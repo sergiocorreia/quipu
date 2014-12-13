@@ -45,20 +45,33 @@ end
 capture program drop Setpath
 program define Setpath
 	syntax anything(everything name=path id=path) , [REPLACE APPEND]
-	assert_msg ("`replace'"!="") + ("`append'"!="") < 2 , msg("estdb setpath: cannot set both -replace- and -append-")
+	
 	local path `path' // Remove the quotes
 	global estdb_path // set to empty
+	cap mkdir `path' // Try to create the path in case it doesn't exist
 
-	if ("`replace'"=="" & "`append'"=="") {
+	* Check that the path is writeable
+	local fn `path'/deletethis
+	qui file open estdb_handle using `fn', write replace
+	file close estdb_handle
+	erase `fn'
+
+	if ("`append'"=="") {
 		local files : dir "`path'" files "*.ster"
-		assert_msg "`files'"=="", msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
+		local empty = ("`files'"=="")
+
+		if ("`replace'"=="") {
+			assert_msg `empty', msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
+		}
+		else if ("`replace'"!="" & !`empty') {
+			di as text "(deleting " as result `"`path'/*.ster"' as text ")"
+			local cmd = cond("`c(os)'"=="Windows", "del", "rm")
+			!`cmd' "`path'/*.ster"
+		}
 	}
-	else if ("`replace'"!="") {
-		di as result `"Deleting <`path'/*.ster>"'
-		local cmd = cond("`c(os)'"=="Windows", "del", "rm")
-		di as error `" !`cmd' "`path'/*.associate-ster" "'
+	else {
+		assert_msg ("`replace'"==""), msg("estdb setpath: options -replace- and -append- are mutually exclusive")
 	}
-	
 	global estdb_path `path'
 end
 
@@ -79,15 +92,16 @@ program define View, eclass
 	`e(cmd)' // -estimates replay- writes an unwanted title row
 end
 
+* Run this after a command, or together with <prefix : cmd>
 cap pr drop Add
 program define Add, eclass
-// BUGBUG: We should DELETE the entire results folder (externally, not here)
-// To avoid keeping old stale (WRONG?) results. EG: I run a regr, fix a bug, rerun;
-// but the wrong results won't get overwritten (different cmdline!) and I don't notice!
-
-	_on_colon_parse `0' // * See help _prefix
-	local cmd `s(after)'
-	local 0 `s(before)'
+	
+	* Parse
+	cap _on_colon_parse `0' // * See help _prefix
+	if !_rc {
+		local cmd `s(after)'
+		local 0 `s(before)'
+	}
 	syntax [, PATH(string) PREFIX(string) FILENAME(string)] [NOTEs(string)]
 
 	* Run command

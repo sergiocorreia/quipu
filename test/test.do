@@ -1,24 +1,23 @@
 * Prep work
 	clear all
 	cls
-	local path "D:\Github\estdb\test\tmp"
-	adopath + "D:\Github\estdb\source"
-
-* There is a REAL risk of keeping old/stale/wrong results in the estdb path (or a subfolder)
-	estdb setpath "`path'/foo" , replace
-	cap rmdir `path'
-	mkdir `path'
-
-	estdb init "`path'" // checks folder is empty
+	local repo "D:\Github\estdb"
+	local path "`repo'\test\tmp"
+	qui adopath + "`repo'\source"
 
 * Set up estdb
-	
+* There is a REAL risk of keeping old/stale/wrong results in the estdb path (or a subfolder)
+* To partially address this, when there are already .ster files, we force you to use -append-
+* (to ignore possible problem), or -replace- (to delete .ster files)
+	estdb setpath "`path'/foo" , replace //  append // replace
 
 * Run regressions and add results to db
 	sysuse auto
 
 	reg price weight
 	estdb add
+
+	estdb add: reg weight price
 
 	reg price length
 	estdb add, notes(model=2)
