@@ -102,20 +102,17 @@ program define Add, eclass
 		local cmd `s(after)'
 		local 0 `s(before)'
 	}
-	syntax [, PATH(string) PREFIX(string) FILENAME(string)] [NOTEs(string)]
+	syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)]
 
-	* Run command
+	* Run command (if using prefix version)
 	`cmd'
 	mata: st_local("notes", strtrim(`"`notes'"'))
 
 	* Get or create filename
 	if ("`filename'"=="") {
-		if ("`path'"=="") local path `"$ESTPATH"'
-		if ("`path'"=="") {
-			di as error "Don't know where to save the .sest file! Either use path() or global ESTPATH"
-			error 101
-		}
-
+		local path $estdb_path
+		assert_msg `"`path'"'!="",  msg("Don't know where to save the .sest file! Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+asd
 		* Make up a filename
 		mata: st_local("cmd_hash", strofreal(hash1(`"`e(cmdline)'"', 1e8), "%30.0f")) // `cmd'
 		mata: st_local("obs_hash", strofreal(hash1("`c(N)'", 1e4), "%30.0f"))

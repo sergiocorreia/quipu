@@ -3,6 +3,7 @@
 	cls
 	local repo "D:\Github\estdb"
 	local path "`repo'\test\tmp"
+	cap mkdir "`path'" // git won't save empty folders
 	qui adopath + "`repo'\source"
 
 * Set up estdb
@@ -23,7 +24,7 @@
 	estdb add, notes(model=2)
 
 	reg price head length
-	estdb add, prefix("foo/bar_")
+	estdb add, prefix("bar_")
 	local fn = e(filename)
 	// note that the final path should be returned in a hidden e(filename)
 
