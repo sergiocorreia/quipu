@@ -1,3 +1,0 @@
-[submodule "externals/stata-misc"]
-	path = externals/stata-misc
-	url = git://github.com/sergiocorreia/stata-misc.git
