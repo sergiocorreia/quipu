@@ -1,6 +1,14 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Stata
+*.ado text
+*.mata text
+*.do text
+*.doh text
+
+*.dta binary
+
 # Custom for Visual Studio
 *.cs     diff=csharp
 *.sln    merge=union
