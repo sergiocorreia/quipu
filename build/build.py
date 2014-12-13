@@ -3,6 +3,12 @@ use this as template
 - add files together
 - add assert_msg
 
+Better than adding assert_msg.. use git submodules
+http://stackoverflow.com/questions/2140985/how-to-set-up-a-git-project-to-use-an-external-repo-submodule
+
+# Command used in git shell was:
+# submodule add git://github.com/sergiocorreia/stata-misc.git externals/stata-misc
+
 # -*- coding: utf-8 -*-
 
 """
