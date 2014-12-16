@@ -15,7 +15,7 @@ program define Setpath
 
 	if ("`append'"=="") {
 		local files : dir "`path'" files "*.ster"
-		local empty = ("`files'"=="")
+		local empty = (`"`files'"'=="")
 
 		if ("`replace'"=="") {
 			assert_msg `empty', msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")

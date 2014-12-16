@@ -1,6 +1,7 @@
 * Prep work
 	clear all
 	cls
+	set more off
 	local repo "D:\Github\estdb"
 	local path "`repo'\test\tmp"
 	cap mkdir "`path'" // git won't save empty folders
@@ -17,21 +18,22 @@
 
 	reg price weight
 	estdb add
-
 	estdb add: reg weight price
-
 	reg price length
 	estdb add, notes(model=2)
 
 	reg price head length
-	estdb add, prefix("bar_")
+	estdb add, prefix("bar")
 	local fn = e(filename)
 	// note that the final path should be returned in a hidden e(filename)
+	di as text "`fn'"
+	assert "`fn'"!="."
 
 * Add .ster as an extension and see if I can open it
 	estdb associate // will run as administrator
 	!`fn'
 
+	asd
 
 * Build index
 	estdb build_index, keys(depvar model)

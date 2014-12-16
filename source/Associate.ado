@@ -6,16 +6,31 @@ program define Associate
 		
 	local path_binary : sysdir STATA
 	local fn_binary : dir "`path_binary'" files "s*.exe", nofail
+	local minlen = .
+	
+	* Imperfect workaround to multiple files
+	foreach f of local fn_binary {
+		local len = length("`f'")
+		if (`len'<`minlen') {
+			local minlen `len'
+			local best `f'
+		}
+	}
+	local fn_binary `best'
+	*local fn_binary : word 1 of `fn_binary'
+
 	local fn_binary `fn_binary' // Remove quotes
 	local binary `path_binary'`fn_binary'
 	local binary : subinstr local binary "/" "\", all
+	di as text "Stata binary: `binary'"
 	local binary : subinstr local binary "\" "\BS\BS", all
-	findfile "estdb-associate-template.reg.ado"
+	qui findfile "estdb-associate-template.reg.ado"
 	local template `r(fn)'
 
 	tempfile regfile
 	local regfile "`regfile'.reg" // need a .reg extension
 	filefilter "`template'" "`regfile'", from("REPLACETHIS") to("`binary'") replace
+	di as text "Running .reg file: `regfile'"
 	!"`regfile'"
 	cap erase "`regfile'" // Stata won't delete this due to the name change
 end

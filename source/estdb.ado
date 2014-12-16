@@ -7,7 +7,7 @@ program define estdb
 	* save index describe use browse list view table report
 
 	* Remove subcmd from 0
-	gettoken subcmd 0 : 0, parse(" ,")
+	gettoken subcmd 0 : 0, parse(" ,:")
 
 	* Expand abbreviations and call appropiate subcommand
 	if (substr("`subcmd'", 1,2)=="de") local subcmd "describe"
