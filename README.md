@@ -15,4 +15,4 @@ net install estdb
 
 ## Author
 
-[Sergio Correia], Duke University
+[Sergio Correia](sergio.correia@gmail.com), Duke University
