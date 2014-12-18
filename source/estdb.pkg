@@ -1,0 +1,16 @@
+v 3
+
+d Miscellaneous Stata Commands
+d
+d Author: Sergio Correia, Duke University
+d Support: sergio.correia@duke.edu
+d
+d estdb: Saves, manage and export estimation results (requires estout)
+d
+d
+d Distribution-Date: 20141217
+d
+f estdb.ado
+f estdb.sthlp
+f estdb-associate-template.reg.ado
+e

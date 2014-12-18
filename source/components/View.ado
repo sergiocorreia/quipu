@@ -14,4 +14,14 @@ program define View, eclass
 	di as input `"`e(cmdline)'"' _n
 	di as text "{title:Estimation Results}"
 	`e(cmd)' // -estimates replay- writes an unwanted title row
+
+	/*
+	local keys = e(keys)
+	if ("`keys'"!="") {
+		di as text _n "{title:Saved Notes}"
+		foreach key of local keys {
+			di as text " `key' = " as result "`e(`key')'"
+		}
+	}
+	*/
 end

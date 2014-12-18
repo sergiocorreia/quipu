@@ -23,7 +23,7 @@
 	estdb add
 	estdb add: reg weight price
 	reg price length
-	estdb add, notes(model=2)
+	estdb add, notes(model=ols smpl=2 vars=all)
 
 	reg price head length
 	estdb add, prefix("bar")
@@ -41,16 +41,21 @@
 	estdb setpath "`path'"
 	estdb build_index, keys(depvar model)
 	estdb update_varlist
-	asd
 
 * View one result
+	estdb view "D:\Github\estdb\test\tmp\foo\7826-6430-22915172.ster"
 
 * Describe many results
+	estdb use if ..
+
+	estdb describe if ..
+	estdb list if ..
+	estdb browse if ..
+	estdb table if ..
 
 * Show table
-
 * Build latex table
-
+	estdb report if .. , smcl|latex
 
 rmdir `path'
 exit

@@ -4,7 +4,7 @@ Windows Registry Editor Version 5.00
 ; http://defaultprogramseditor.com/
 
 ; This associates .ster files (call it with -estdb associate-)
-; Ado extension so it gets downloaded
+; Extension is .ado so it gets downloaded
 
 ; Edit Verb
 [HKEY_CURRENT_USER\Software\Classes\ster_auto_file\shell\open\command]
