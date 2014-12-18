@@ -1,7 +1,6 @@
 * Run this after a command, or together with <prefix : cmd>
 * [SYNTAX 1] estdb add, notes(..) [prefix(..)] // after estdb setpath ..
 * [SYNTAX 2] estdb add, notes(..) filename(..)
-
 cap pr drop Add
 program define Add, eclass
 	

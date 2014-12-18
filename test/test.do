@@ -4,6 +4,9 @@
 	set more off
 	local repo "D:\Github\estdb"
 	local path "`repo'\test\tmp"
+	* Don't use `path' to avoid big bugs where I delete everything
+	!del "`repo'\test\tmp\*.*" /q
+	!del "`repo'\test\tmp\foo\*.*" /q
 	cap mkdir "`path'" // git won't save empty folders
 	qui adopath + "`repo'\source"
 
@@ -11,7 +14,7 @@
 * There is a REAL risk of keeping old/stale/wrong results in the estdb path (or a subfolder)
 * To partially address this, when there are already .ster files, we force you to use -append-
 * (to ignore possible problem), or -replace- (to delete .ster files)
-	estdb setpath "`path'/foo" , replace //  append // replace
+	estdb setpath "`path'/foo" // , replace //  append // replace
 
 * Run regressions and add results to db
 	sysuse auto
@@ -30,13 +33,15 @@
 	assert "`fn'"!="."
 
 * Add .ster as an extension and see if I can open it
-	estdb associate // will run as administrator
-	!`fn'
+	* estdb associate // will run as administrator
+	* !`fn' // calls new instance of stata
 
-	asd
 
 * Build index
+	estdb setpath "`path'"
 	estdb build_index, keys(depvar model)
+	estdb update_varlist
+	asd
 
 * View one result
 
