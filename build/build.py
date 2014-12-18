@@ -67,5 +67,6 @@ shutil.copy(full_pkg, os.path.join(server_path, u"estdb.pkg"))
 print("Copying misc files...")
 shutil.copy(os.path.join(source_path, u"estdb.sthlp"), os.path.join(server_path, u"estdb.sthlp"))
 shutil.copy(os.path.join(source_path, u"stata.toc"), os.path.join(server_path, u"stata.toc"))
+shutil.copy(os.path.join(source_path, u"estdb-associate-template.reg.ado"), os.path.join(server_path, u"estdb-associate-template.reg.ado"))
 
 print("Done!")
