@@ -34,3 +34,4 @@ program define Associate
 	!"`regfile'"
 	cap erase "`regfile'" // Stata won't delete this due to the name change
 end
+

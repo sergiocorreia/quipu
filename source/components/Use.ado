@@ -84,3 +84,4 @@ if (`"`cond'"'!="") local cond if `cond'
 	return local models `"`models'"'
 	clear
 end
+

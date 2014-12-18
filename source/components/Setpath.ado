@@ -31,3 +31,4 @@ program define Setpath
 	}
 	global estdb_path `path'
 end
+

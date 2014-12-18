@@ -1,10 +1,3 @@
-tb guardar date!!
-
-use this as template
-- remove pr drop
-- add files together
-- add assert_msg
-
 # -*- coding: utf-8 -*-
 
 """
@@ -32,7 +25,7 @@ from __future__ import division
 import os, time, re, shutil
 
 # Constants
-fn = "estdb"
+fn = "estdb.ado"
 source_path = u"../source"
 server_path = u"../package"
 
@@ -50,6 +43,9 @@ for include in includes:
 
 # Remove cap drops
 capdrops = re.findall('\s^\s*cap pr drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
+for capdrop in capdrops:
+    data = data.replace(capdrop, "")        
+capdrops = re.findall('\s^\s*capture program drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
 for capdrop in capdrops:
     data = data.replace(capdrop, "")        
 

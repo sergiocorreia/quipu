@@ -54,6 +54,7 @@ program define Build_Index
 	Update_Varlist
 end
 
+
 capture program drop ProcessFolder
 program define ProcessFolder
 	syntax, path(string) keys(string)
@@ -74,6 +75,7 @@ program define ProcessFolder
 	if (`"`files'"'!="") di
 	c_local varlist `varlist'
 end
+
 
 capture program drop ProcessFile
 program define ProcessFile
@@ -108,3 +110,4 @@ syntax, path(string) filename(string) keys(string)
 		}
 	}
 end
+

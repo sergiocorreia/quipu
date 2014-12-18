@@ -344,3 +344,4 @@ program define GetNote, rclass
 	return local note "`note'"
 	return local symbol "`symbol'"
 end
+

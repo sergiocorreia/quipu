@@ -8,3 +8,4 @@ syntax, index(string) [cond(string asis) sort(string) sort(string) sortmerge(str
 	}
 
 end
+

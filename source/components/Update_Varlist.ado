@@ -30,3 +30,4 @@ program define Update_Varlist
 	di as text "estdb: update done, you can edit " as result "`path'/varlist.raw"
 	clear
 end
+

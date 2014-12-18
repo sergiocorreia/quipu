@@ -19,7 +19,7 @@ program define estdb
 
 	local subcmd_commas1 : subinstr local subcmd_list1 " "   `"", ""', all
 	local subcmd_commas2 : subinstr local subcmd_list2 " "   `"", ""', all
-	assert_msg inlist("`subcmd1'", "`subcmd_commas1'") | inlist("`subcmd2'", "`subcmd_commas2'"), ///
+	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
 	 	msg("Valid subcommands for -estdb- are: `subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
 	`subcmd' `0'

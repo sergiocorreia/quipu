@@ -65,3 +65,4 @@ program define Add, eclass
 
 	estimates save "`filename'", replace
 end
+
