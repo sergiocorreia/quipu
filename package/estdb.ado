@@ -85,9 +85,16 @@ program define Setpath
 			assert_msg `empty', msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
 		}
 		else if ("`replace'"!="" & !`empty') {
-			di as text "(deleting " as result `"`path'/*.ster"' as text ")"
-			local cmd = cond("`c(os)'"=="Windows", "del", "rm")
-			!`cmd' "`path'/*.ster"
+			local pattern "`path'/*.ster"
+			local is_windows = "`c(os)'"=="Windows"
+			if `is_windows' {
+				local pattern : subinstr local pattern "/" "\", all
+				shell del `pattern'
+			}
+			else {
+				shell rm `pattern'
+			}
+			di as text "(deleted " as result `"`pattern'"' as text ")"
 		}
 	}
 	else {
