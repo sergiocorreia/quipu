@@ -6,12 +6,12 @@ program define Update_Varlist
 
 	* Backup if possible
 	cap copy "`path'/varlist.dta" "`path'/varlist_backup.dta", replace
-	cap copy "`path'/varlist.raw" "`path'/varlist_backup.raw", replace
+	cap copy "`path'/varlist.tsv" "`path'/varlist_backup.tsv", replace
 
 	* Load preset varlist if it exists (tab-separated for easier editing)
-	cap conf file "`path'/varlist.raw"
+	cap conf file "`path'/varlist.tsv"
 	if !_rc {
-		qui import delimited "`path'/varlist.raw", clear delim("\t") ///
+		qui import delimited "`path'/varlist.tsv", clear delim("\t") ///
 			varnames(1) case(preserve) asdouble stringcols(1 2 3) numericcols(4 5)
 		tempfile existing
 		qui save "`existing'"
@@ -25,9 +25,12 @@ program define Update_Varlist
 	qui save "`path'/varlist", replace
 
 	* Export so it can be updated
-	local fn "`path'/varlist.raw"
+	local fn "`path'/varlist.tsv"
 	qui export delimited "`fn'", replace nolabel delim(tab) quote
-	di as text "estdb: update done, you can edit " as result "`path'/varlist.raw"
+	
+	*di as text "estdb: update done, you can edit " as result "`fn'"
+	di as text "estdb: update done, you can now edit " _c
+	di as smcl `"{stata "shell `fn'":`fn'}"'
 	clear
 end
 

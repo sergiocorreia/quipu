@@ -36,7 +36,6 @@
 	* estdb associate // will run as administrator
 	* !`fn' // calls new instance of stata
 
-
 * Build index
 	estdb setpath "`path'"
 	estdb build_index, keys(depvar model)

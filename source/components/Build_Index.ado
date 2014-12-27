@@ -24,6 +24,7 @@ program define Build_Index
 	foreach folder of local folders {
 		ProcessFolder, path(`path'/`folder') keys(`keys')
 	}
+	qui destring _all, replace // Try to convert to numbers
 
 	* Save index
 	sort fullpath
@@ -61,7 +62,7 @@ program define ProcessFolder
 	
 	local files : dir "`path'" files "*.ster"
 	local n : word count `files'
-	di as text `" - parsing <`path'>, `n' files found"'
+	di as text `" - parsing <`path'>, `n' files found "' _c
 	qui set obs `=c(N)+`n''
 
 	foreach filename of local files {
@@ -72,11 +73,12 @@ program define ProcessFolder
 		local varlist : list varlist | vars
 		di as text "." _c
 	}
-	if (`"`files'"'!="") di
+	di // empty to flush line
 	c_local varlist `varlist'
 end
 
 
+* Parse a single .ster file
 capture program drop ProcessFile
 program define ProcessFile
 syntax, path(string) filename(string) keys(string)
@@ -90,24 +92,7 @@ syntax, path(string) filename(string) keys(string)
 	local keys : list uniq keys
 
 	foreach key of local keys {
-		local value = e(`key')
-		
-		cap conf var `key'
-		if (_rc==111) {
-			local is_numeric = (real("`value'")!=.) | ("`value'"==".")
-			local type = cond(`is_numeric', "double", "str1")
-			local default = cond(`is_numeric', ".", `""""')
-			qui gen `type' `key' = `default'
-		}
-		else {
-			local type : type `key'
-			if ("`type'"=="double") {
-				qui replace `key' = `value' in `pos'
-			}
-			else {
-				qui replace `key' = "`value'" in `pos'
-			}
-		}
+		cap qui gen `key' = ""
+		qui replace `key' = "`e(`key')'" in `pos'
 	}
 end
-
