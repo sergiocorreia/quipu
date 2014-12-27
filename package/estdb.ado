@@ -199,6 +199,7 @@ program define Build_Index
 	foreach folder of local folders {
 		ProcessFolder, path(`path'/`folder') keys(`keys')
 	}
+	qui destring _all, replace // Try to convert to numbers
 
 	* Save index
 	sort fullpath
@@ -233,7 +234,7 @@ program define ProcessFolder
 	
 	local files : dir "`path'" files "*.ster"
 	local n : word count `files'
-	di as text `" - parsing <`path'>, `n' files found"'
+	di as text `" - parsing <`path'>, `n' files found "' _c
 	qui set obs `=c(N)+`n''
 
 	foreach filename of local files {
@@ -244,9 +245,12 @@ program define ProcessFolder
 		local varlist : list varlist | vars
 		di as text "." _c
 	}
-	if (`"`files'"'!="") di
+	di // empty to flush line
 	c_local varlist `varlist'
 end
+
+
+* Parse a single .ster file
 program define ProcessFile
 syntax, path(string) filename(string) keys(string)
 	local pos = c(N)
@@ -259,24 +263,8 @@ syntax, path(string) filename(string) keys(string)
 	local keys : list uniq keys
 
 	foreach key of local keys {
-		local value = e(`key')
-		
-		cap conf var `key'
-		if (_rc==111) {
-			local is_numeric = (real("`value'")!=.) | ("`value'"==".")
-			local type = cond(`is_numeric', "double", "str1")
-			local default = cond(`is_numeric', ".", `""""')
-			qui gen `type' `key' = `default'
-		}
-		else {
-			local type : type `key'
-			if ("`type'"=="double") {
-				qui replace `key' = `value' in `pos'
-			}
-			else {
-				qui replace `key' = "`value'" in `pos'
-			}
-		}
+		cap qui gen `key' = ""
+		qui replace `key' = "`e(`key')'" in `pos'
 	}
 end
 program define Update_Varlist
@@ -286,12 +274,12 @@ program define Update_Varlist
 
 	* Backup if possible
 	cap copy "`path'/varlist.dta" "`path'/varlist_backup.dta", replace
-	cap copy "`path'/varlist.raw" "`path'/varlist_backup.raw", replace
+	cap copy "`path'/varlist.tsv" "`path'/varlist_backup.tsv", replace
 
 	* Load preset varlist if it exists (tab-separated for easier editing)
-	cap conf file "`path'/varlist.raw"
+	cap conf file "`path'/varlist.tsv"
 	if !_rc {
-		qui import delimited "`path'/varlist.raw", clear delim("\t") ///
+		qui import delimited "`path'/varlist.tsv", clear delim("\t") ///
 			varnames(1) case(preserve) asdouble stringcols(1 2 3) numericcols(4 5)
 		tempfile existing
 		qui save "`existing'"
@@ -305,9 +293,12 @@ program define Update_Varlist
 	qui save "`path'/varlist", replace
 
 	* Export so it can be updated
-	local fn "`path'/varlist.raw"
+	local fn "`path'/varlist.tsv"
 	qui export delimited "`fn'", replace nolabel delim(tab) quote
-	di as text "estdb: update done, you can edit " as result "`path'/varlist.raw"
+	
+	*di as text "estdb: update done, you can edit " as result "`fn'"
+	di as text "estdb: update done, you can now edit " _c
+	di as smcl `"{stata "shell `fn'":`fn'}"'
 	clear
 end
 

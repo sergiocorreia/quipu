@@ -62,7 +62,7 @@
 {p 12 14 2} (2) footnote: the keyword of the footnote linked to that variable.{p_end}
 {p 12 14 2} (3) sort_depvar: the position of the variable in the table (column wise).{p_end}
 {p 12 14 2} (4) sort_indepvar: the position of the variable in the table (row wise).{p_end}
-{p 9 11 2}- The filename is {it:varlist.raw}. Only update that file. After updating, run {estdb update_varlist}
+{p 9 11 2}- The filename is {it:varlist.tsv}. Only update that file. After updating, run {estdb update_varlist}
 again (no need if also running {it: estdb build_index}.{p_end}
 
 {title:Syntax - Selecting Estimates}
