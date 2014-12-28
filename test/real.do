@@ -8,13 +8,22 @@ local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars
 
 
 set trace off
-tic
-estdb build, keys(`keys')
-toc
-* estdb update
+*tic
+*estdb build, keys(`keys')
+*toc, report
+*estdb update
 
+estdb use
+estdb use if cmd!="reghdfe"
 
+*estdb list if cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
+*estdb br if cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
 
+local cond cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
+*estdb tab if `cond' , plot
+
+*estdb replay if `cond'
+estdb table if `cond' , b(%3.2f)
 exit
 
 estdb desc if ..

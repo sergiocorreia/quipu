@@ -44,8 +44,15 @@
 * View one result
 	estdb view "D:\Github\estdb\test\tmp\foo\7826-6430-22915172.ster"
 
+* Load an index
+	cap estdb use if 0
+	assert _rc==2000
+	
+	estdb use if depvar=="price"
+	assert c(N)==3
+
 * Describe many results
-	estdb use if ..
+	asd
 
 	estdb describe if ..
 	estdb list if ..
