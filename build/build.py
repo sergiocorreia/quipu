@@ -65,8 +65,7 @@ shutil.copy(full_pkg, os.path.join(server_path, u"estdb.pkg"))
 
 # Copy
 print("Copying misc files...")
-shutil.copy(os.path.join(source_path, u"estdb.sthlp"), os.path.join(server_path, u"estdb.sthlp"))
-shutil.copy(os.path.join(source_path, u"stata.toc"), os.path.join(server_path, u"stata.toc"))
-shutil.copy(os.path.join(source_path, u"estdb-associate-template.reg.ado"), os.path.join(server_path, u"estdb-associate-template.reg.ado"))
-
+fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-latex-template.tex"]
+for fn in fns:
+	shutil.copy(os.path.join(source_path, fn), os.path.join(server_path, fn))
 print("Done!")
