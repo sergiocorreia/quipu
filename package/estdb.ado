@@ -3,14 +3,14 @@
 // -------------------------------------------------------------------------------------------------
 program define estdb
 	local subcmd_list1 associate setpath add build_index update_varlist view
-	local subcmd_list2 use describe list browse table report
+	local subcmd_list2 use tabulate list browse table report replay
 	* save index describe use browse list view table report
 
 	* Remove subcmd from 0
 	gettoken subcmd 0 : 0, parse(" ,:")
 
 	* Expand abbreviations and call appropiate subcommand
-	if (substr("`subcmd'", 1,2)=="de") local subcmd "describe"
+	if (substr("`subcmd'", 1,3)=="tab" & "`subcmd'"!="table") local subcmd "tabulate"
 	if (substr("`subcmd'", 1,2)=="br") local subcmd "browse"
 	if (substr("`subcmd'", 1,2)=="li") local subcmd "list"
 	if (substr("`subcmd'", 1,5)=="build") local subcmd "build_index"
@@ -19,7 +19,7 @@ program define estdb
 	local subcmd_commas1 : subinstr local subcmd_list1 " "   `"", ""', all
 	local subcmd_commas2 : subinstr local subcmd_list2 " "   `"", ""', all
 	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
-	 	msg("Valid subcommands for -estdb- are: `subcmd_list1' `subcmd_list2'")
+	 	msg("Valid subcommands for -estdb- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
 	`subcmd' `0'
 end
@@ -386,6 +386,31 @@ program define View, eclass
 	*/
 end
 program define Use, rclass
+	* Parse (including workaround that allows to use if <cond> with variables not in dataset)
+	estimates clear
+	syntax [anything(name=ifcond id="if condition" everything)]
+	if ("`ifcond'"!="") {
+		gettoken ifword ifcond : ifcond
+		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
+		local if "if`ifcond'"
+	}
+	local path $estdb_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+	
+	* BUGBUG: preserve+restore?
+	qui use `if' using "`path'/index", clear
+	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
+	di as text "(`c(N)' estimation results loaded)"
+
+	foreach var of varlist _all {
+		cap qui cou if `var'!=.
+		if (_rc==109) qui cou if `var'!=""
+		if (r(N)==0) drop `var'
+	}
+end
+
+/*cap pr drop Use
+program define Use, rclass
 syntax, index(string) [cond(string asis) ///
 	group(string) grouplabel(string asis) ///
 	header(string) headerlabel(string asis) ///
@@ -470,8 +495,18 @@ if (`"`cond'"'!="") local cond if `cond'
 	return local models `"`models'"'
 	clear
 end
+
+*/
 program define List
-syntax, index(string) [cond(string asis) sort(string) sort(string) sortmerge(string)] [*]
+syntax [anything(everything)] , [*]
+	qui Use `anything'
+	qui ds path filename time, not
+	list `r(varlist)' , `options' constant
+	return clear
+end
+
+/*
+ [cond(string asis) sort(string) sort(string) sortmerge(string)] [*]
 	Use, index(`index') cond(`cond') sort(`sort') sortmerge(`sortmerge')
 	* estimates table est*
 	forv i=1/`r(num_estimates)' {
@@ -479,12 +514,40 @@ syntax, index(string) [cond(string asis) sort(string) sort(string) sortmerge(str
 	}
 
 end
+
+*/
 program define Browse
-	...
+syntax [anything(everything)]
+	qui Use `anything'
+	browse
 end
-program define Describe
+program define Tabulate
+syntax [anything(everything)] , [*]
+	qui Use `anything'
+	
+	di as text _n "{bf:List of keys:}"
+	de, simple
+	if (c(N)==0) exit
+
+	di as text _n "{bf:List of saved estimates:}"
+	forv i=1/`c(N)' {
+		local fn = path[`i'] +"/"+filename[`i']
+		di %3.0f `i' _c
+		di as text `"{stata "estdb view `fn'" : `fn' } "'
+	}
+
+	drop path filename time
+	di as text _n "{bf:Tabulates of keys that vary across estimates:}"
+	foreach var of varlist _all {
+		qui levelsof `var'
+		local n : word count `r(levels)'
+		if (`n'>1) tab `var', m sort `options'
+	} 
+end
+
+/*
 syntax, index(string) [cond(string asis)] [noRESTORE]
-	describe using `index', simple
+	Tabulate using `index', simple
 	assert inlist("`restore'","", "norestore")
 
 	if (`"`cond'"'!="") {
@@ -492,34 +555,39 @@ syntax, index(string) [cond(string asis)] [noRESTORE]
 		di
 		use if `cond' using `index', clear
 
-		di as text "List of saved estimates:"
-		forv i=1/`c(N)' {
-			local fn = __filename__[`i']
-			gettoken left right : fn, parse(":")
-			gettoken colon right : right, parse(":")
+		gettoken left right : fn, parse(":")
+		gettoken colon right : right, parse(":")
 
-			if ("`right'"!="") {
-				di as text `"{stata estmgr view "`left'\`=char(58)'`right'" : `fn' } "'
-			}
-			else {
-				di as text `"{stata estmgr view "`fn'" : `fn' } "'
-			}
+		if ("`right'"!="") {
+			di as text `"{stata estmgr view "`left'\`=char(58)'`right'" : `fn' } "'
 		}
-		drop __*
-		if (c(N)==0) exit
-		foreach var of varlist _all {
-			qui levelsof `var'
-			local n : word count `r(levels)'
-			if (`n'>1) tab `var', m sort
-		} 
-		if ("`restore'"=="") restore
+		else {
+			di as text `"{stata estmgr view "`fn'" : `fn' } "'
+		}
+		}
+*/
+program define Replay
+syntax [anything(everything)] , [*]
+	qui Use `anything'
+	forv i=1/`c(N)' {
+		local fn = path[`i'] +"/"+filename[`i']
+		di as text _n "{bf:replay `i'/`c(N)':}"
+		estdb view "`fn'"
+		di as text "{hline}"
 	}
-
 end
 program define Table
-syntax, index(string) [cond(string asis) sort(string) sortmerge(string)] [*]
-	Use, index(`index') cond(`cond') sort(`sort') sortmerge(`sortmerge')
+syntax [anything(everything)] , [*]
+	estimates drop estdb*
+	qui Use `anything'
+	forv i=1/`c(N)' {
+		local fn = path[`i'] +"/"+filename[`i']
+		estimates use "`fn'"
+		estimates title: "`fn'"
+		estimates store estdb`i', nocopy
+	}
 	estimates table _all , `options'
+	estimates drop estdb*
 end
 program define Report
 
