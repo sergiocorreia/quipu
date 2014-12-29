@@ -1,7 +1,7 @@
 cap pr drop Table
 program define Table
 syntax [anything(everything)] , [*]
-	estimates drop estdb*
+	cap estimates drop estdb*
 	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']

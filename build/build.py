@@ -68,4 +68,4 @@ print("Copying misc files...")
 fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-latex-template.tex"]
 for fn in fns:
 	shutil.copy(os.path.join(source_path, fn), os.path.join(server_path, fn))
-print("Done!")
+ print("Done!")

@@ -1,5 +1,11 @@
-cap pr drop Report
+capture program drop Report
 program define Report
+*copiar cosas de table	
+end
+
+
+cap pr drop ReportOld
+program define ReportOld
 
 * [CONSTANTS] ALl in caps
 	local TAB "`=char(9)'"
