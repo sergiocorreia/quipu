@@ -65,7 +65,11 @@ shutil.copy(full_pkg, os.path.join(server_path, u"estdb.pkg"))
 
 # Copy
 print("Copying misc files...")
-fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-latex-template.tex"]
+fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-top.tex.ado", "estdb-bottom.tex.ado"]
 for fn in fns:
 	shutil.copy(os.path.join(source_path, fn), os.path.join(server_path, fn))
- print("Done!")
+
+# Copy the .def file as .def.ado so Stata installs it w/out the need for the -all- option
+shutil.copy(os.path.join(source_path, "estout_estdb.def"), os.path.join(server_path, "estout_estdb.def.ado"))
+
+print("Done!")

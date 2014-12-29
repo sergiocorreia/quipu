@@ -123,3 +123,43 @@ Tex, html, smcl
 - margin
 - discrete
 - meqs(eqlist)
+
+## Calling estout from acad markdown:
+
+In the metadata, we set
+estimates folder? NO, always called ESTIMATES
+stata path?? or just assume stata opens when we run the dofile??
+
+- estimates-template: template.txt
+- estimates-update: false
+- estimates-options: .. (ON TOP OF TEMPLATE.. NEEDED? OR AS ALTERNATIVE?)
+
+bla bla bla bla, as seen in table-robust-iv
+
+~~~ estimates
+- name: robust-iv
+- title: Varying the Radius
+- condition: logfile=="foobar" & radius!=.
+- options: ... (on top of the default)
+- orientation: portrait | landscape
+- fontsize: 4 # 1 2 3 4 ..
+- clearpage = True
+~~~
+
+This will
+1) build the cmd: estdb using NAME if CONDITION, DEFOPT OPTIONS title(...)
+2) Automatically create the label ESTIMATES:ROBUST-IV (in lowercase)
+
+At the end, we will end up with a DO FILE in the ./estimates folder, which we will run if estimates-update is TRUE
+
+all the estdb commands will create .tex files with the expected names
+
+then when stata is done and exits, we will go back to the pandoc filter and insert the .tex files
+
+It would be cool if we can also create files ready for .doc and .html (future..)
+
+Also include an option in the metadata to put all the tables at the bottom
+- estimates-are-draft: true
+
+When a new file is created, autocomplete the metadata so its easy to remember (i.e. with a gist or whatever)
+

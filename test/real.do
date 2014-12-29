@@ -27,11 +27,15 @@ local cond cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfil
 *estdb replay if `cond'
 estdb table if `cond' , b(%3.2f)
 
-estdb report if `cond'
+estdb export if `cond', as(tex) replace
+estdb export using tmp/borrar if `cond', as(tex) replace
+estdb export using "tmp/bor rar" if `cond', replace as(pdf) verbose(2) title("Some Title") label("tex-label")
 
 exit
 
 estdb desc if ..
 li br table
 report
+ 
+
  

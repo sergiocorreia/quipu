@@ -31,8 +31,8 @@ The typical way to use it is:{p_end}
 {pstd}5)Inspect the index with any of the convenience commands ({opt tab:ulate}, {opt li:st}, {opt br:owse}, {opt de:scribe}, {opt replay}, {opt table}):{p_end}
 {p 8 15 2}{cmd:estdb tab if} {it:depvar=="price"}{p_end}
 
-{pstd}6)Create a pretty table with the {opt report} subcommand{p_end}
-{p 8 15 2}{cmd:estdb report if} {it:depvar=="price"}{p_end}
+{pstd}6)Create a pretty table with the {opt export} subcommand{p_end}
+{p 8 15 2}FIX THIS{cmd:estdb export if} {it:depvar=="price"}{p_end}
 
 {pstd}(Windows) You are also encouraged to run {cmd:estdb associate} so you can later double click
 on the .sest files (which will open Stata and run {cmd:estdb view{it: SomeFilename.sest}}).{p_end}
@@ -141,11 +141,16 @@ again (no need if also running {it: estdb build_index}.{p_end}
 
 {p 8 15 2}
 {cmd:estdb}
-{opt report}
+{opt export}
 [{help if}]
+[{help using} FilenameWithoutExtension]
+, {opt as(tex pdf html)}
+[{opt verbose(0|1|2)}]
 {p_end}
 {p 9 11 2}- Build pretty tables for the estimates that match the condition.{p_end}
-{p 9 11 2}- Tables can be in smcl format (for quick inspection) or latex format.{p_end}
+{p 9 11 2}- This calls {stata "help esttab":esttab} under the hood,
+so most {cmd:esttab} and {cmd:estout} options are supported.{p_end}
+{p 9 11 2}- The {cmd:as} option supports more than one output at the same time.{p_end}
 {p 9 11 2}- The detailed syntax is still a work in progress.{p_end}
 
 {title:Syntax - Misc Subcommands}

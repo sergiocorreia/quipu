@@ -1,11 +1,172 @@
-capture program drop Report
-program define Report
-*copiar cosas de table	
+capture program drop Export
+program define Export
+syntax [anything(everything)] , as(string) [*]
+	
+	* Extract the optional -using- part from the -if-
+	while (`"`anything'"'!="") {
+		gettoken tmp anything : anything
+		if ("`tmp'"=="using") {
+			gettoken filename anything : anything
+
+			* Remove extension (which will be ignored!)
+			foreach ext in tex htm html pdf {
+				local filename : subinstr local filename ".`ext'" ""
+			}
+
+			* Remove quotes (will include by default)
+			local filename `filename'
+
+			* Windows shell can't handle "/" folder separators:
+			if c(os)=="Windows" {
+				local filename = subinstr(`"`filename'"', "/", "\", .)
+			}
+			
+			local ifcond `ifcond' `anything'
+			continue, break
+		}
+		else {
+			local ifcond `ifcond' `tmp'
+
+		}
+	}
+
+	* Check the as() strings and convert as(html) into -> html(filename.html)
+	foreach format in `as' {
+		assert_msg inlist("`format'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
+	}
+	
+	* Load estimates
+	cap estimates drop estdb*
+	qui Use `ifcond'
+	forv i=1/`c(N)' {
+		local fn = path[`i'] +"/"+filename[`i']
+		estimates use "`fn'"
+		estimates title: "`fn'"
+		estimates store estdb`i', nocopy
+	}
+	clear
+
+	* Export table
+	SetConstants
+	ExportInner, filename(`filename') `as' `options'
+	
+	* Cleanup
+	estimates drop estdb*
+	CleanConstants
+	global ESTDB_DEBUG
+end
+	
+capture program drop ExportInner
+program define ExportInner
+syntax, [FILEname(string) HTML TEX PDF] [VERBOSE(integer 0)] ///
+		[colformat(string) title(string) label(string)] ///
+		[*]
+
+	if (`verbose'>0) global ESTDB_DEBUG 1
+	if (`verbose'>1) local noisily noisily 
+
+
+	local using = cond("`filename'"=="","", `"using "`filename'.tex""')
+	local base_cmd `"esttab estdb* `using' , `noisily'"'
+	local tex_options longtable booktabs ///
+		prehead(\`prehead') posthead(\`posthead') prefoot(\`prefoot') postfoot(\`postfoot')
+
+	local footnote \item[\textdagger] Number of large retail stores opened in a district in quarters \(t\) or \(t+1\). // Placeholder
+	local line_subgroup // What was this?
+	if ("`colformat'"=="") local colformat C{2cm}
+
+	* Set header/footer locals
+	local prehead \begin{ThreePartTable} ///
+$ENTER$TAB\begin{TableNotes}$ENTER$TAB$TAB`footnote'$ENTER$TAB\end{TableNotes} ///
+$ENTER$TAB\begin{longtable}{l*{@M}{`colformat'}} /// {}  {c} {p{1cm}}
+$ENTER$TAB\caption{\`title'}\label{table:`label'} \\ ///
+$ENTER$TAB\toprule\endfirsthead ///
+$ENTER$TAB\midrule\endhead ///
+$ENTER$TAB\midrule\endfoot ///
+$ENTER$TAB\insertTableNotes\endlastfoot
+	local posthead `line_subgroup'\midrule
+	local prefoot \midrule
+	local postfoot \bottomrule ///
+$ENTER\end{longtable} ///
+$ENTER\end{ThreePartTable}
+
+	* Save PDF
+	if ("`pdf'"!="") {
+		qui findfile estdb-top.tex.ado
+		local fn_top = r(fn)
+		qui findfile estdb-bottom.tex.ado
+		local fn_bottom = r(fn)
+		local pdf_options top(`fn_top') bottom(`fn_bottom')
+		RunCMD `base_cmd' `tex_options' `pdf_options' `options'
+
+		* Compile
+		if ("`filename'"!="") {
+			CompilePDF, filename(`filename') verbose(`verbose')
+			CompilePDF, filename(`filename') verbose(`verbose') // longtable often requires a rerun
+			di as text `"(output written to {stata "shell `filename'.pdf":`filename'.pdf})"'
+			cap erase "`filename'.log"
+			cap erase "`filename'.aux"
+		}
+	}
+
+	* Save TEX (after .pdf so it overwrites the interim tex file there)
+	if ("`tex'"!="") {
+		RunCMD `base_cmd' `tex_options' `pdf_options' `options'
+	}
+
+end
+
+capture program drop CompilePDF
+program define CompilePDF
+	syntax, filename(string) verbose(integer)
+	
+	* Get folder
+	local tmp `filename'
+	local left
+	local dir
+	while strpos("`tmp'", "/")>0 | strpos("`tmp'", "\")>0 {
+		local dir `dir'`left' // if we run this at the end of the while, we will keep the /
+		gettoken left tmp : tmp, parse("/\")
+	}
+
+	tempfile stderr stdout
+	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
+	RunCMD shell xelatex "`filename'.tex" -halt-on-error -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
+	if (`verbose'>1) noi type "`stderr'"
+	if (`verbose'>1) di as text "{hline}"
+	if (`verbose'>1) noi type "`stdout'"
+	cap conf file "`filename'.pdf"
+	if _rc==601 {
+		di as error "(pdf could not be created - run with -verbose(2)- to see details)"
+		exit 601
+	}
 end
 
 
-cap pr drop ReportOld
-program define ReportOld
+
+capture program drop RunCMD
+program define RunCMD
+	if "$ESTDB_DEBUG"!="" {
+		di as text "[cmd] " as input `"`0'"'
+	}
+	`0'
+end
+
+capture program drop SetConstants
+program define SetConstants
+	global TAB "`=char(9)'"
+	global ENTER "`=char(13)'"
+end
+
+capture program drop CleanConstants
+program define CleanConstants
+	global TAB
+	global ENTER
+end
+
+****************************************************************************************************
+cap pr drop ExportOld
+program define ExportOld
 
 * [CONSTANTS] ALl in caps
 	local TAB "`=char(9)'"

@@ -77,8 +77,8 @@ lz                 lz
 // labeling options
 
 *legend             legend
-*prehead            [...]
-*posthead           [...]
+prehead            [...]
+posthead           [...]
 *prefoot            [...]
 *postfoot           [...]
 *hlinechar          [...]

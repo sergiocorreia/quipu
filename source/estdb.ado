@@ -1,11 +1,10 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB - Save and manage regr. estimates and report tables via -estout-
+// ESTDB - Save and manage regr. estimates and export tables via -estout-
 // -------------------------------------------------------------------------------------------------
 capture program drop estdb
 program define estdb
 	local subcmd_list1 associate setpath add build_index update_varlist view
-	local subcmd_list2 use tabulate list browse table report replay
-	* save index describe use browse list view table report
+	local subcmd_list2 use tabulate list browse table export replay
 
 	* Remove subcmd from 0
 	gettoken subcmd 0 : 0, parse(" ,:")
@@ -37,5 +36,5 @@ end
 	include "components/Tabulate.ado"
 	include "components/Replay.ado"
 	include "components/Table.ado"
-	include "components/Report.ado"
+	include "components/Export.ado"
 	include "../externals/stata-misc/assert_msg.ado"

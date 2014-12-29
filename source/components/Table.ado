@@ -9,6 +9,7 @@ syntax [anything(everything)] , [*]
 		estimates title: "`fn'"
 		estimates store estdb`i', nocopy
 	}
+	clear
 	estimates table _all , `options'
 	estimates drop estdb*
 end

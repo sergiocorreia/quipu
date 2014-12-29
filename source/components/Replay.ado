@@ -8,4 +8,5 @@ syntax [anything(everything)] , [*]
 		estdb view "`fn'"
 		di as text "{hline}"
 	}
+	clear
 end
