@@ -58,7 +58,7 @@ end
 	
 capture program drop ExportInner
 program define ExportInner
-syntax, [FILEname(string) HTML TEX PDF] [VERBOSE(integer 0)] ///
+syntax, [FILEname(string) HTML TEX PDF VIEW] [VERBOSE(integer 0)] ///
 		[colformat(string) title(string) label(string)] ///
 		[*]
 
@@ -104,6 +104,7 @@ $ENTER\end{ThreePartTable}
 			CompilePDF, filename(`filename') verbose(`verbose')
 			CompilePDF, filename(`filename') verbose(`verbose') // longtable often requires a rerun
 			di as text `"(output written to {stata "shell `filename'.pdf":`filename'.pdf})"'
+			if ("`view'"!="") RunCMD shell `filename'.pdf
 			cap erase "`filename'.log"
 			cap erase "`filename'.aux"
 		}

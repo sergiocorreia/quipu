@@ -29,7 +29,7 @@ estdb table if `cond' , b(%3.2f)
 
 estdb export if `cond', as(tex) replace
 estdb export using tmp/borrar if `cond', as(tex) replace
-estdb export using "tmp/bor rar" if `cond', replace as(pdf) verbose(2) title("Some Title") label("tex-label")
+estdb export using "tmp/bor rar" if `cond', replace as(pdf) verbose(2) title("Some Title") label("tex-label") view
 
 exit
 
