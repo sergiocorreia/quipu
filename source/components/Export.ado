@@ -71,11 +71,13 @@ syntax, [FILEname(string) HTML TEX PDF VIEW] [VERBOSE(integer 0)] ///
 	local tex_options longtable booktabs ///
 		prehead(\`prehead') posthead(\`posthead') prefoot(\`prefoot') postfoot(\`postfoot')
 
-	local footnote \item[\textdagger] Number of large retail stores opened in a district in quarters \(t\) or \(t+1\). // Placeholder
+	local footnote // \item[\textdagger] Number of large retail stores opened in a district in quarters \(t\) or \(t+1\). // Placeholder
 	local line_subgroup // What was this?
-	if ("`colformat'"=="") local colformat C{2cm}
 
 	* Set header/footer locals
+	if ("`colformat'"=="") local colformat C{2cm}
+	if (`"`footnote'"'!="") local insert_notes "\insertTableNotes"
+	
 	local prehead \begin{ThreePartTable} ///
 $ENTER$TAB\begin{TableNotes}$ENTER$TAB$TAB`footnote'$ENTER$TAB\end{TableNotes} ///
 $ENTER$TAB\begin{longtable}{l*{@M}{`colformat'}} /// {}  {c} {p{1cm}}
@@ -83,7 +85,7 @@ $ENTER$TAB\caption{\`title'}\label{table:`label'} \\ ///
 $ENTER$TAB\toprule\endfirsthead ///
 $ENTER$TAB\midrule\endhead ///
 $ENTER$TAB\midrule\endfoot ///
-$ENTER$TAB\insertTableNotes\endlastfoot
+$ENTER$TAB`insert_notes'\endlastfoot
 	local posthead `line_subgroup'\midrule
 	local prefoot \midrule
 	local postfoot \bottomrule ///
