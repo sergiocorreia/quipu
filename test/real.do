@@ -27,10 +27,12 @@ local cond cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfil
 *estdb replay if `cond'
 estdb table if `cond' , b(%3.2f)
 
-estdb export if `cond', as(tex) replace
-estdb export using tmp/borrar if `cond', as(tex) replace
-estdb export using "tmp/bor rar" if `cond', replace as(pdf) verbose(2) title("Some Title") label("tex-label") view
+*estdb export if `cond', as(tex) replace
+*estdb export using tmp/borrar if `cond', as(tex) replace
 
+tic
+estdb export using "tmp/bor rar" if `cond', replace as(pdf) latex_engine(xelatex) verbose(1) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
+toc, report
 exit
 
 estdb desc if ..

@@ -1,7 +1,8 @@
 \documentclass[12pt,letterpaper]{article} % ,draft %% Draft warns of boxes and hides figures
 
-% Preamble
-	%% Tables %%
+%% Table-Specific Preamble
+	
+	%% Imports
 	\usepackage{longtable} %% Adds -longtable- environment; similar to -tabular- but with multipage tables
 	\usepackage{booktabs} %% Improve table format: adds -toprule-, -midrule-, -bottomrule-
 	\usepackage{pdflscape} %% Improved -lscape-: Allows rotation of page contents, including when viewing the pdf
@@ -10,6 +11,8 @@
 	\usepackage{threeparttablex} %% Extends -threeparttable- to work with -longtable-. Creates the ThreePartTable, TableNotes and insertTableNotes commands/environments
 	\usepackage{dcolumn} %% Estout suggests this to improve alignment: http://repec.org/bocode/e/estout/esttab.html
 	\usepackage{array} %% The new column types below require arraybackslash
+	\usepackage{ragged2e} %% \raggedright used in table footnotes breaks hyphenation
+	\usepackage[labelfont=bf,font=bf]{caption} %% Provides -captionsetup- http://ctan.mackichan.com/macros/latex/contrib/caption/caption-eng.pdf
 
 	%% Allow text wrapping in multicolumn
 	%% See http://tex.stackexchange.com/questions/115668/wrapping-text-in-multicolumn
@@ -25,5 +28,55 @@
 	%% Used by -esttab- in the significance footnotes
 	\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
 
-% Body (just the table)
+%% Common Preamble (copy-pasted)
+	\usepackage{ifxetex}
+	\ifxetex
+	    % XeLaTeX
+	    %% http://nitens.org/taraborelli/TeXOpenType
+	    %% http://tex.stackexchange.com/questions/37561/getting-started-with-minion-pro-xelatex-and-mathspec
+	    % Text fonts
+	    \usepackage{fontspec}
+	    \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+	    \setmainfont[]{Minion Pro} %% Numbers=OldStyle -> bug, cannot copy-paste from PDF
+	    \setsansfont[Numbers={Monospaced,Lining}]{Myriad Pro}
+	    
+	    % Math fonts
+	    %\setmathsfont(Digits,Latin){Minion Pro}
+	    %\setmathsfont(Greek){Minion Pro}
+	    %\setmathrm{Minion Pro}
+
+	    % Section and title fonts
+	    \usepackage{sectsty,titling}
+	    \allsectionsfont{\sffamily}
+	    \newfontfamily\secfont{Myriad Pro}
+	    %\renewcommand{\maketitlehooka}{\secfont}
+
+	    % Language
+	    \usepackage{polyglossia}
+	    \setdefaultlanguage{english}
+
+	    % Misc
+	    \usepackage{url}
+	    \usepackage[svgnames]{xcolor}
+	    %%
+	    %% Unsure: xunicode
+	\else
+	    % default: pdfLaTeX
+	    \usepackage[english]{babel}
+	    \usepackage[T1]{fontenc}
+	    \usepackage{lmodern}
+	    \usepackage[adobe-utopia]{mathdesign}
+	    \usepackage[utf8]{inputenc}
+	    \usepackage[babel=true]{microtype}
+	\fi
+
+	% Shared
+	% use upquote if available, for straight quotes in verbatim environments
+	\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+	% use microtype if available
+	\IfFileExists{microtype.sty}{\usepackage{microtype}}{}
+
+	\usepackage{csquotes} %% Stata doesn't handle `quotes' well, this is a workaround
+
+%% Body (just the table)
 \begin{document}

@@ -58,18 +58,21 @@ end
 	
 capture program drop ExportInner
 program define ExportInner
-syntax, [FILEname(string) HTML TEX PDF VIEW] [VERBOSE(integer 0)] ///
+syntax, [FILEname(string) HTML TEX PDF] [VERBOSE(integer 0)] ///
+		[VIEW LATEX_engine(string)] /// PDF-Specific
 		[colformat(string) title(string) label(string)] ///
 		[*]
 
 	if (`verbose'>0) global ESTDB_DEBUG 1
 	if (`verbose'>1) local noisily noisily 
+	if ("`latex_engine'"=="") local latex_engine "xelatex"
+	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
 
 
 	local using = cond("`filename'"=="","", `"using "`filename'.tex""')
 	local base_cmd `"esttab estdb* `using' , `noisily'"'
 	local tex_options longtable booktabs ///
-		prehead(\`prehead') posthead(\`posthead') prefoot(\`prefoot') postfoot(\`postfoot')
+		prehead(\`prehead') posthead(\`posthead') prefoot(\`prefoot') postfoot(\`postfoot') substitute(\`substitute')
 
 	local footnote // \item[\textdagger] Number of large retail stores opened in a district in quarters \(t\) or \(t+1\). // Placeholder
 	local line_subgroup // What was this?
@@ -77,8 +80,17 @@ syntax, [FILEname(string) HTML TEX PDF VIEW] [VERBOSE(integer 0)] ///
 	* Set header/footer locals
 	if ("`colformat'"=="") local colformat C{2cm}
 	if (`"`footnote'"'!="") local insert_notes "\insertTableNotes"
-	
-	local prehead \begin{ThreePartTable} ///
+
+	* Substitute characters conflicting with latex
+	local specialchars _ % $ // Latex special characters (don't substitute \ so we can insert math with \( \) )
+	foreach char in `specialchars' {
+		local substitute `substitute' `char' $BACKSLASH`char'
+	}
+	local substitute `substitute' "\_cons " \_cons
+
+	local prehead \centering /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+$ENTER\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified} /// Different line for table number and table title
+$ENTER\begin{ThreePartTable} ///
 $ENTER$TAB\begin{TableNotes}$ENTER$TAB$TAB`footnote'$ENTER$TAB\end{TableNotes} ///
 $ENTER$TAB\begin{longtable}{l*{@M}{`colformat'}} /// {}  {c} {p{1cm}}
 $ENTER$TAB\caption{\`title'}\label{table:`label'} \\ ///
@@ -103,8 +115,11 @@ $ENTER\end{ThreePartTable}
 
 		* Compile
 		if ("`filename'"!="") {
-			CompilePDF, filename(`filename') verbose(`verbose')
-			CompilePDF, filename(`filename') verbose(`verbose') // longtable often requires a rerun
+			local args latex_engine(`latex_engine') filename(`filename') verbose(`verbose')
+			cap erase "`filename'.log"
+			cap erase "`filename'.aux"
+			CompilePDF, `args'
+			CompilePDF, `args' // longtable often requires a rerun
 			di as text `"(output written to {stata "shell `filename'.pdf":`filename'.pdf})"'
 			if ("`view'"!="") RunCMD shell `filename'.pdf
 			cap erase "`filename'.log"
@@ -121,7 +136,7 @@ end
 
 capture program drop CompilePDF
 program define CompilePDF
-	syntax, filename(string) verbose(integer)
+	syntax, filename(string) verbose(integer) latex_engine(string)
 	
 	* Get folder
 	local tmp `filename'
@@ -134,7 +149,8 @@ program define CompilePDF
 
 	tempfile stderr stdout
 	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
-	RunCMD shell xelatex "`filename'.tex" -halt-on-error -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
+	if (`verbose'<=1) local quiet "-quiet"
+	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
 	if (`verbose'>1) noi type "`stderr'"
 	if (`verbose'>1) di as text "{hline}"
 	if (`verbose'>1) noi type "`stdout'"
@@ -159,12 +175,14 @@ capture program drop SetConstants
 program define SetConstants
 	global TAB "`=char(9)'"
 	global ENTER "`=char(13)'"
+	global BACKSLASH "`=char(92)'"
 end
 
 capture program drop CleanConstants
 program define CleanConstants
 	global TAB
 	global ENTER
+	global BACKSLASH
 end
 
 ****************************************************************************************************
