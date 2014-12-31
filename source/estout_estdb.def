@@ -1,8 +1,7 @@
 * Default Styles for -estdb.ado-
 * Based on estout_mystyle.def, version 1.1.0  02jun2014  Ben Jann
 * Source: http://fmwww.bc.edu/repec/bocode/e/estout_mystyle.def
-* Note: only *, // and /// comments are allowed
-* Treat this like a regular do-file that will be included
+* Note: only comments allowed are: *, // and ///
 ****************************************************************************************************
 
 // parameter statistics options

@@ -1,3 +1,13 @@
+* TODO: Automate VCVNOTE
+* Check the estimates for e(vce)
+* e(vce) = unadjusted ols conventional ..  -> Don't say anything
+* e(vcetype) = Robust, e(vce)=cluster e(clustvar)
+* Robust standard errors in parentheses, clustered by individual.
+* e(vcetype) = Robust, e(vce)=robust
+
+* IDEA Include cluster vars in varlist.dta?
+* AND Also probably the tsset vars?!?
+
 capture program drop Export
 program define Export
 syntax [anything(everything)] , as(string) [*]
@@ -58,10 +68,16 @@ end
 	
 capture program drop ExportInner
 program define ExportInner
-syntax, [FILEname(string) HTML TEX PDF] [VERBOSE(integer 0)] ///
-		[VIEW LATEX_engine(string)] /// PDF-Specific
-		[colformat(string) title(string) label(string)] ///
-		[*]
+syntax, [FILEname(string) /// Path+name of output file; ideally w/out extension
+		HTML TEX PDF /// What are the desired output formats?
+		VERBOSE(integer 0) /// 0=No Logging, 2=Log Everything
+		VIEW /// Open the PDF viewer at the end?
+		LATEX_engine(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
+		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
+		VCVnote(string) /// Note regarding std. errors, in case default msg is not good enough
+		title(string) ///
+		label(string) /// Used in TeX labels
+		] [*]
 
 	if (`verbose'>0) global ESTDB_DEBUG 1
 	if (`verbose'>1) local noisily noisily 

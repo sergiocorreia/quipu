@@ -43,7 +43,6 @@ program define Build_Index
 	qui save "`fn'", replace
 	di as text `"index saved in {stata "use `fn'":`fn'}"'
 
-
 	* Deal with indicator variables by just using the root variable
 	* (else with many indicators it becomes a mess)
 	local newvarlist
@@ -84,7 +83,6 @@ program define Build_Index
 	Update_Varlist
 end
 
-
 capture program drop ProcessFolder
 program define ProcessFolder, rclass
 	syntax, path(string) keys(string)
@@ -97,10 +95,14 @@ program define ProcessFolder, rclass
 
 	local i 0
 	foreach filename of local files {
-		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos')
+		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos') // Fill row in index.dta
 		local indepvars : colnames e(b)
-		local depvar `e(depvar)'
 		
+		local extravars depvar clustvar ivar // e(absvars)? // xtreg uses ivar
+		foreach var of local extravars {
+			local `var' = cond("`e(`var')'"==".","", "`e(`var')'")
+		}
+
 		local vars `depvar' `indepvars'
 		local varlist : list varlist | vars
 		local ++i

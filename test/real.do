@@ -10,7 +10,7 @@ local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars
 
 
 
-set trace off
+
 *tic
 *estdb build, keys(`keys')
 *toc, report
@@ -31,7 +31,8 @@ estdb table if `cond' , b(%3.2f)
 *estdb export using tmp/borrar if `cond', as(tex) replace
 
 tic
-estdb export using "tmp/bor rar" if `cond', replace as(pdf) latex_engine(xelatex) verbose(1) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
+set trace off
+estdb export using "tmp/bor rar" if `cond', replace as(pdf) latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
 toc, report
 exit
 
