@@ -16,3 +16,12 @@ net install estdb
 ## Author
 
 [Sergio Correia](sergio.correia@gmail.com), Duke University
+
+## To Do List - Features
+
+- [ ] Labels
+    - [ ] RHS
+    - [ ] LHS
+- [ ] Notes
+    - [ ] Footnotes
+    - [ ] VCV
