@@ -3,7 +3,7 @@ program define Use, rclass
 	* Parse (including workaround that allows to use if <cond> with variables not in dataset)
 	estimates clear
 	syntax [anything(name=ifcond id="if condition" everything)]
-	if ("`ifcond'"!="") {
+	if (`"`ifcond'"'!="") {
 		gettoken ifword ifcond : ifcond
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"

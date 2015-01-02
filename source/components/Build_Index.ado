@@ -14,6 +14,7 @@ program define Build_Index
 	local i 1 // Cursor position
 	gen path = ""
 	gen filename = ""
+	gen depvar = "" // we need this to sort the table columns (in Export.ado)
 	* gen fullpath = "" // path + filename
 
 	* Root of path
@@ -114,7 +115,6 @@ program define ProcessFolder, rclass
 	return local varlist `varlist'
 end
 
-
 * Parse a single .ster file
 capture program drop ProcessFile
 program define ProcessFile
@@ -124,13 +124,14 @@ syntax, path(string) filename(string) keys(string) pos(integer)
 	qui replace filename = `"`filename'"' in `pos'
 	* qui replace fullpath = `"`fullpath'"' in `pos'
 	estimates use "`fullpath'"
-	local keys `keys' `e(keys)' time
+	local keys `keys' `e(keys)' time depvar vce clustvar
 	local keys : list uniq keys
+	* depvar is used to sort the table columns
+	* vce and clustvar are used to build the VCV footnotes
 
 	foreach key of local keys {
 		cap qui gen `key' = ""
 		qui replace `key' = "`e(`key')'" in `pos'
 	}
-
 	*assert fullpath!="" in 1/`pos'
 end

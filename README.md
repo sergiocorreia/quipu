@@ -25,3 +25,10 @@ net install estdb
 - [ ] Notes
     - [ ] Footnotes
     - [ ] VCV
+    - [ ] Significance
+- [ ] Group columns
+    - [ ] Main groups
+    - [ ] Subgroups
+    - [ ] asd
+- [ ] For later
+    - [ ] HTML: use rowspan and colspan attributes for the TH and TD

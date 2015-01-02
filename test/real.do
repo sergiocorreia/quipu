@@ -15,7 +15,6 @@ local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars
 *estdb build, keys(`keys')
 *toc, report
 *estdb update
-
 estdb use
 estdb use if cmd!="reghdfe"
 
@@ -23,6 +22,7 @@ estdb use if cmd!="reghdfe"
 *estdb br if cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
 
 local cond cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple" & N_hdfe==5 & ubigeos=="" & smpl==.
+local cond strpos(path, "individuals_debtors") & strpos(depvar, "will_") & model=="second" & subcmd=="ivreg2" & instruments=="entry_store_*"
 *estdb tab if `cond' , plot
 *estdb replay if `cond'
 estdb table if `cond' , b(%3.2f)
@@ -32,7 +32,8 @@ estdb table if `cond' , b(%3.2f)
 
 tic
 set trace off
-estdb export using "tmp/bor rar" if `cond', replace as(pdf) latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
+estdb export using "tmp/bor rar" if `cond', replace as(pdf) ///
+	latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
 toc, report
 exit
 
