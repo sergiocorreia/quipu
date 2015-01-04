@@ -8,13 +8,15 @@ cd ../source
 estdb setpath "D:\Dropbox\Projects\CreditCards\out\Regression"
 local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars clustvar dofmethod N_hdfe
 
-
+include components/metadata.mata
+asd
 
 
 *tic
 *estdb build, keys(`keys')
 *toc, report
-*estdb update
+estdb update
+asd
 estdb use
 estdb use if cmd!="reghdfe"
 
@@ -42,4 +44,26 @@ li br table
 report
  
 
+ 
+
+exit
+
+* Example of super-advanced syntax for estdb export
+
+estdb export using FILENAME if CONDITION , REPLACE as(pdf) latex(xelatex) verbose(2) title(SOMETITLE) label(SOMELABEL) view ///
+	footnotes(spam "Something something" eggs "Else else" ... potentially HUGE strings here) /// MEJOR: footnotedict(OBJECT_NAME)
+	notes(All the notes at the end (on top of VCE, etc)) ///
+	stats(..) statsformats(..) ///
+	group(..) grouplabel(..) groupnote(..) ///
+	regexrename(..) regexdrop(..) nonumbers cellformat(..) se(..) 
+	
+En markdown hacer
+ - prefix: estdb.doh
+ - notes: ..
+ 
+y en el dofile hacer include prefix
+
+
+	
+* The thing about footnotes is that I don't know which ones will I need ex ante..b etter to just give a dict or file!	
  
