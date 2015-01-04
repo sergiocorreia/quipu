@@ -82,6 +82,29 @@ program define Build_Index
 	di as text `"varlist template saved in {stata "use `fn'":`fn'}"'
 
 	Update_Varlist
+
+	* Save metadata.txt *IF* it doesn't exist already
+	local fn "`path'/metadata.txt"
+	cap conf file "`fn'"
+	if _rc==601 {
+		tempname fh
+		file open `fh' using `"`fn'"', write text
+		file write `fh' "* Key-Value Metadata for ESTDB" _n
+		file write `fh' "*  - You can set headers with #, ##, etc." _n
+		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
+		file write `fh' "somekey: Some value" _n _n
+		file write `fh' "anotherkey: Another value" _n _n
+		file write `fh' "#footnotes" _n _n
+		file write `fh' " - foobar: Lorem ipsum dolor sit amet." _n
+		file write `fh' " - example: this is an example" _n _n
+		file write `fh' "#groups" _n _n
+		file write `fh' "##mygroup" _n _n
+		file write `fh' " - spam: eggs" _n
+		file write `fh' " - foo: bar" _n
+		file write `fh' _n
+		file close `fh'
+		di as text `"metadata template saved in {stata "use `fn'":`fn'}"'
+	}
 end
 
 capture program drop ProcessFolder

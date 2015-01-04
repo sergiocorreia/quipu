@@ -1,10 +1,9 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB - Save and manage regr. estimates and report tables via -estout-
+// ESTDB - Save and manage regr. estimates and export tables via -estout-
 // -------------------------------------------------------------------------------------------------
 program define estdb
 	local subcmd_list1 associate setpath add build_index update_varlist view
-	local subcmd_list2 use tabulate list browse table report replay
-	* save index describe use browse list view table report
+	local subcmd_list2 use tabulate list browse table export replay
 
 	* Remove subcmd from 0
 	gettoken subcmd 0 : 0, parse(" ,:")
@@ -189,6 +188,7 @@ program define Build_Index
 	local i 1 // Cursor position
 	gen path = ""
 	gen filename = ""
+	gen depvar = "" // we need this to sort the table columns (in Export.ado)
 	* gen fullpath = "" // path + filename
 
 	* Root of path
@@ -217,7 +217,6 @@ program define Build_Index
 	local fn "`path'/index"
 	qui save "`fn'", replace
 	di as text `"index saved in {stata "use `fn'":`fn'}"'
-
 
 	* Deal with indicator variables by just using the root variable
 	* (else with many indicators it becomes a mess)
@@ -257,6 +256,29 @@ program define Build_Index
 	di as text `"varlist template saved in {stata "use `fn'":`fn'}"'
 
 	Update_Varlist
+
+	* Save metadata.txt *IF* it doesn't exist already
+	local fn "`path'/metadata.txt"
+	cap conf file "`fn'"
+	if _rc==601 {
+		tempname fh
+		file open `fh' using `"`fn'"', write text
+		file write `fh' "* Key-Value Metadata for ESTDB" _n
+		file write `fh' "*  - You can set headers with #, ##, etc." _n
+		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
+		file write `fh' "somekey: Some value" _n _n
+		file write `fh' "anotherkey: Another value" _n _n
+		file write `fh' "#footnotes" _n _n
+		file write `fh' " - foobar: Lorem ipsum dolor sit amet." _n
+		file write `fh' " - example: this is an example" _n _n
+		file write `fh' "#groups" _n _n
+		file write `fh' "##mygroup" _n _n
+		file write `fh' " - spam: eggs" _n
+		file write `fh' " - foo: bar" _n
+		file write `fh' _n
+		file close `fh'
+		di as text `"metadata template saved in {stata "use `fn'":`fn'}"'
+	}
 end
 program define ProcessFolder, rclass
 	syntax, path(string) keys(string)
@@ -269,10 +291,14 @@ program define ProcessFolder, rclass
 
 	local i 0
 	foreach filename of local files {
-		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos')
+		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos') // Fill row in index.dta
 		local indepvars : colnames e(b)
-		local depvar `e(depvar)'
 		
+		local extravars depvar clustvar ivar // e(absvars)? // xtreg uses ivar
+		foreach var of local extravars {
+			local `var' = cond("`e(`var')'"==".","", "`e(`var')'")
+		}
+
 		local vars `depvar' `indepvars'
 		local varlist : list varlist | vars
 		local ++i
@@ -284,7 +310,6 @@ program define ProcessFolder, rclass
 	return local varlist `varlist'
 end
 
-
 * Parse a single .ster file
 program define ProcessFile
 syntax, path(string) filename(string) keys(string) pos(integer)
@@ -293,14 +318,15 @@ syntax, path(string) filename(string) keys(string) pos(integer)
 	qui replace filename = `"`filename'"' in `pos'
 	* qui replace fullpath = `"`fullpath'"' in `pos'
 	estimates use "`fullpath'"
-	local keys `keys' `e(keys)' time
+	local keys `keys' `e(keys)' time depvar vce clustvar
 	local keys : list uniq keys
+	* depvar is used to sort the table columns
+	* vce and clustvar are used to build the VCV footnotes
 
 	foreach key of local keys {
 		cap qui gen `key' = ""
 		qui replace `key' = "`e(`key')'" in `pos'
 	}
-
 	*assert fullpath!="" in 1/`pos'
 end
 program define Update_Varlist
@@ -389,7 +415,7 @@ program define Use, rclass
 	* Parse (including workaround that allows to use if <cond> with variables not in dataset)
 	estimates clear
 	syntax [anything(name=ifcond id="if condition" everything)]
-	if ("`ifcond'"!="") {
+	if (`"`ifcond'"'!="") {
 		gettoken ifword ifcond : ifcond
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"
@@ -575,10 +601,11 @@ syntax [anything(everything)] , [*]
 		estdb view "`fn'"
 		di as text "{hline}"
 	}
+	clear
 end
 program define Table
 syntax [anything(everything)] , [*]
-	estimates drop estdb*
+	cap estimates drop estdb*
 	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
@@ -586,353 +613,336 @@ syntax [anything(everything)] , [*]
 		estimates title: "`fn'"
 		estimates store estdb`i', nocopy
 	}
+	clear
 	estimates table _all , `options'
 	estimates drop estdb*
 end
-program define Report
-
-* [CONSTANTS] ALl in caps
-	local TAB "`=char(9)'"
-	local ENTER "`=char(13)'"
-	local STARS starlevels(* .05 ** .01) // * .10 ** .05 *** .01
-	local CELLFORMAT b(a2) se(a2) // b(a3) ??
-	local STAT_LAYOUT "\multicolumn{1}{r}{@}"
-	local LAYOUT // nogaps nolines compress
-	local LABELS coeflabels(_cons Constant) title(\`title') addnotes(\`notes')
-	local FORMAT booktabs longtable // smcl fixed tab rtf html tex booktabs
-	*local OUTPUT // replace noi type append (forces print)
-	*local ORDER order(rel_newcc)
-	*local WIDTH // varwidth(20)
-	*local RENAME rename(rel_newcc "New Cards (banks w/store)")
-	local ADVANCED `ORDER' `WIDTH' `RENAME'
-	local NOTE_STAR Levels of significance: ** p\(<0.05\), ** p\(<0.01\). // *** p<0.01, ** p<0.05, * p<0.1.
-	local VCVNOTE Robust standard errors in parentheses, clustered by individual.
-	** local APPENDREPLACE replace
-
-	local MGROUPS_EXTRA prefix(\multicolumn{@span}{c}{) suffix(}) span erepeat(\cmidrule(lr){@span})
-	local COLFORMAT C{2cm} // Will be overwritten if passed as argument.
-	// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
-
-	local PREHEAD \begin{ThreePartTable} ///
-`ENTER'`TAB'\begin{TableNotes}`ENTER'`TAB'`TAB'\`footnote'`ENTER'`TAB'\end{TableNotes} ///
-`ENTER'`TAB'\begin{longtable}{l*{@M}{\`colformat'}} /// {}  {c} {p{1cm}}
-`ENTER'`TAB'\caption{\`title'}\label{table:\`label'} \\ ///
-`ENTER'`TAB'\toprule\endfirsthead ///
-`ENTER'`TAB'\midrule\endhead ///
-`ENTER'`TAB'\midrule\endfoot ///
-`ENTER'`TAB'\insertTableNotes\endlastfoot
-	local POSTHEAD \`line_subgroup'\midrule
-	local PREFOOT \midrule
-	local POSTFOOT \bottomrule ///
-`ENTER'\end{longtable} ///
-`ENTER'\end{ThreePartTable}
-
-* [Symbols mess]
-mata: cur_symbol = 1
-mata: allsymbols = tokens("\textdagger \textsection \textparagraph \textdaggerdbl 1 2 3 4 5 6 7 8 9")
-mata: symboldict = asarray_create()
-mata: asarray_notfound(symboldict,"")
-
-* [PARSING]
-	syntax, index(string) /// Filename with the .sest index
-		labels(string) [ /// Filename with the varname/label/orders
-		tex(string) /// If not set, won't save tex
-		vcvnote(string) /// If set, will override the one above
-		noDISP /// If not set, won't display
-		cond(string asis) sort(string) ///
-		title(string) ///
-		group(string) grouplabel(string asis) groupnote(string asis) ///
-		header(string) headerlabel(string asis) headernote(string asis) ///
-		hideheader ///
-		subgroup(string) subgrouplabel(string asis) /// subgroupnote(string) ///
-		label(string) ///
-		note(string) /// Ugly hack, need to use @ instead of ` for the local expansion
-		regexrename(string asis) ///
-		rename(string asis) ///
-		regexdrop(string asis) ///
-		drop(string asis) ///
-		notedict(string) /// Name of the Mata -asarray- with the name -> description
-		colformat(string) ///
-		cellformat(string) ///
-		DESCribe /// Will describe and exit.. useful when building the cond() part
-		STATs(string) STATFormats(string) STATLabels(string asis) ///
-		NOIsily] [*]
-	// We still depend on the FOOT_... globals , else its too much hassle
-
-	if ("`colformat'"=="") local colformat `COLFORMAT'
-	if ("`vcvnote'"=="") local vcvnote `VCVNOTE'
-	if ("`cellformat'"=="") local cellformat `CELLFORMAT'
+program define Export
+syntax [anything(everything)] , as(string) [*]
 	
-* [DESCRIBE]
-	if ("`describe'"!="") {
-		di as result _n `"cond: <`cond'>"'
-		Describe, index("`index'") cond(`cond')
-		exit
-	}
+	* Extract the optional -using- part from the -if-
+	while (`"`anything'"'!="") {
+		gettoken tmp anything : anything
+		if ("`tmp'"=="using") {
+			gettoken filename anything : anything
 
-* [USE]
-	assert ("`group'"!="") + ("`subgroup'"!="") < 2 // Can't have both!
-	preserve
-		Use, index("`index'") sortmerge("`labels'") cond(`cond') ///
-			group(`group') grouplabel(`grouplabel') ///
-			header(`header') headerlabel(`headerlabel') ///
-			sort(`sort' sort_depvar depvar `subgroup') `echo'
-	restore
-	if ("`subgroup'"!="") local group depvar
-	if ("`noisily'"!="") local echo echo
-	
-	assert r(num_models) > 0
-	local vars `r(varlist)'
-	local depvars `r(depvarlist)'
-	local indepvars `r(indepvarlist)'
-	local models `"`r(models)'"'
-	local num_vars `r(num_vars)'
-	local num_depvars `r(num_depvars)'
-	local num_indepvars `r(num_indepvars)'
-	local num_models `r(num_models)'
-	
-	local symbolcell
-
-* [LHS Labels and groups]
-	drop _all // clear destroys the labels
-	qui set obs `num_models' // Better to use model as there may be be less indepvars than models if repeated
-	qui gen varname = ""
-	if ("`group'`header'`subgroup'"!="") qui gen __filename__ = ""
-
-	forv i=1/`c(N)' {
-		gettoken depvar depvars : depvars
-		qui replace varname = "`depvar'" in `i'
-		gettoken model models : models
-		if ("`group'`header'`subgroup'"!="") qui replace __filename__ = `"`model'"' in `i'
-	}
-	gen index = _n
-	qui merge m:1 varname using "`labels'", assert(match using) keep(match) nogen nolabel nonotes
-	if ("`group'`header'`subgroup'"!="") qui merge m:1 __filename__ using "`index'", assert(match using) keep(match) keepusing(`group' `header' `subgroup') nogen nolabel nonotes
-
-	sort index
-	drop index
-
-	local n_subgroup 1
-	forv i=1/`c(N)' {
-		local key = varname[`i']
-		local value = varlabel[`i']
-		local foot = footnote[`i']
-
-		if ("`subgroup'"!="") {
-			local subgroupvalue = `subgroup'[`i']
-			if ("`subgrouplabel'"!="") {
-				local posof : list posof "`subgroupvalue'" in subgrouplabel
-				if (`posof'!=0) local subgroupvalue : word `=`posof'+1' of `subgrouplabel'
-				// local subgroupvalue : label `subgrouplabel' `subgroupvalue'
+			* Remove extension (which will be ignored!)
+			foreach ext in tex htm html pdf {
+				local filename : subinstr local filename ".`ext'" ""
 			}
-		}
 
-		if ("`value'"=="") local value `key'
+			* Remove quotes (will include by default)
+			local filename `filename'
 
-		local symbolcell
-		GetNote, key(`foot') dict(`notedict')
-		if ("`r(note)'"!="") local symbolnotes "`symbolnotes'\item[`r(symbol)'] `r(note)' `ENTER'`TAB'`TAB'"
-		if ("`r(symbol)'"!="") local symbolcell "\tnote{`r(symbol)'}"
-
-		if ("`group'"!="") {
-			local _ = `group'[`i']
-			if ("`_'"!=`group'[`=`i'-1']) {
-				local mpattern `mpattern' 1
-				* Give designed name (from local), else see if group==depvar and use that label, else keep the raw name
-				
-				local mgroup
-				local posof : list posof "`_'" in grouplabel
-				if (`posof'!=0) local mgroup : word `=`posof'+1' of `grouplabel'
-
-				local mfoot
-				local posof : list posof "`_'" in groupnote
-				if (`posof'!=0) local mfoot : word `=`posof'+1' of `groupnote'
-
-				local msymbolcell
-				GetNote, key(`mfoot') dict(`notedict')
-				if ("`r(note)'"!="") local symbolnotes "`symbolnotes'\item[`r(symbol)'] `r(note)' `ENTER'`TAB'`TAB'"
-				if ("`r(symbol)'"!="") local msymbolcell "\tnote{`r(symbol)'}"
-
-				if ("`mgroup'"=="" & "`group'"=="depvar") {
-					local mgroup `value'
-				}
-				else if ("`mgroup'"=="") {
-					local mgroup `_'
-				}
-				local mgroups `"`mgroups' "`mgroup'`msymbolcell'" "'
+			* Windows shell can't handle "/" folder separators:
+			if c(os)=="Windows" {
+				local filename = subinstr(`"`filename'"', "/", "\", .)
 			}
-			else {
-				local mpattern `mpattern' 0
-			}
-		}
-
-		* ALmost copy-paste from -groups-
-		if ("`header'"!="") {
-			local _ = `header'[`i']
-			local hgroup
-			local posof : list posof "`_'" in headerlabel
-			if (`posof'!=0) local hgroup : word `=`posof'+1' of `headerlabel'
-
-			local hfoot
-			local posof : list posof "`_'" in headernote
-			if (`posof'!=0) local hfoot : word `=`posof'+1' of `headernote'
-
-			local symbolcell
-			GetNote, key(`hfoot') dict(`notedict')
-			if ("`r(note)'"!="") local symbolnotes "`symbolnotes'\item[`r(symbol)'] `r(note)' `ENTER'`TAB'`TAB'"
-			if ("`r(symbol)'"!="") local symbolcell "\tnote{`r(symbol)'}"
-			if ("`hgroup'"!="") local value `hgroup'
-		}
-
-		if ("`subgroup'"!="") {
-			local depvarlabels `"`depvarlabels' "`subgroupvalue'`symbolcell'""'
+			
+			local ifcond `ifcond' `anything'
+			continue, break
 		}
 		else {
-			local depvarlabels `"`depvarlabels' "`value'`symbolcell'""'
+			local ifcond `ifcond' `tmp'
+
 		}
 	}
 
-	local mlabels `"mlabels(`depvarlabels', depvars)"'
-	if ("`hideheader'"!="") local mlabels mlabels(none)
+	* Check the as() strings and convert as(html) into -> html(filename.html)
+	foreach format in `as' {
+		assert_msg inlist("`format'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
+	}
 
-* [Start RHS work]
-	drop _all
-	qui set obs `num_indepvars'
-	qui gen varname =""
+	* Set constants, globals, etc. (do just after parsing)
+	SetConstants
+
+	* Load Estimates (and sort them, save $indepvars)
+	cap estimates drop estdb*
+	qui Use `ifcond'
+	LoadEstimates
+
+	* Export table
+	ExportInner, filename(`filename') `as' `options'
+	
+	* Cleanup
+	estimates drop estdb*
+	CleanConstants
+	global ESTDB_DEBUG
+end
+program define LoadEstimates
+	* Load estimates in the order set by varlist.dta (wrt depvar)
+	rename depvar varname
+	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) keepusing(sort_depvar) nogen nolabel nonotes
+	sort sort_depvar
+	drop sort_depvar varname
+	assert "${indepvars}"==""
+
 	forv i=1/`c(N)' {
+		local fn = path[`i'] +"/"+filename[`i']
+		estimates use "`fn'"
+		estimates title: "`fn'"
+
+		local indepvars : colnames e(b)
+		local indepvarlist : list indepvarlist | indepvars
+
+		estimates store estdb`i', nocopy
+	}
+
+	global indepvars `indepvarlist'
+	clear
+end
+program define ExportInner
+syntax, [FILEname(string) /// Path+name of output file; ideally w/out extension
+		HTML TEX PDF /// What are the desired output formats?
+		VERBOSE(integer 0) /// 0=No Logging, 2=Log Everything
+		VIEW /// Open the PDF viewer at the end?
+		LATEX_engine(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
+		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
+		VCVnote(string) /// Note regarding std. errors, in case default msg is not good enough
+		title(string) ///
+		label(string) /// Used in TeX labels
+		] [*]
+
+	if (`verbose'>0) global ESTDB_DEBUG 1
+	if (`verbose'>1) local noisily noisily 
+	if ("`latex_engine'"=="") local latex_engine "xelatex"
+	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
+
+	* Load metadata
+	if (`verbose'>1) di as text "(loading metadata)"
+	mata: read_metadata()
+
+	local using = cond("`filename'"=="","", `"using "`filename'.tex""')
+	local base_cmd esttab estdb* `using' , `noisily' ///
+		varlabels(\`rhslabels') order(`rhsorder')
+	local tex_options longtable booktabs ///
+		prehead(\`prehead') posthead(\`posthead') prefoot(\`prefoot') postfoot(\`postfoot') substitute(\`substitute')
+
+	local footnote // \item[\textdagger] Number of large retail stores opened in a district in quarters \(t\) or \(t+1\). // Placeholder
+	local line_subgroup // What was this?
+
+	* Set header/footer locals
+	if ("`colformat'"=="") local colformat C{2cm}
+	if (`"`footnote'"'!="") local insert_notes "\insertTableNotes"
+
+	* Substitute characters conflicting with latex
+	local specialchars _ % $ // Latex special characters (don't substitute \ so we can insert math with \( \) )
+	foreach char in `specialchars' {
+		local substitute `substitute' `char' $BACKSLASH`char'
+	}
+	local substitute `substitute' "\_cons " \_cons
+
+	local prehead \centering /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+$ENTER\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified} /// Different line for table number and table title
+$ENTER\begin{ThreePartTable} ///
+$ENTER$TAB\begin{TableNotes}$ENTER$TAB$TAB`footnote'$ENTER$TAB\end{TableNotes} ///
+$ENTER$TAB\begin{longtable}{l*{@M}{`colformat'}} /// {}  {c} {p{1cm}}
+$ENTER$TAB\caption{\`title'}\label{table:`label'} \\ ///
+$ENTER$TAB\toprule\endfirsthead ///
+$ENTER$TAB\midrule\endhead ///
+$ENTER$TAB\midrule\endfoot ///
+$ENTER$TAB`insert_notes'\endlastfoot
+	local posthead `line_subgroup'\midrule
+	local prefoot \midrule
+	local postfoot \bottomrule ///
+$ENTER\end{longtable} ///
+$ENTER\end{ThreePartTable}
+
+	* Testing..
+	GetMetadata mylocal=debug
+	GetMetadata another=footnotes.growth
+	di as text "mylocal=<`mylocal'>"
+	di as text "another=<`another'>"
+
+	GetRHSVarlabels // Options saved in locals: rhslabels->varlabels rhsorder->order +- +-
+
+	* Save PDF
+	if ("`pdf'"!="") {
+		qui findfile estdb-top.tex.ado
+		local fn_top = r(fn)
+		qui findfile estdb-bottom.tex.ado
+		local fn_bottom = r(fn)
+		local pdf_options top(`fn_top') bottom(`fn_bottom')
+		RunCMD `base_cmd' `tex_options' `pdf_options' `options'
+
+		* Compile
+		if ("`filename'"!="") {
+			local args latex_engine(`latex_engine') filename(`filename') verbose(`verbose')
+			cap erase "`filename'.log"
+			cap erase "`filename'.aux"
+			CompilePDF, `args'
+			CompilePDF, `args' // longtable often requires a rerun
+			di as text `"(output written to {stata "shell `filename'.pdf":`filename'.pdf})"'
+			if ("`view'"!="") RunCMD shell `filename'.pdf
+			cap erase "`filename'.log"
+			cap erase "`filename'.aux"
+		}
+	}
+
+	* Save TEX (after .pdf so it overwrites the interim tex file there)
+	if ("`tex'"!="") {
+		RunCMD `base_cmd' `tex_options' `pdf_options' `options'
+	}
+end
+program define GetRHSVarlabels
+	local indepvars $indepvars
+	local N : word count `indepvars'
+	qui set obs `N'
+	qui gen varname =""
+
+	* Fill -varname- and merge to get variable labels
+	forv i=1/`N' {
 		gettoken indepvar indepvars : indepvars
 		qui replace varname = "`indepvar'" in `i'
 	}
-	qui merge 1:1 varname using "`labels'", assert(match using) keep(match) nogen nolabel nonotes
+	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) keepusing(varlabel footnote sort_indepvar) nogen nolabel nonotes
 
-* [Drop RHS vars]
-	gen byte dropit = 0
-	while (`"`regexdrop'"'!="") {
-		gettoken s1 regexdrop : regexdrop
-		qui replace dropit = 1 if regexm(varname, "`s1'")
-	}
-	while (`"`drop'"'!="") {
-		gettoken s1 drop : drop
-		qui replace dropit = 1 if varname=="`s1'"
-	}
-	qui levelsof varname if dropit, local(droplist) clean
-	qui drop if dropit
-	drop dropit
+	* List of RHS variables to drop/hide
+	* ...
 
-* [Rename RHS when using groups] OR ALWAYS? BUGBUG
-*if ("`group'"!="") {
-if (`"`regexrename'`rename'"'!="") {
-	qui gen original = varname
-	while (`"`regexrename'"'!="") {
-		gettoken s1 regexrename : regexrename
-		gettoken s2 regexrename : regexrename
-		qui replace varname = regexr(varname, "`s1'", "`s2'")
-	}
+	* Groups +-+-
+	* ...
 
-	while (`"`rename'"'!="") { // Can't use estout for this because it messes up the varlabels
-		gettoken s1 rename : rename
-		gettoken s2 rename : rename
-		qui replace varname = "`s2'" if varname=="`s1'"
-	}
-	gen byte renamed = original!=varname
-	forv i=1/`c(N)' {
-		local renamed = renamed[`i']
-		assert inlist(`renamed',0,1)
-		if (`renamed') {
-			local renamelist `renamelist' `=original[`i']' `=varname[`i']'
-		}
-	}
-	qui bys varname: replace footnote = "" if _N>1
-	qui bys varname (renamed sort_depvar): drop if _n>1
-	// If changed to an existing var, keep that (to get its varlabel)
-	// Else, use the specified sort order
-	drop original renamed
-}
-
-* [Add varlabels and footnotes to RHS]
-	sort sort_indepvar // So dagger is for the visually first footnote, and to get the sort order
-	forv i=1/`c(N)' {
+	* Set varlabel option
+	sort sort_indepvar // orders RHS, and ensures footnote daggers will be in order
+	forv i=1/`N' {
 		local key = varname[`i']
 		local value = varlabel[`i']
 		local foot = footnote[`i']
 		local order `order' `key'
 
-		local symbolcell
-		GetNote, key(`foot') dict(`notedict')
-		if ("`r(note)'"!="") local symbolnotes "`symbolnotes'\item[`r(symbol)'] `r(note)' `ENTER'`TAB'`TAB'"
-		if ("`r(symbol)'"!="") local symbolcell "\tnote{`r(symbol)'}"
+		*local symbolcell
+		*GetNote, key(`foot') dict(`notedict')
+		*if ("`r(note)'"!="") local symbolnotes "`symbolnotes'\item[`r(symbol)'] `r(note)' `ENTER'`TAB'`TAB'"
+		*if ("`r(symbol)'"!="") local symbolcell "\tnote{`r(symbol)'}"
 		if ("`value'"!="") local varlabels `"`varlabels' `key' "`value'`symbolcell'" "'
 	}
 
-	local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
+	drop _all // BUGBUG: clear?
+	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
+	local varlabels `varlabels' _cons Constant , end("" "") nolast
 
-* [Stats Layout]
-	local numstats : word count `stats'
-	forv i=1/`numstats' {
-		local statlayout `statlayout' `STAT_LAYOUT'
-	}
-	local STATS     `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
-	local ALT_STATS `"stats(`stats', fmt(`statformats') labels(`statlabels') )"'
-
-
-* [Wrap Up]
-	if ("`symbolnotes'"=="") local symbolnotes "\item \relax `ENTER'`TAB'`TAB'"
-	
-	if ("`note'"!="") {
-		local note : subinstr local note `"@"' "`=char(96)'" , all // UGLY HACK
-		local note `note'
-	}
-	local note \Note{`vcvnote' `NOTE_STAR' `note'}
-
-	local footnote `symbolnotes'`note'
-	local opt `cellformat' `STARS' `LAYOUT' `LABELS' `OUTPUT' `ADVANCED' rename(`renamelist') drop(`droplist') // order(`order')
-	if ("`disp'"!="nodisp") {
-		if ("`mgroups'"!="") local full_mgroups `"mgroups(`mgroups', pattern(`mpattern'))"'
-		local cmd esttab _all , varwidth(20) `ALT_STATS' `noisily' `mlabels' ///
-			`full_mgroups' smcl `opt' modelwidth(30) `options' // BUGBUG
-		`cmd'
-		di as text _n "[FOOTNOTE] `footnote'"
-	}
-	*** local html_cmd  esttab _all using "$output_path/$fn.html" , `opt' $APPENDREPLACE $ALT_STATS
-	if ("`tex'"!="") {
-		if ("`mgroups'"!="") local full_mgroups `"mgroups(`mgroups', pattern(`mpattern') `MGROUPS_EXTRA')"'
-		local cmd esttab _all using "`tex'", `opt' replace `FORMAT' `STATS' ///
-			prehead(`PREHEAD') posthead(`POSTHEAD') prefoot(`PREEFOOT') postfoot(`POSTFOOT') ///
-			`varlabels' `mlabels' `full_mgroups' `options'
-		if ("`noisily'"!="") di as input _n `"`cmd'"' _n
-		`cmd'
-	}
-	// estimates clear
-	mata: mata drop cur_symbol allsymbols symboldict
+	c_local rhslabels `varlabels'
+	c_local rhsorder `order'
 end
-program define GetNote, rclass
-	syntax, [key(string) dict(string)] // dict() has the asarray() for key -> note
-	return clear
-	if ("`dict'"=="" | "`key'"=="") exit
-
-	mata: st_local("symbol", asarray(symboldict, "`key'"))
-	if ("`symbol'"!="") {
-		return local note ""
-		return local symbol "`symbol'"
-		* We don't need to return the note; if the symbol already exists, it has been added
-		exit
-	}
-
-	* At this point, the key has no symbol yet
-	mata: st_local("symbol", allsymbols[cur_symbol++])
-	cap mata: st_local("note", asarray(`dict', "`key'"))
-	if _rc {
-		di as error `"KEY <`key'> not found on mata asarray <`dict'> and asarray_notfound() was not set"'
-		error 4321
-
-	}
-	mata: asarray(symboldict, "`key'", "`symbol'")
-	if ("`note'"=="") di as error "Warning: note for `key' is empty, footnote not used"
+program define CompilePDF
+	syntax, filename(string) verbose(integer) latex_engine(string)
 	
-	return local note "`note'"
-	return local symbol "`symbol'"
+	* Get folder
+	local tmp `filename'
+	local left
+	local dir
+	while strpos("`tmp'", "/")>0 | strpos("`tmp'", "\")>0 {
+		local dir `dir'`left' // if we run this at the end of the while, we will keep the /
+		gettoken left tmp : tmp, parse("/\")
+	}
+
+	tempfile stderr stdout
+	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
+	if (`verbose'<=1) local quiet "-quiet"
+	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
+	if (`verbose'>1) noi type "`stderr'"
+	if (`verbose'>1) di as text "{hline}"
+	if (`verbose'>1) noi type "`stdout'"
+	cap conf file "`filename'.pdf"
+	if _rc==601 {
+		di as error "(pdf could not be created - run with -verbose(2)- to see details)"
+		exit 601
+	}
+end
+program define RunCMD
+	if "$ESTDB_DEBUG"!="" {
+		di as text "[cmd] " as input `"`0'"'
+	}
+	`0'
+end
+program define SetConstants
+	global TAB "`=char(9)'"
+	global ENTER "`=char(13)'"
+	global BACKSLASH "`=char(92)'"
+	global indepvars // Ensure it's empty
+end
+program define CleanConstants
+	* TODO: Ensure this function always get called when -Export- fails (like -reghdfe- does)
+	global TAB
+	global ENTER
+	global BACKSLASH
+	global indepvars
+end
+program define GetMetadata
+* Syntax: GetMetadata MyLocal=key -> Will store metadata[key] in the local MyLocal
+	local lclkey `0'
+	if ("`lclkey'"=="") error 100
+	gettoken lcl lclkey: lclkey , parse("=")
+	gettoken equalsign key: lclkey , parse("=")
+	local key `key' // Remove blanks
+	assert_msg "`key'"!="", msg("Key is empty! args=<`0'>")
+	mata: st_local("key_exists", strofreal(asarray_contains(metadata, "`key'")))
+	assert inlist(`key_exists', 0, 1)
+	assert_msg `key_exists'==1, msg("metadata[`key'] does not exist")
+	mata: st_local("value", asarray(metadata, "`key'"))
+	c_local `lcl' = "`value'"
 end
 
+	
+// -------------------------------------------------------------------------------------------------
+// Import metadata.txt (kinda-markdown-syntax with metadata for footnotes, etc.)
+// -------------------------------------------------------------------------------------------------
+mata:
+mata set matastrict off
+
+void read_metadata()
+{
+	external metadata
+	fn = st_global("estdb_path") + "/" + "metadata.txt"
+	fh = fopen(fn, "r")
+	metadata = asarray_create() // container dict
+	headers = J(1, 5, "")
+	level = 0
+	i = 0
+	is_verbose = st_local("verbose")!="0"
+
+	while ( ( line = strtrim(fget(fh)) ) != J(0,0,"") ) {
+		//  Ignore comments
+		if ( strpos(line, "*")==1 | strlen(line)==0 ) continue
+
+		// Remove leading dash
+		if (substr(line, 1, 1)=="-") {
+			line = strtrim(substr(line, 2, .))
+		}
+
+		// Check that the line contents are not empty
+		assert(strlen(subinstr(line, "#", "", .)))
+		// metadata[header1.header2...key] = value
+		if ( strpos(line, "#")!=1 ) {
+			_ = regexm(line, "^[ \t]?([a-zA-Z0-9_]+)[ \t]?:(.+)$")
+			if (_==0) {
+				printf("{txt}key:value line could not be parsed <" + line + ">")
+			}
+			assert (_==1)
+			assert(strlen(strtrim(regexs(1)))>0)
+			assert(strlen(strtrim(regexs(2)))>0)
+			headers[level+1] = regexs(1)
+			value = strtrim(regexs(2))
+			key = invtokens(headers[., (1..level+1)], ".")
+			assert(asarray_contains(metadata, key)==0) // assert key not in metadata
+			++i
+			asarray(metadata, key, value) // metadata[key] = value
+			// printf("metadata.%s=<%s>\n", key, value)
+		}
+		// Get header and level
+		else {
+			_ = regexm(line, "^(#+)(.+)")
+			level = strlen(regexs(1))
+			headers[level] = strtrim(regexs(2))
+		}
+	}
+	fclose(fh)
+	if (is_verbose) {
+		printf("{txt}(%s key-value pairs added to estdb metadata)\n", strofreal(i))
+	}
+}
+end
 
 	
 // -------------------------------------------------------------

@@ -1,4 +1,3 @@
-*duplicate keys prohibidas!
 // -------------------------------------------------------------------------------------------------
 // Import metadata.txt (kinda-markdown-syntax with metadata for footnotes, etc.)
 // -------------------------------------------------------------------------------------------------
@@ -14,6 +13,7 @@ void read_metadata()
 	headers = J(1, 5, "")
 	level = 0
 	i = 0
+	is_verbose = st_local("verbose")!="0"
 
 	while ( ( line = strtrim(fget(fh)) ) != J(0,0,"") ) {
 		//  Ignore comments
@@ -51,16 +51,8 @@ void read_metadata()
 		}
 	}
 	fclose(fh)
-	printf("{txt}(%s key-value pairs added to estdb metadata)", strofreal(i))
+	if (is_verbose) {
+		printf("{txt}(%s key-value pairs added to estdb metadata)\n", strofreal(i))
+	}
 }
-
 end
-
-
-mata: read_metadata()
-mata:
-	mata desc
-	asarray_contains(metadata, "footnotes.growth")
-	asarray(metadata, "footnotes.growth")
-end
-exit

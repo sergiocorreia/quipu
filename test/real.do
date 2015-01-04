@@ -8,15 +8,11 @@ cd ../source
 estdb setpath "D:\Dropbox\Projects\CreditCards\out\Regression"
 local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars clustvar dofmethod N_hdfe
 
-include components/metadata.mata
-asd
-
-
-*tic
-*estdb build, keys(`keys')
-*toc, report
+tic
+estdb build, keys(`keys')
+toc, report
 estdb update
-asd
+
 estdb use
 estdb use if cmd!="reghdfe"
 

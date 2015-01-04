@@ -8,7 +8,7 @@ d
 d estdb: Saves, manage and export estimation results (requires estout)
 d
 d
-d Distribution-Date: 20141228
+d Distribution-Date: 20150104
 d
 f estdb.ado
 f estdb.sthlp

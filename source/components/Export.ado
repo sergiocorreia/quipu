@@ -94,6 +94,9 @@ syntax, [FILEname(string) /// Path+name of output file; ideally w/out extension
 	if ("`latex_engine'"=="") local latex_engine "xelatex"
 	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
 
+	* Load metadata
+	if (`verbose'>1) di as text "(loading metadata)"
+	mata: read_metadata()
 
 	local using = cond("`filename'"=="","", `"using "`filename'.tex""')
 	local base_cmd esttab estdb* `using' , `noisily' ///
@@ -130,6 +133,12 @@ $ENTER$TAB`insert_notes'\endlastfoot
 	local postfoot \bottomrule ///
 $ENTER\end{longtable} ///
 $ENTER\end{ThreePartTable}
+
+	* Testing..
+	GetMetadata mylocal=debug
+	GetMetadata another=footnotes.growth
+	di as text "mylocal=<`mylocal'>"
+	di as text "another=<`another'>"
 
 	GetRHSVarlabels // Options saved in locals: rhslabels->varlabels rhsorder->order +- +-
 
@@ -255,4 +264,20 @@ program define CleanConstants
 	global ENTER
 	global BACKSLASH
 	global indepvars
+end
+
+capture program drop GetMetadata
+program define GetMetadata
+* Syntax: GetMetadata MyLocal=key -> Will store metadata[key] in the local MyLocal
+	local lclkey `0'
+	if ("`lclkey'"=="") error 100
+	gettoken lcl lclkey: lclkey , parse("=")
+	gettoken equalsign key: lclkey , parse("=")
+	local key `key' // Remove blanks
+	assert_msg "`key'"!="", msg("Key is empty! args=<`0'>")
+	mata: st_local("key_exists", strofreal(asarray_contains(metadata, "`key'")))
+	assert inlist(`key_exists', 0, 1)
+	assert_msg `key_exists'==1, msg("metadata[`key'] does not exist")
+	mata: st_local("value", asarray(metadata, "`key'"))
+	c_local `lcl' = "`value'"
 end

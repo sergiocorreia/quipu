@@ -37,4 +37,5 @@ end
 	include "components/Replay.ado"
 	include "components/Table.ado"
 	include "components/Export.ado"
+	include "components/metadata.mata"
 	include "../externals/stata-misc/assert_msg.ado"
