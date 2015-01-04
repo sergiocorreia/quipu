@@ -1,3 +1,4 @@
+*duplicate keys prohibidas!
 // -------------------------------------------------------------------------------------------------
 // Import metadata.txt (kinda-markdown-syntax with metadata for footnotes, etc.)
 // -------------------------------------------------------------------------------------------------
@@ -10,27 +11,47 @@ void read_metadata()
 	fn = st_global("estdb_path") + "/" + "metadata.txt"
 	fh = fopen(fn, "r")
 	metadata = asarray_create() // container dict
-	headers = J(1, 4, "")
+	headers = J(1, 5, "")
 	level = 0
+	i = 0
 
 	while ( ( line = strtrim(fget(fh)) ) != J(0,0,"") ) {
 		//  Ignore comments
 		if ( strpos(line, "*")==1 | strlen(line)==0 ) continue
 
-		// Add keys to container
+		// Remove leading dash
+		if (substr(line, 1, 1)=="-") {
+			line = strtrim(substr(line, 2, .))
+		}
+
+		// Check that the line contents are not empty
+		assert(strlen(subinstr(line, "#", "", .)))
+		// metadata[header1.header2...key] = value
 		if ( strpos(line, "#")!=1 ) {
-			header = "SUBKEY"
+			_ = regexm(line, "^[ \t]?([a-zA-Z0-9_]+)[ \t]?:(.+)$")
+			if (_==0) {
+				printf("{txt}key:value line could not be parsed <" + line + ">")
+			}
+			assert (_==1)
+			assert(strlen(strtrim(regexs(1)))>0)
+			assert(strlen(strtrim(regexs(2)))>0)
+			headers[level+1] = regexs(1)
+			value = strtrim(regexs(2))
 			key = invtokens(headers[., (1..level+1)], ".")
-			printf(" "*level*4 + key + header + "= %s\n", line)
+			assert(asarray_contains(metadata, key)==0) // assert key not in metadata
+			++i
+			asarray(metadata, key, value) // metadata[key] = value
+			// printf("metadata.%s=<%s>\n", key, value)
+		}
 		// Get header and level
 		else {
-			regexm(line, "^(#+)(.+)")
+			_ = regexm(line, "^(#+)(.+)")
 			level = strlen(regexs(1))
 			headers[level] = strtrim(regexs(2))
 		}
-		headers[(1..level)] // print
 	}
 	fclose(fh)
+	printf("{txt}(%s key-value pairs added to estdb metadata)", strofreal(i))
 }
 
 end
