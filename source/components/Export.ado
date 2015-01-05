@@ -102,6 +102,8 @@ syntax, VERBOSE(integer) ///
 	}
 	local substitute `substitute' "\_cons " \_cons
 
+	* Format LHS Variables
+
 	* Format RHS Variables
 	GetRHSVarlabels // returns r(rhslabels) -> varlabels and r(rhsorder) -> order
 	local rhslabels `"`r(rhslabels)'"'
