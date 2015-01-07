@@ -257,7 +257,10 @@ program define CompilePDF
 	local left
 	local dir
 	while strpos("`tmp'", "/")>0 | strpos("`tmp'", "\")>0 {
-		local dir `dir'`left' // if we run this at the end of the while, we will keep the /
+		di as error "dir=<`dir'> left=<`left'>"
+		local dir `macval(dir)'`macval(left)' // if we run this at the end of the while, we will keep the /
+		* We need -macval- to deal with the "\" in `dir' interfering with the `' in left
+		di as error "newdir=<`dir'>"
 		gettoken left tmp : tmp, parse("/\")
 	}
 

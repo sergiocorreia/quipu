@@ -29,8 +29,8 @@ estdb table if `cond' , b(%3.2f)
 *estdb export using tmp/borrar if `cond', as(tex) replace
 
 tic
-set trace on
-estdb export using "tmp/bor rar" if `cond', replace as(pdf) ///
+set trace off
+estdb export using "../test/tmp/bor rar" if `cond', replace as(pdf) ///
 	latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view	
 toc, report
 exit
