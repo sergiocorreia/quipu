@@ -174,6 +174,12 @@ so most {cmd:esttab} and {cmd:estout} options are supported.{p_end}
 {synopt: {opt view}}open the resulting PDF file if appropiate{p_end}
 {synopt: {opt latex_engine(xelatex | pdflatex)}}latex engine to use{p_end}
 
+{syntab:Format}
+{synopt: {opt rename(pat rep ...)}}list of pattern-replace strings; matched with regex against the entire varname.{p_end}
+{pmore}Note that the point of renaming is not to change the label (that's what the label cols are!){p_end}
+{pmore}but instead to use the label/footnote of another variable.{p_end}
+{synopt: {opt drop(pat ...)}}drop RHS varnames that match any of the regex patterns.{p_end}
+
 {syntab:Debugging}
 {synopt: {opt verbose(#)}}how much information to show (0=quiet, 2=a lot){p_end}
 {synoptline}
