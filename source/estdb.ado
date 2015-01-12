@@ -21,6 +21,7 @@ program define estdb
 	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
 	 	msg("Valid subcommands for -estdb- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
+	if ("`subcmd'"=="Export") local subcmd estdb_export
 	`subcmd' `0'
 end
 
@@ -36,6 +37,4 @@ end
 	include "components/Tabulate.ado"
 	include "components/Replay.ado"
 	include "components/Table.ado"
-	include "components/Export.ado"
-	include "components/metadata.mata"
 	include "../externals/stata-misc/assert_msg.ado"

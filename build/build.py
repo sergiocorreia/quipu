@@ -25,34 +25,36 @@ from __future__ import division
 import os, time, re, shutil
 
 # Constants
-fn = "estdb.ado"
 source_path = u"../source"
 server_path = u"../package"
+fns = ["estdb.ado", "estdb_export.ado"]
 
-print("parsing file <{}>".format(fn))
-full_fn = os.path.join(source_path, fn)
-data = open(full_fn, "rb").read()
+# Update the main ADO files
+for fn in fns:
+	print("parsing file <{}>".format(fn))
+	full_fn = os.path.join(source_path, fn)
+	data = open(full_fn, "rb").read()
 
-# Add includes
-includes = re.findall('^\s*include "([^"]+)"', data, re.MULTILINE)
-for include in includes:
-    print("    parsing include <{}>".format(include))
-    full_include = os.path.join(source_path, include)
-    include_data = open(full_include, "rb").read()
-    data = data.replace(u'include "{}"'.format(include), '\r\n' + include_data)
+	# Add includes
+	includes = re.findall('^\s*include "([^"]+)"', data, re.MULTILINE)
+	for include in includes:
+	    print("    parsing include <{}>".format(include))
+	    full_include = os.path.join(source_path, include)
+	    include_data = open(full_include, "rb").read()
+	    data = data.replace(u'include "{}"'.format(include), '\r\n' + include_data)
 
-# Remove cap drops
-capdrops = re.findall('\s^\s*cap pr drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
-for capdrop in capdrops:
-    data = data.replace(capdrop, "")        
-capdrops = re.findall('\s^\s*capture program drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
-for capdrop in capdrops:
-    data = data.replace(capdrop, "")        
+	# Remove cap drops
+	capdrops = re.findall('\s^\s*cap pr drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
+	for capdrop in capdrops:
+	    data = data.replace(capdrop, "")        
+	capdrops = re.findall('\s^\s*capture program drop [a-zA-Z0-9_]+\s*$', data, re.MULTILINE)
+	for capdrop in capdrops:
+	    data = data.replace(capdrop, "")        
 
-# Save
-new_fn = os.path.join(server_path, fn)
-with open(new_fn, 'wb') as new_fh:
-    new_fh.write(data)
+	# Save
+	new_fn = os.path.join(server_path, fn)
+	with open(new_fn, 'wb') as new_fh:
+	    new_fh.write(data)
 
 # Update reghdfe.pkg
 print("updating date in estdb.pkg")
