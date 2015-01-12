@@ -12,7 +12,7 @@ program define estdb_export
 		cap noi break Export `0'
 		if (_rc) {
 			local rc = _rc
-			Cleanup
+			*BUGBUG Cleanup
 			exit `rc'
 		}
 	}
@@ -27,6 +27,7 @@ end
 // Main Subroutine
 	include "export/ExportInner.ado"
 // Building Blocks
+	include "export/BuildHeader.ado"
 	include "export/ProcessLHS.ado"
 	include "export/ProcessRHS.ado"
 	include "export/Prehead.ado"
@@ -36,6 +37,7 @@ end
 	include "export/CompilePDF.ado"
 	include "export/RunCMD.ado"
 	include "export/GetMetadata.ado"
+	include "export/SetMetadata.ado"
 // Misc
 	include "export/metadata.mata"
 	include "../externals/stata-misc/assert_msg.ado"

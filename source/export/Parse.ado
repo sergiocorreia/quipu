@@ -13,6 +13,7 @@ program define Parse
 		LABEL(string) /// Used in TeX labels
 		RENAME(string asis) /// This is for REGEX replaces, which encompass normal ones. Note we are matching entire strings (adding ^$)
 		DROP(string asis) /// REGEX drops, which encompass normal ones.
+		HEADER(string) /// Each word will indicate a row in the header. Valid ones are either in e() or #.
 		] [*]
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
@@ -28,18 +29,22 @@ program define Parse
 		local `as' `as'
 	}
 
+	* Header defaults
+	if ("`header'"=="") local header depvar #
+
 	if ("`latex_engine'"=="") local latex_engine "xelatex"
 	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
 	
 	* Inject values into caller (Export.ado)
 	local names filename ifcond tex pdf html view latex_engine colformat notes vcvnote title label ///
-		rename drop options
+		rename drop header options
 	if ($estdb_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
-			if ($estdb_verbose>1) di as text `"  `name' = "' as result `"``name''"')
+			if ($estdb_verbose>1) di as text `"  `name' = "' as result `"``name''"'
 			c_local `name' `"``name''"'
 		}
+	}
 end
 
 capture program drop ParseUsingIf

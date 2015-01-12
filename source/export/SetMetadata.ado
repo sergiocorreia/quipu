@@ -7,5 +7,5 @@ program define SetMetadata
 	local key `key' // trim spaces
 	local value `value' // trim spaces
 	di as error `"metadata[`key'] = <`value'>"'
-	mata: asarray(metadata, "`key'", `"`value'"'))
+	mata: asarray(metadata, "`key'", `"`value'"')
 end

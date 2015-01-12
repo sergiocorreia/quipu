@@ -1,6 +1,5 @@
 capture program drop Initialize
 program define Initialize
-	syntax, verbose(integer)
 	global TAB "`=char(9)'"
 	global ENTER "`=char(13)'"
 	global BACKSLASH "`=char(92)'"
