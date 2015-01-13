@@ -1,6 +1,5 @@
 capture program drop Parse
 program define Parse
-
 	syntax [anything(everything)] , ///
 		as(string) /// tex pdf html
 		[VERBOSE(integer 0) /// 0=No Logging, 2=Log Everything
@@ -14,7 +13,9 @@ program define Parse
 		RENAME(string asis) /// This is for REGEX replaces, which encompass normal ones. Note we are matching entire strings (adding ^$)
 		DROP(string asis) /// REGEX drops, which encompass normal ones.
 		HEADER(string) /// Each word will indicate a row in the header. Valid ones are either in e() or #.
+		METAdata(string asis) /// Additional metadata to override the one from the markdown file
 		] [*]
+	* Note: Remember to update any changes here before the bottom c_local!
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
 	global estdb_verbose `verbose'
@@ -28,7 +29,7 @@ program define Parse
 		assert_msg inlist("`format'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
 		local `as' `as'
 	}
-
+	
 	* Header defaults
 	if ("`header'"=="") local header depvar #
 
@@ -37,7 +38,7 @@ program define Parse
 	
 	* Inject values into caller (Export.ado)
 	local names filename ifcond tex pdf html view latex_engine colformat notes vcvnote title label ///
-		rename drop header options
+		rename drop header metadata options
 	if ($estdb_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {

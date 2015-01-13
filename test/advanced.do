@@ -32,8 +32,10 @@
 *		asd
 * Show table
 set trace off
-	estdb export using `path'/table if test==1, as(pdf) verbose(2) view ///
-		header(cmd depvar rank absvar #)
+ 	estdb export using `path'/table if test==1, as(pdf) verbose(2) view ///
+		metadata(header.sort.absvar `"turn "" rep78"') ///
+		header(cmd rank # absvar depvar)
 
+exit
 rmdir `path'
 exit

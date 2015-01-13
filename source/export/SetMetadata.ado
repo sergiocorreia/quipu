@@ -6,6 +6,6 @@ program define SetMetadata
 	gettoken equalsign value: 0 , parse("=")
 	local key `key' // trim spaces
 	local value `value' // trim spaces
-	di as error `"metadata[`key'] = <`value'>"'
+	*di as error `"metadata[`key'] = <`value'>"'
 	mata: asarray(metadata, "`key'", `"`value'"')
 end
