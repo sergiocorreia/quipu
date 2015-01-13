@@ -1,6 +1,7 @@
-capture program drop ProcessRHS
-program define ProcessRHS, rclass
-syntax , [rename(string asis) drop(string asis)]
+capture program drop BuildRHS
+program define BuildRHS
+syntax, [rename(string asis) drop(string asis)]
+
 	local indepvars $indepvars
 	local N : word count `indepvars'
 	qui set obs `N'
@@ -25,7 +26,6 @@ syntax , [rename(string asis) drop(string asis)]
 		if ($estdb_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
 		qui drop if dropit
 		drop dropit
-		return local rhsdrop `"`rhsdrop'"'
 	}
 
 	* Rename variables
@@ -53,7 +53,6 @@ syntax , [rename(string asis) drop(string asis)]
 
 		if (`"`rhsrename'"'!="") {
 			if ($estdb_verbose>0) di as text "(renaming variables:" `notice' as text ")"
-			return local rhsrename `"`rhsrename'"'
 
 			* We don't want the labels of a renamed variable (else, why did we rename it?)
 			replace varlabel = "" if renamed
@@ -88,6 +87,6 @@ syntax , [rename(string asis) drop(string asis)]
 	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
-	return local rhslabels `"`varlabels'"'
-	return local rhsorder `"`order'"'
+	* Set global option
+	global estdb_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
 end

@@ -12,6 +12,7 @@
 	\usepackage{array} %% The new column types below require arraybackslash
 	\usepackage{ragged2e} %% \raggedright used in table footnotes breaks hyphenation
 	\usepackage[labelfont=bf,font=bf]{caption} %% Provides -captionsetup- http://ctan.mackichan.com/macros/latex/contrib/caption/caption-eng.pdf
+	\usepackage{comment} %% Allow comment blocks around the tables, for documentation
 
 	%% Allow text wrapping in multicolumn
 	%% See http://tex.stackexchange.com/questions/115668/wrapping-text-in-multicolumn

@@ -6,8 +6,17 @@ program define Cleanup
 	global ENTER
 	global BACKSLASH
 	global indepvars
-	global estdb_footnotes
 	global estdb_verbose
+
+	global estdb_prehead
+	global estdb_header
+	global estdb_footnotes
+	global estdb_insertnote
+	global estdb_rhsoptions
+	global estdb_prefoot
+	global estdb_postfoot
+
+	clear
 	cap estimates drop estdb*
 	local mata_objects metadata symboltoken symbols symboldict
 	foreach obj of local mata_objects {

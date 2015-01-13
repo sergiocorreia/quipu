@@ -5,15 +5,13 @@ program define Initialize
 	global TAB "`=char(9)'"
 	global ENTER "`=char(13)'"
 	global BACKSLASH "`=char(92)'"
-	global indepvars // Ensure it's empty
-	global estdb_footnotes // Ensure it's empty
+	global COMMENT "%"
 	
 	* Load metadata
 	if ($estdb_verbose>1) di as text "(loading metadata)"
 	mata: read_metadata()
 
 	* Additional metadata from the options
-	assert `"`metadata'"'!=""
 	while (`"`metadata'"'!="") {
 		gettoken lhs metadata : metadata
 		gettoken rhs metadata : metadata

@@ -14,6 +14,7 @@ program define Parse
 		DROP(string asis) /// REGEX drops, which encompass normal ones.
 		HEADER(string) /// Each word will indicate a row in the header. Valid ones are either in e() or #.
 		METAdata(string asis) /// Additional metadata to override the one from the markdown file
+		Order(string asis) VARLabels(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
@@ -27,12 +28,12 @@ program define Parse
 	* Validate contents of as()
 	foreach format in `as' {
 		assert_msg inlist("`format'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
-		local `as' `as'
+		local `format' `format'
 	}
 	
-	* Header defaults
+	* Set default options
 	if ("`header'"=="") local header depvar #
-
+	if ("`colformat'"=="") local colformat C{2cm}
 	if ("`latex_engine'"=="") local latex_engine "xelatex"
 	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
 	

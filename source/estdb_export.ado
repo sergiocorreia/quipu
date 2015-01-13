@@ -1,5 +1,3 @@
-* makethesis.py tables.ado (en aug) filter.py (en Research/latex/pandoc)
-
 // -------------------------------------------------------------------------------------------------
 // ESTDB_EXPORT - Exports the Estimation Tables
 // -------------------------------------------------------------------------------------------------
@@ -8,7 +6,9 @@
 
 capture program drop estdb_export
 program define estdb_export
+	*preserve
 	nobreak {
+		Cleanup // Ensure globals start empty
 		cap noi break Export `0'
 		if (_rc) {
 			local rc = _rc
@@ -16,6 +16,7 @@ program define estdb_export
 			exit `rc'
 		}
 	}
+	*restore
 end
 
 // Outer Subroutines
@@ -24,20 +25,26 @@ end
 	include "export/Initialize.ado"
 	include "export/Cleanup.ado"
 	include "export/LoadEstimates.ado"
-// Main Subroutine
-	include "export/ExportInner.ado"
+
 // Building Blocks
+	include "export/BuildPrehead.ado"
 	include "export/BuildHeader.ado"
-	include "export/ProcessLHS.ado"
-	include "export/ProcessRHS.ado"
-	include "export/Prehead.ado"
-	include "export/Footnotes.ado"
+	include "export/BuildPrefoot.ado"
+	include "export/BuildRHS.ado"
+	include "export/BuildFootnotes.ado"
+	include "export/BuildPostFoot.ado"
 	include "export/AddFootnote.ado"
+	include "export/BuildHTML.ado"
+	include "export/BuildTEX.ado"
+	include "export/BuildPDF.ado"
+
 // Input-Output
 	include "export/CompilePDF.ado"
 	include "export/RunCMD.ado"
 	include "export/GetMetadata.ado"
 	include "export/SetMetadata.ado"
+
 // Misc
+	include "components/Use.ado"
 	include "export/metadata.mata"
 	include "../externals/stata-misc/assert_msg.ado"

@@ -6,7 +6,7 @@ program define AddFootnote, rclass
 		return local symbol ""
 		exit
 	}
-	GetMetadata definition=footnote.`footnote'
+	GetMetadata definition=footnotes.`footnote'
 	* Use existing symbols for footnotes previously used
 	mata: st_local("footnote_exists", strofreal(asarray_contains(symboldict, "`footnote'")))
 	if (`footnote_exists') {

@@ -6,22 +6,22 @@ program define BuildHeader
 	local cell_start "\multicolumn{\`n'}{c}{"
 	local cell_end "}"
 	local cell_sep " & "
-	local cell_line "\cmidrule(lr){\`start_col'-\`end_col'}"
+	local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
 	local row_start "${TAB}"
-	local row_end "${BACKSLASH}${BACKSLASH}${ENTER}"
+	local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
 	local row_sep ""
 	local header_start ""
-	local header_end "\midrule"
+	local header_end "$TAB\midrule"
 	local offset 1 // First cell in row is usually empty
 
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
 	foreach cat of local header {
 		local ++numrow
-		local line
+		local line "$TAB"
 		local numcell 0
 		if ("`cat'"=="#") {
-			local row "`row_start' & "
+			local row "`row_start'\multicolumn{1}{c}{} & "
 			forval i = 1/`c(N)' {
 				local cell = "(`i')"
 				local n 1
@@ -50,7 +50,7 @@ program define BuildHeader
 			local ans "`ans'`sep'`row'`row_end'"
 			qui su span_`cat'
 			if (r(max)>1) {
-				local ans "`ans'`line'${ENTER}"
+				local ans "`ans'`line'$ENTER"
 			}
 			else {
 				* por ahora nada, quizas midrule?
