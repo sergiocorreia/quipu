@@ -15,6 +15,7 @@ program define Cleanup
 	global estdb_rhsoptions
 	global estdb_prefoot
 	global estdb_postfoot
+	global estdb_starlevels
 
 	clear
 	cap estimates drop estdb*

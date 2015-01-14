@@ -13,4 +13,5 @@ syntax, [notes(string)] [vcnote(string)]
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
 	if (`"$estdb_footnotes"'!="") global estdb_insertnote "\insertTableNotes"
+	global estdb_starlevels starlevels(`starlevels')
 end

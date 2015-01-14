@@ -19,7 +19,7 @@ syntax, filename(string) latex_engine(string) VIEW [*]
 	if ($estdb_verbose>1) local noisily noisily
 	local prepost prehead($estdb_prehead) posthead($estdb_header) prefoot($estdb_prefoot) postfoot($estdb_postfoot)
 	local base_cmd esttab estdb* using "`filename'.tex"
-	local base_opt `noisily' $estdb_rhsoptions `prepost' mlabels(none) nonumbers
+	local base_opt `noisily' $estdb_rhsoptions $estdb_starlevels `prepost' mlabels(none) nonumbers
 	local tex_opt longtable booktabs substitute(`substitute')
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 

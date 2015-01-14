@@ -15,6 +15,7 @@ program define Parse
 		DROP(string asis) /// REGEX drops, which encompass normal ones.
 		HEADER(string) /// Each word will indicate a row in the header. Valid ones are either in e() or #.
 		METAdata(string asis) /// Additional metadata to override the one from the markdown file
+		STARs(string) // Cutoffs for statistical significance
 		Order(string asis) VARLabels(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
@@ -40,6 +41,11 @@ program define Parse
 	if ("`orientation'"=="") local orientation "portrait"
 	assert_msg inlist("`orientation'", "landscape", "portrait"), msg("invalid page orientation (needs to be landscape or portrait)")
 	assert_msg inrange(`size', 1, 10), msg("invalid table size (needs to be an integer between 1 and 10)")
+	if ("`stars'"=="") local stars "0.10 0.05 0.01"
+	foreach cutoff of local stars {
+		assert_msg real("`cutoff'")<. , msg("invalid cutoff: `cutoff' (not a number)")
+		assert_msg inrange(`cutoff', 0.0, 1.0) , msg("invalid cutoff: `cutoff' (outside [0-1])")
+	}
 	
 	* Inject values into caller (Export.ado)
 	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
