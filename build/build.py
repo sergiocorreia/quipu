@@ -71,7 +71,4 @@ fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-to
 for fn in fns:
 	shutil.copy(os.path.join(source_path, fn), os.path.join(server_path, fn))
 
-# Copy the .def file as .def.ado so Stata installs it w/out the need for the -all- option
-shutil.copy(os.path.join(source_path, "estout_estdb.def"), os.path.join(server_path, "estout_estdb.def.ado"))
-
 print("Done!")

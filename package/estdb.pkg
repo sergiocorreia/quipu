@@ -8,9 +8,10 @@ d
 d estdb: Saves, manage and export estimation results (requires estout)
 d
 d
-d Distribution-Date: 20150104
+d Distribution-Date: 20150114
 d
 f estdb.ado
+f estdb_export.ado
 f estdb.sthlp
 f estdb-associate-template.reg.ado
 f estdb-latex-template.tex
