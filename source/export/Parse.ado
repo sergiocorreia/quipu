@@ -15,7 +15,7 @@ program define Parse
 		DROP(string asis) /// REGEX drops, which encompass normal ones.
 		HEADER(string) /// Each word will indicate a row in the header. Valid ones are either in e() or #.
 		METAdata(string asis) /// Additional metadata to override the one from the markdown file
-		STARs(string) // Cutoffs for statistical significance
+		STARs(string) /// Cutoffs for statistical significance
 		Order(string asis) VARLabels(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
@@ -49,7 +49,7 @@ program define Parse
 	
 	* Inject values into caller (Export.ado)
 	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
-		colformat notes vcvnote title label ///
+		colformat notes stars vcvnote title label ///
 		rename drop header metadata options
 	if ($estdb_verbose>1) di as text "Parsed options:"
 	foreach name of local names {

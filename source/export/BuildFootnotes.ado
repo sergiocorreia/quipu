@@ -1,9 +1,20 @@
 capture program drop BuildFootnotes
 program define BuildFootnotes
-syntax, [notes(string)] [vcnote(string)]
+syntax, stars(string) [notes(string)] [vcnote(string)]
 	* BUGBUG: Autoset starnote and vcnote!!!
-	local starnote `"Levels of significance: ** p\(<0.05\), ** p\(<0.01\)."' // *** p<0.01, ** p<0.05, * p<0.1.
-	local note "\Note{`vcvnote' `starnote' `note'}"
+
+	local stars : list sort stars // Sort it
+	local numstars : word count `stars'
+	local starnote "Levels of significance: "
+	forval i = `numstars'(-1)1 {
+		local sign = "*" * `=`numstars'-`i'+1'
+		local num : word `i' of `stars'
+		local sep = cond(`i'>1, ", ", ".")
+		local starnote "`starnote' `sign' \(p<`num'\)`sep'"
+		local starlevels "`starlevels' `sign' `num'"
+	}
+
+	local note "\Note{`vcvnote'`starnote'`note'}"
 	if (`"${estdb_footnotes}"'!="") {
 		global estdb_footnotes `"${estdb_footnotes}${ENTER}$TAB$TAB`note'"'
 	}
