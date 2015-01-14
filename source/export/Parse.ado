@@ -8,7 +8,7 @@ program define Parse
 		SIZE(integer 5) ORIENTation(string) PAGEBREAK /// More PDF options
 		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
 		NOTEs(string) /// Misc notes (i.e. everything besides the glossaries for symbols, stars, and vcv)
-		VCVnote(string) /// Note regarding std. errors, in case default msg is not good enough
+		VCEnote(string) /// Note regarding std. errors, in case default msg is not good enough
 		TITLE(string) ///
 		LABEL(string) /// Used in TeX labels
 		RENAME(string asis) /// This is for REGEX replaces, which encompass normal ones. Note we are matching entire strings (adding ^$)
@@ -49,7 +49,7 @@ program define Parse
 	
 	* Inject values into caller (Export.ado)
 	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
-		colformat notes stars vcvnote title label ///
+		colformat notes stars vcenote title label ///
 		rename drop header metadata options
 	if ($estdb_verbose>1) di as text "Parsed options:"
 	foreach name of local names {

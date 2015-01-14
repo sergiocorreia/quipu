@@ -30,6 +30,7 @@ end
 	include "export/BuildPrehead.ado"
 	include "export/BuildHeader.ado"
 	include "export/BuildPrefoot.ado"
+	include "export/BuildVCENote.ado"
 	include "export/BuildRHS.ado"
 	include "export/BuildFootnotes.ado"
 	include "export/BuildPostFoot.ado"

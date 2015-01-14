@@ -14,7 +14,10 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' `sign' `num'"
 	}
 
-	local note "\Note{`vcvnote'`starnote'`note'}"
+	local sep1 = cond("${estdb_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
+	local sep2 = cond("${estdb_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
+	local note "\Note{${estdb_vcenote}`sep1'`starnote'`sep2'`note'}"
+
 	if (`"${estdb_footnotes}"'!="") {
 		global estdb_footnotes `"${estdb_footnotes}${ENTER}$TAB$TAB`note'"'
 	}
