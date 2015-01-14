@@ -1,8 +1,8 @@
 * Prep work	
-	set trace off
+	set more off
 	clear all
 	cls
-	set more off
+	
 	local repo "D:\Github\estdb"
 	local path "`repo'\test\tmp"
 	* Don't use `path' to avoid big bugs where I delete everything
@@ -10,6 +10,7 @@
 	!del "`repo'\test\tmp\foo\*.*" /q
 	cap mkdir "`path'" // git won't save empty folders
 	qui adopath + "`repo'\source"
+	cd "`repo'\source"
 
 * Set up estdb
 * There is a REAL risk of keeping old/stale/wrong results in the estdb path (or a subfolder)

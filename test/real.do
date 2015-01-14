@@ -32,7 +32,7 @@ tic
 set trace off
 estdb export using "../test/tmp/bor rar" if `cond', replace as(pdf) ///
 	latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view ///
-	drop(sunat.*) rename(S_num_branch.* "spam" "new.*rel" "foo") header(# depvar)
+	drop(sunat.*) rename(S_num_branch.* "spam" "new.*rel" "foo") header(# depvar) orientation(landscape) size(1)
 toc, report
 exit
 
