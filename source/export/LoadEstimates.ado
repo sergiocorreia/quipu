@@ -1,6 +1,6 @@
 capture program drop LoadEstimates
 program define LoadEstimates
-	syntax, header(string)
+syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
@@ -57,7 +57,7 @@ program define LoadEstimates
 	}
 
 	sort `groups' // Redundant
-	drop _group_* _index_
+	drop _group_*
 
 	* Load estimates
 	forv i=1/`c(N)' {

@@ -294,7 +294,7 @@ program define ProcessFolder, rclass
 		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos') // Fill row in index.dta
 		local indepvars : colnames e(b)
 		
-		local extravars depvar clustvar ivar // e(absvars)? // xtreg uses ivar
+		local extravars depvar clustvar ivar model // e(absvars)? // xtreg uses ivar
 		foreach var of local extravars {
 			local `var' = cond("`e(`var')'"==".","", "`e(`var')'")
 		}

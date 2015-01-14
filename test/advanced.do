@@ -35,7 +35,8 @@
 set trace off
  	estdb export using `path'/table if test==1, as(pdf) verbose(2) view ///
 		metadata(header.sort.absvar `"turn "" rep78"') ///
-		header(cmd rank # absvar depvar) title(asd) label(foo) begin(_tab)
+		header(cmd rank # absvar depvar) title(asd) label(foo) begin(_tab) ///
+		stats(default F , l(N "Obs."))
 
 exit
 rmdir `path'

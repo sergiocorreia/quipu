@@ -15,16 +15,14 @@ syntax, [vcenote(string)]
 		}
 		else if ("`vce'"=="cluster") {
 			qui levelsof clustvar, missing local(clustvar) clean
-			* qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes keepusing(varlabel footnote sort_indepvar sort_depvar)
 			local cond = `"inlist(varname, ""' + subinstr("`clustvar'", "#", `"", ""', .) + `"")"'
-			use varname varlabel if `cond' using "${estdb_path}/varlist", clear
-			replace varlabel = varname if missing(varlabel)
+			qui use varname varlabel if `cond' using "${estdb_path}/varlist", clear
+			qui replace varlabel = varname if missing(varlabel)
 			forval i = 1/`c(N)' {
 				local sep = cond(`i'==1, "", cond(`i'==c(N), " and ", ", "))
 				local varlabel = varlabel[`i']
 				local clustlabel `clustlabel'`sep'`varlabel'
 			}
-			li
 			global estdb_vcenote "Robust standard errors in parentheses, clustered by `clustlabel'."
 		}
 	}
@@ -32,4 +30,5 @@ syntax, [vcenote(string)]
 	if "$estdb_vcenote"=="" {
 		global estdb_vcenote "`vcenote'"
 	}
+	clear // Because we -use-d the dataset
 end

@@ -14,16 +14,12 @@ syntax, filename(string) latex_engine(string) VIEW [*]
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
-	local substitute `substitute' "\_cons " Constant
+	local substitute `substitute' "\_cons " Constant "..." "\ldots"
 
-	if ($estdb_verbose>1) local noisily noisily
-	local prepost prehead($estdb_prehead) posthead($estdb_header) prefoot($estdb_prefoot) postfoot($estdb_postfoot)
-	local base_cmd esttab estdb* using "`filename'.tex"
-	local base_opt `noisily' $estdb_rhsoptions $estdb_starlevels `prepost' mlabels(none) nonumbers
+	local cmd esttab estdb* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
-
-	RunCMD `base_cmd' , `base_opt' `tex_opt' `pdf_options' `options'
+	RunCMD `cmd', `tex_opt' `pdf_options' `options'
 
 	local args latex_engine(`latex_engine') filename(`filename')
 	cap erase "`filename'.log"

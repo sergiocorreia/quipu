@@ -1,8 +1,30 @@
 capture program drop BuildHeader
 program define BuildHeader
-* Save results in $estdb_header
-	syntax, [header(string)]
-	
+syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
+
+	* Set replacement locals
+	local header : subinstr local header "#" "autonumeric", word
+	foreach cat of local header {
+		if ("`cat'"=="autonumeric") {
+			local template_`cat' "(@)"
+		}
+		else {
+			local template_`cat' "@"
+		}
+	}
+	while ("`fmt'"!="") {
+		gettoken cat fmt : fmt
+		gettoken template fmt : fmt
+		local template_`cat' "`template'"
+	}
+
+	rename depvar varname
+	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes ///
+		 keepusing(varlabel footnote)
+	sort _index_ // rearrange
+	rename varname depvar
+	qui replace varlabel = depvar if missing(varlabel)
+
 	local cell_start "\multicolumn{\`n'}{c}{"
 	local cell_end "}"
 	local cell_sep " & "
@@ -20,10 +42,10 @@ program define BuildHeader
 		local ++numrow
 		local line "$TAB"
 		local numcell 0
-		if ("`cat'"=="#") {
+		if ("`cat'"=="autonumeric") {
 			local row "`row_start'\multicolumn{1}{c}{} & "
 			forval i = 1/`c(N)' {
-				local cell = "(`i')"
+				local cell = subinstr("`template_`cat''", "@", "`i'", .)
 				local n 1
 				local sep = cond(`i'>1, "`cell_sep'", "")
 				local row `row'`sep'`cell_start'`cell'`cell_end'
@@ -32,12 +54,24 @@ program define BuildHeader
 			local ans "`ans'`sep'`row'`row_end'"
 		}
 		else {
-			local row "`row_start'\multicolumn{1}{l}{`cat'} & " // TODO: Fix this
+			local row "`row_start'\multicolumn{1}{l}{} & " // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
 				local inactive = inactive_`cat'[`i']
 				if (!`inactive') {
 					local ++numcell
-					local cell = `cat'[`i']
+					
+					if ("`cat'"=="depvar") {
+						local cell = varlabel[`i']	
+						local footnote = footnote[`i']
+						AddFootnote `footnote'
+						local cell "`cell'`r(symbolcell)'"
+					}
+					else {
+						local cell = `cat'[`i']
+						cap GetMetadata cell=groups.`cat'.`cell' // Will abort if label not found
+						local cell = subinstr("`template_`cat''", "@", "`cell'", .)
+					}
+
 					local n = span_`cat'[`i']
 					local start_col = `offset' + `i'
 					local end_col = `start_col' + `n' - 1
@@ -59,4 +93,5 @@ program define BuildHeader
 	}
 	local ans "`ans'`header_end'"
 	global estdb_header `"`ans'"'
+	drop varlabel footnote
 end

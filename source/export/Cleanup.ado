@@ -17,6 +17,7 @@ program define Cleanup
 	global estdb_postfoot
 	global estdb_starlevels
 	global estdb_vcenote
+	global estdb_stats
 
 	clear
 	cap estimates drop estdb*

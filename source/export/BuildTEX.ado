@@ -8,12 +8,7 @@ syntax, filename(string) [*]
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
 	local substitute `substitute' "\_cons " Constant
-
-	if ($estdb_verbose>1) local noisily noisily
-	local prepost prehead($estdb_prehead) posthead($estdb_header) prefoot($estdb_prefoot) postfoot($estdb_postfoot)
-	local base_cmd esttab estdb* using "`filename'.tex"
-	local base_opt `noisily' $estdb_rhsoptions $estdb_starlevels `prepost' mlabels(none) nonumbers
+	local cmd esttab estdb* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
-
-	RunCMD `base_cmd' , `base_opt' `tex_opt' `options'
+	RunCMD `cmd', `tex_opt' `options'
 end

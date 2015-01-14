@@ -5,7 +5,6 @@ program define Initialize
 	global TAB "`=char(9)'"
 	global ENTER "`=char(13)'"
 	global BACKSLASH "`=char(92)'"
-	global COMMENT "%"
 	
 	* Load metadata
 	if ($estdb_verbose>1) di as text "(loading metadata)"

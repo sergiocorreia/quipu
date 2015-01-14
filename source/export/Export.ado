@@ -4,20 +4,24 @@ program define Export
 	
 	Initialize, metadata(`metadata') // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates, header(`header') // Loads estimates and sort them in the correct order
-	
-	BuildPrehead, colformat(`colformat') title(`title') label(`label') ifcond(`"`ifcond'"') orientation(`orientation') size(`size')
-	BuildHeader, header(`header') // Build header and saves it in $estdb_header (passed to posthead)
-	BuildVCENote, vcenote(`vcenote')
-	clear // Do after -BuildHeader- and before -BuildRHS-
+	LoadEstimates `header' // Loads estimates and sort them in the correct order
+
+	BuildPrehead, colformat(`colformat') title(`title') label(`label') ifcond(`"`ifcond'"') orientation(`orientation') size(`size')	
+	BuildHeader `header' // Build header and saves it in $estdb_header (passed to posthead)
+	BuildStats `stats'
+	BuildVCENote, vcenote(`vcenote') // This clears the data!
+	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
 	BuildRHS, rename(`rename') drop(`drop') // $estdb_rhsoptions -> rename() drop() varlabels() order()
 	BuildPrefoot
 	BuildPostfoot, orientation(`orientation') size(`size') `pagebreak'
 	BuildFootnotes, notes(`notes') stars(`stars') // Updates $estdb_footnotes
 
-	if ("`html'"!="") BuildHTML, filename(`filename') `options'
-	if ("`pdf'"!="") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `options'
-	if ("`tex'"!="") BuildTEX, filename(`filename') `options'  // Run after PDF so it overwrites the .tex file
+	if ($estdb_verbose>1) local noisily noisily
+	local prepost prehead($estdb_prehead) posthead($estdb_header) prefoot($estdb_prefoot) postfoot($estdb_postfoot)
+	local base_opt `noisily' $estdb_rhsoptions $estdb_starlevels mlabels(none) nonumbers `cellformat' ${estdb_stats} `prepost'
+	if ("`html'"!="") BuildHTML, filename(`filename') `base_opt' `options'
+	if ("`pdf'"!="") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
+	if ("`tex'"!="") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
 	Cleanup
 end

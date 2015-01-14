@@ -6,11 +6,21 @@ adopath + "D:\Dropbox\Projects\stata\misc"
 cd ../source
 
 estdb setpath "D:\Dropbox\Projects\CreditCards\out\Regression"
-local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars clustvar dofmethod N_hdfe
+local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars dofmethod N_hdfe
 
-*tic
-*estdb build, keys(`keys')
-*toc, report
+/*
+tic
+* Create index
+	estdb build, keys(`keys')
+
+* Quick and dirty (maybe allow a program to run at the end of -build- to generate all this?)
+	use "${estdb_path}/index"
+	gen definition = regexs(1) if regexm(depvar, "will_(default|late)([0-9]+)")
+	gen byte horizon = real(regexs(2)) if regexm(depvar, "will_(default|late)([0-9]+)")
+	save, replace
+toc, report
+*/
+
 estdb update
 
 estdb use
@@ -30,10 +40,13 @@ estdb table if `cond' , b(%3.2f)
 
 tic
 set trace on
+set tracedepth 3
 estdb export using "../test/tmp/bor rar" if `cond', replace as(pdf) ///
 	latex_engine(xelatex) verbose(2) title("Some Title: With Weird % ! / a_b Signs") label("tex-label") view ///
-	drop(sunat.*) rename(S_num_branch.* "spam" "new.*rel" "foo") header(# depvar) ///
-	orientation(landscape) size(5) pagebreak
+	drop(sunat.*) rename(S_num_branch.* "spam" "new.*rel" "foo") header(definition horizon #, fmt(horizon "@ months")) ///
+	orientation(landscape) size(5) pagebreak cellformat(b(a1) se(a1)) /// stats(r2 N)
+	
+	
 toc, report
 exit
 
