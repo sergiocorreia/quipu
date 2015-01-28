@@ -15,5 +15,5 @@ f estdb_export.ado
 f estdb.sthlp
 f estdb-associate-template.reg.ado
 f estdb-top.tex.ado
-d f estdb-bottom.tex.ado
+f estdb-bottom.tex.ado
 e
