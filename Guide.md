@@ -89,6 +89,7 @@ Other useful subcommands with the same syntax are `list` and `browse` (self expl
 You can create and export tables as HTML, Tex files (to be included in another tex file), and PDFs. You can also customize the title, label, headers, footnotes, reported stats, etc.
 
 The full syntax is
+
 ```stata
 quipu export myfile.fmt [if] , [common_opt] [adv_opt] [pdf_opt] [misc_opt] [esttab_opt]
 ```
@@ -103,6 +104,9 @@ Options:
 Note that many of these options are magic-like and do a lot of things under the hood. For instance,
 
 * The output format is inferred from the extension. Valid extensions are html, tex and pdf.
+* Headers allow very easy grouping of models. EG: `header(group varname method #)`
+* VCE notes are autoinferred from the estimates (e.g. clustering, robust SEs)
+* rename() and drop() are actually doing regex matching
 
 ## Summary
 
