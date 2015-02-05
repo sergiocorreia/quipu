@@ -2,8 +2,8 @@
 * Notes:
 * - keys() are *on top* of time, filename, path, fullpath, and the ones set when creating
 * - recursive only goes ONE level deep!!!
-cap pr drop Build_Index
-program define Build_Index
+cap pr drop Index
+program define Index
 	syntax , [keys(namelist local)] //  [Recursive] -> Always on one level
 	local path $quipu_path
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
