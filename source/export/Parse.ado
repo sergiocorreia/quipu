@@ -3,7 +3,7 @@ program define Parse
 	syntax [anything(everything)] , ///
 		as(string) /// tex pdf html
 		[VERBOSE(integer 0) /// 0=No Logging, 2=Log Everything
-		VIEW /// Open the PDF viewer at the end?
+		VIEW /// Open the PDF/HTML viewer  at the end?
 		LATEX_engine(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
 		SIZE(integer 5) ORIENTation(string) PAGEBREAK /// More PDF options
 		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
@@ -30,10 +30,8 @@ program define Parse
 	ParseUsingIf `anything'
 
 	* Validate contents of as()
-	foreach format in `as' {
-		assert_msg inlist("`format'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
-		local `format' `format'
-	}
+	assert_msg inlist("`as'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
+	local `as' `as' // Create local -tex- if that is the output format, and so on
 	
 	* Set default options
 	if ("`header'"=="") local header depvar #

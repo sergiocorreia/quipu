@@ -157,7 +157,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
 {opt export}
 [{help if}]
 [{help using} FilenameWithoutExtension]
-, {opt as(tex pdf html)}
+, {opt as(tex | pdf | html)}
 [{opt view} {opt latex_engine(xelatex | pdflatex)}]
 [{opt verbose(0|1|2)}]
 {p_end}
