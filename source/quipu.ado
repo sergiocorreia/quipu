@@ -27,7 +27,7 @@ end
 
 	include "components/Associate.ado"
 	include "components/Setpath.ado"
-	include "components/Add.ado"
+	include "components/Save.ado"
 	include "components/Build_Index.ado"
 	include "components/Update_Varlist.ado"
 	include "components/View.ado"

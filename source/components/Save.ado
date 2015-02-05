@@ -1,8 +1,8 @@
 * Run this after a command, or together with <prefix : cmd>
-* [SYNTAX 1] quipu add, notes(..) [prefix(..)] // after quipu setpath ..
-* [SYNTAX 2] quipu add, notes(..) filename(..)
-cap pr drop Add
-program define Add, eclass
+* [SYNTAX 1] quipu save, notes(..) [prefix(..)] // after quipu setpath ..
+* [SYNTAX 2] quipu save, notes(..) filename(..)
+cap pr drop Save
+program define Save, eclass
 	
 	* Parse (with our without colon)
 	cap _on_colon_parse `0' // * See help _prefix
