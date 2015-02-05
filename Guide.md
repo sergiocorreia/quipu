@@ -8,9 +8,40 @@
 
 ## Usage
 
-First, set the path where
+First, set the path where the results will be saved. Most of the time you want to use the `replace` option to delete previous estimates saved in that folder. If you want to keep them, just use `append` instead.
 
-Save a regression, adding notes about the sample, etc.
 ```stata
-quipu save
+quipu setpath "C:\MyProject\out\results", replace
+```
+(implementation deatail: this creates a global $quipu_path)
+
+Now save regression, adding notes about the sample, etc.
+
+```stata
+sysuse auto
+quipu save, notes(sample=foreign logfile="`logfile'"): reg price weight if foreign
+quipu save, notes(sample=!foreign logfile="`logfile'"): reg price weight if !foreign
+```
+
+After the files are saved, you need to index them:
+```stata
+quipu index
+```
+This will create 
+
+
+
+## Template ready for copy-paste
+```stata
+quipu setpath "$OUT/results", append
+
+quipu save, notes(KEY=VAL ...):  CMD
+
+quipu index
+update by hand
+quipu..
+
+quipu export
+
+
 ```
