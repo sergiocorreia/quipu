@@ -2,4 +2,4 @@
 % Prologue
 \end{document}
 
-%% This line is just a filler 111111111111111111111111111111111112222222222333444455555ABC12345
+%% (Loren Ipsum - Due to a bug Stata requires files to be at least ~0.124kb or the install will fail)
