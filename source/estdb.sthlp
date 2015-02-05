@@ -4,7 +4,7 @@
 {title:Title}
 {p2colset 5 18 20 2}{...}
 
-{p2col :{cmd:estdb} {hline 2}}Estimation Manager - Save estimates to files, manage them like a database, and export tables as latex{p_end}
+{p2col :{cmd:quipu} {hline 2}}Estimation Manager - Save estimates to files, manage them like a database, and export tables as latex{p_end}
 {p2colreset}{...}
 
 {marker description}{...}
@@ -14,28 +14,28 @@
 The typical way to use it is:{p_end}
 
 {pstd}1) Set the path where the estimates and index will be saved{p_end}
-{p 8 15 2}{cmd:estdb setpath} {it:SomePath}{p_end}
+{p 8 15 2}{cmd:quipu setpath} {it:SomePath}{p_end}
 
 {pstd}2) Run and save estimates:{p_end}
-{p 8 15 2}{cmd:estdb add, } {opt notes(key=SomeValue)} : {cmd:reg price weight}{p_end}
+{p 8 15 2}{cmd:quipu add, } {opt notes(key=SomeValue)} : {cmd:reg price weight}{p_end}
 {p 8 15 2}...{p_end}
-{p 8 15 2}{cmd:estdb add, } {opt notes(key=AnotherValue)} : {cmd:reg length weight price}{p_end}
+{p 8 15 2}{cmd:quipu add, } {opt notes(key=AnotherValue)} : {cmd:reg length weight price}{p_end}
 
 {pstd}3)Index the estimates by {it:notes} and the specified {it:keys}:{p_end}
-{p 8 15 2}{cmd:estdb build_index, } {opt keys(depvar)}{p_end}
+{p 8 15 2}{cmd:quipu build_index, } {opt keys(depvar)}{p_end}
 
 {pstd}4)To change the names of a variable, their orden in the tables, etc. edit the {it:varlist.tsv} file and then update:{p_end}
 {p 8 15 2}{cmd:>>>} Double click on the {it:varlist.tsv} file, and edit it.{p_end}
-{p 8 15 2}{cmd:estdb update}{p_end}
+{p 8 15 2}{cmd:quipu update}{p_end}
 
 {pstd}5)Inspect the index with any of the convenience commands ({opt tab:ulate}, {opt li:st}, {opt br:owse}, {opt de:scribe}, {opt replay}, {opt table}):{p_end}
-{p 8 15 2}{cmd:estdb tab if} {it:depvar=="price"}{p_end}
+{p 8 15 2}{cmd:quipu tab if} {it:depvar=="price"}{p_end}
 
 {pstd}6)Create a pretty table with the {opt export} subcommand{p_end}
-{p 8 15 2}FIX THIS{cmd:estdb export if} {it:depvar=="price"}{p_end}
+{p 8 15 2}FIX THIS{cmd:quipu export if} {it:depvar=="price"}{p_end}
 
-{pstd}(Windows) You are also encouraged to run {cmd:estdb associate} so you can later double click
-on the .sest files (which will open Stata and run {cmd:estdb view{it: SomeFilename.sest}}).{p_end}
+{pstd}(Windows) You are also encouraged to run {cmd:quipu associate} so you can later double click
+on the .sest files (which will open Stata and run {cmd:quipu view{it: SomeFilename.sest}}).{p_end}
 
 {marker syntax}{...}
 {title:Syntax}
@@ -43,16 +43,16 @@ on the .sest files (which will open Stata and run {cmd:estdb view{it: SomeFilena
 
   {bf:(1)} {title:Setting the path used by the other subcommands}
 
-{phang}{cmd:estdb} {opt setpath} [{it:PATH}] {p_end}
+{phang}{cmd:quipu} {opt setpath} [{it:PATH}] {p_end}
 {synopt: {it:PATH}}path where the estimates (.ster files) will be saved, looked up when indexed, and opened when building tables.{p_end}
 
   {bf:(2)} {title:Saving estimates}
 
 {phang}{it:Simple syntax:}{p_end}
-{phang}{cmd:estdb} {opt add} [ , {opt note:s(key1=value1 ...)}] : {it:{help regression command}}{p_end}
+{phang}{cmd:quipu} {opt add} [ , {opt note:s(key1=value1 ...)}] : {it:{help regression command}}{p_end}
 
 {phang}{it:Advanced syntax:}{p_end}
-{phang}{cmd:estdb} {opt add} [ , {opt note:s(key1=value1 ...)}] [{opt prefix(string)} {opt filename(string)}]
+{phang}{cmd:quipu} {opt add} [ , {opt note:s(key1=value1 ...)}] [{opt prefix(string)} {opt filename(string)}]
 [ : {it:{help regression command}} ]{p_end}
 
 {pmore}Save a the estimates into a file with a .ster extension.
@@ -70,19 +70,19 @@ e(cmdline), c(N), and the key-value pairs. EG: {it:6156-6557-65206297.ster}.{p_e
   {bf:(3)} {title:Building the Index and Updating Table Labels}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt build_index}
 [ , {opt keys(key1 key2 ...)}
 {p_end}
 
-{pmore}Will index all .ster files located in $estdb_path (and the first level of subfolders).
- It will create an index.dta and varlist_template.dta files, and then call {it: estdb update_varlist}.{p_end}
+{pmore}Will index all .ster files located in $quipu_path (and the first level of subfolders).
+ It will create an index.dta and varlist_template.dta files, and then call {it: quipu update_varlist}.{p_end}
 
-{pmore}The keys can be any of the e() results (notes specified in {it:estdb add} are automatically added,
+{pmore}The keys can be any of the e() results (notes specified in {it:quipu add} are automatically added,
  as well as four default ones: path, filename, fullpath, time (in %tc format)).{p_end}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt update_varlist}
 {p_end}
 
@@ -92,13 +92,13 @@ e(cmdline), c(N), and the key-value pairs. EG: {it:6156-6557-65206297.ster}.{p_e
 {p 12 14 2} (3) sort_depvar: the position of the variable in the table (column wise).{p_end}
 {p 12 14 2} (4) sort_indepvar: the position of the variable in the table (row wise).{p_end}
 
-{pmore}The filename is {it:varlist.tsv}. Only update that file. After updating, run {estdb update_varlist}
-again (no need if also running {it: estdb build_index}.{p_end}
+{pmore}The filename is {it:varlist.tsv}. Only update that file. After updating, run {quipu update_varlist}
+again (no need if also running {it: quipu build_index}.{p_end}
 
   {bf:(optional)} {title:Inspecting the Estimates Index}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt tab:ulate}
 [{help if}]
 {p_end}
@@ -110,7 +110,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
 {pmore}Also lists all keys and lists the links to the .sest files.{p_end}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt li:st}
 [{help if}]
 {p_end}
@@ -124,7 +124,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
 {pmore}To save space, constant variables are listed first in a separate table.{p_end}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt br:owse}
 [{help if}]
 {p_end}
@@ -132,7 +132,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
 {pmore}Browse results that match a condition.{p_end}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt replay}
 [{help if}]
 {p_end}
@@ -140,7 +140,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
 {pmore}Replay results that match a condition.{p_end}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt table}
 [{help if}]
 {p_end}
@@ -153,7 +153,7 @@ again (no need if also running {it: estdb build_index}.{p_end}
   {bf:(4)} {title:Building Tables}
 
 {phang}
-{cmd:estdb}
+{cmd:quipu}
 {opt export}
 [{help if}]
 [{help using} FilenameWithoutExtension]
@@ -188,17 +188,17 @@ so most {cmd:esttab} and {cmd:estout} options are supported.{p_end}
 
   {bf:(optional)} {title:Seldom-Used Convenience Subcommands}
 
-{phang}{cmd:estdb} {opt view} [{it:FILENAME}]{p_end}
+{phang}{cmd:quipu} {opt view} [{it:FILENAME}]{p_end}
 
 {pmore}Replays the estimates table; useful when double clicking a .ster file.{p_end}
 
 {synopt:{it:FILENAME}} relative or absolute filename to view.{p_end}
 
-{phang}{cmd:estdb} {opt associate}{p_end}
+{phang}{cmd:quipu} {opt associate}{p_end}
 
-{pmore}(Windows only) Register .ster files with the current Stata binary , to be opened with {cmd: estdb view}.{p_end}
+{pmore}(Windows only) Register .ster files with the current Stata binary , to be opened with {cmd: quipu view}.{p_end}
 
-{phang}{cmd:estdb} {opt use} [{help if}] {p_end}
+{phang}{cmd:quipu} {opt use} [{help if}] {p_end}
 {pmore}Internal subcommand that just loads the index dataset;
 used by {opt export}, {opt tab:ulate}, {opt li:st}, etc.{p_end}
 

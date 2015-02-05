@@ -2,18 +2,18 @@
 	clear all
 	cls
 	set more off
-	local repo "D:\Github\estdb"
+	local repo "D:\Github\quipu"
 	cd "`repo'\source"
 	*qui adopath + "`repo'\source"
-	estdb setpath "`repo'\test/tmp" // , append
+	quipu setpath "`repo'\test/tmp" // , append
 
-	estdb tabulate // if ..
-	*estdb list if ..
-	*estdb browse if ..
-	*estdb table if ..
+	quipu tabulate // if ..
+	*quipu list if ..
+	*quipu browse if ..
+	*quipu table if ..
 
 * Build latex table
-	estdb export if depvar=="price" using "`repo'\test\tmp" , as(tex pdf) replace view
+	quipu export if depvar=="price" using "`repo'\test\tmp" , as(tex pdf) replace view
 
 exit
 * TODO: Cleanup
@@ -22,9 +22,9 @@ PROBLEMA: Me sale que option filename es missing si using no esta! pero eso enre
 PROBLEMA: HACER Q VIEW NO SEA REQD
 
 
-estdb export ... using "foobar.pdf"
-estdb export ... using "foobar.tex"
-estdb export ... using "foobar.html"
+quipu export ... using "foobar.pdf"
+quipu export ... using "foobar.tex"
+quipu export ... using "foobar.html"
 
 
 QUITAR AS Y USAR IMPLICITA LA EXTENSIONs

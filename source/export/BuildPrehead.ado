@@ -16,10 +16,10 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
-	global estdb_prehead $ENTER\begin{comment} ///
-		"$TAB`hr' ESTDB - Stata Regression `hr'" ///
+	global quipu_prehead $ENTER\begin{comment} ///
+		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
 		`"$TAB - Criteria: `ifcond'"' ///
-		`"$TAB - Estimates: ${estdb_path}"' ///
+		`"$TAB - Estimates: ${quipu_path}"' ///
 		"\end{comment}" ///
 		"`wrapper'" ///
 		"$BACKSLASH`size_name'" ///
@@ -27,11 +27,11 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
 		"\centering" /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
 		"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}" /// Different line for table number and table title
 		"\begin{ThreePartTable}" ///
-		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${estdb_footnotes}$ENTER$TAB\end{TableNotes}" ///
+		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
 		"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
 		"$TAB\caption{`title'}\label{table:`label'} \\" ///
 		"$TAB\toprule\endfirsthead" ///
 		"$TAB\midrule\endhead" ///
 		"$TAB\midrule\endfoot" ///
-		"$TAB\${estdb_insertnote}\endlastfoot"
+		"$TAB\${quipu_insertnote}\endlastfoot"
 end

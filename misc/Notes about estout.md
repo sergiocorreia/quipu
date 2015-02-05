@@ -1,8 +1,8 @@
-Estout is quite complex; these are some notes on how to call it from estdb report.
+Estout is quite complex; these are some notes on how to call it from quipu report.
 Source: http://repec.org/bocode/e/estout/hlp_estout.html#ref
 
 # Usage
-`estout estdb* using OUTPUTFILE.EXT , OPTIONS`
+`estout quipu* using OUTPUTFILE.EXT , OPTIONS`
 
 # Options
 
@@ -147,12 +147,12 @@ bla bla bla bla, as seen in table-robust-iv
 ~~~
 
 This will
-1) build the cmd: estdb using NAME if CONDITION, DEFOPT OPTIONS title(...)
+1) build the cmd: quipu using NAME if CONDITION, DEFOPT OPTIONS title(...)
 2) Automatically create the label ESTIMATES:ROBUST-IV (in lowercase)
 
 At the end, we will end up with a DO FILE in the ./estimates folder, which we will run if estimates-update is TRUE
 
-all the estdb commands will create .tex files with the expected names
+all the quipu commands will create .tex files with the expected names
 
 then when stata is done and exits, we will go back to the pandoc filter and insert the .tex files
 

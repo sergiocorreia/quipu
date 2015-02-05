@@ -1,6 +1,6 @@
 * Run this after a command, or together with <prefix : cmd>
-* [SYNTAX 1] estdb add, notes(..) [prefix(..)] // after estdb setpath ..
-* [SYNTAX 2] estdb add, notes(..) filename(..)
+* [SYNTAX 1] quipu add, notes(..) [prefix(..)] // after quipu setpath ..
+* [SYNTAX 2] quipu add, notes(..) filename(..)
 cap pr drop Add
 program define Add, eclass
 	
@@ -21,8 +21,8 @@ program define Add, eclass
 
 	* Get or create filename
 	if !`has_filename' {
-		local path $estdb_path
-		assert_msg `"`path'"'!="",  msg("Don't know where to save the .sest file! Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+		local path $quipu_path
+		assert_msg `"`path'"'!="",  msg("Don't know where to save the .sest file! Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 		* Make up a filename
 		mata: st_local("cmd_hash", strofreal(hash1(`"`e(cmdline)'"', 1e8), "%30.0f"))
 		mata: st_local("obs_hash", strofreal(hash1("`c(N)'", 1e4), "%30.0f"))

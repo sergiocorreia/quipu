@@ -3,9 +3,9 @@ program define BuildPDF
 syntax, filename(string) latex_engine(string) VIEW [*]
 
 	* PDF preface and epilogue
-	qui findfile estdb-top.tex.ado
+	qui findfile quipu-top.tex.ado
 	local fn_top = r(fn)
-	qui findfile estdb-bottom.tex.ado
+	qui findfile quipu-bottom.tex.ado
 	local fn_bottom = r(fn)
 
 
@@ -16,7 +16,7 @@ syntax, filename(string) latex_engine(string) VIEW [*]
 	}
 	local substitute `substitute' "\_cons " Constant "..." "\ldots"
 
-	local cmd esttab estdb* using "`filename'.tex"
+	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'

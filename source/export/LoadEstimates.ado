@@ -4,7 +4,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) keepusing(sort_depvar) nogen nolabel nonotes
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) keepusing(sort_depvar) nogen nolabel nonotes
 	rename varname depvar
 	assert "${indepvars}"=="" // bugbug drop
 
@@ -66,7 +66,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		estimates title: "`fn'"
 		local indepvars : colnames e(b)
 		local indepvarlist : list indepvarlist | indepvars
-		estimates store estdb`i', nocopy
+		estimates store quipu`i', nocopy
 	}
 	global indepvars `indepvarlist'
 end

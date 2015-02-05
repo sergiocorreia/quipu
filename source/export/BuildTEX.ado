@@ -8,7 +8,7 @@ syntax, filename(string) [*]
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
 	local substitute `substitute' "\_cons " Constant
-	local cmd esttab estdb* using "`filename'.tex"
+	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	RunCMD `cmd', `tex_opt' `options'
 end

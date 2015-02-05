@@ -1,4 +1,4 @@
-* Default Styles for -estdb.ado-
+* Default Styles for -quipu.ado-
 * Based on estout_mystyle.def, version 1.1.0  02jun2014  Ben Jann
 * Source: http://fmwww.bc.edu/repec/bocode/e/estout_mystyle.def
 * Note: only comments allowed are: *, // and ///

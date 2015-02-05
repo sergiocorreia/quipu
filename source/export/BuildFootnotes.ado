@@ -14,18 +14,18 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' `sign' `num'"
 	}
 
-	local sep1 = cond("${estdb_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
-	local sep2 = cond("${estdb_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
-	local note "\Note{${estdb_vcenote}`sep1'`starnote'`sep2'`note'}"
+	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
+	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
+	local note "\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"
 
-	if (`"${estdb_footnotes}"'!="") {
-		global estdb_footnotes `"${estdb_footnotes}${ENTER}$TAB$TAB`note'"'
+	if (`"${quipu_footnotes}"'!="") {
+		global quipu_footnotes `"${quipu_footnotes}${ENTER}$TAB$TAB`note'"'
 	}
 	else {
-		global estdb_footnotes `"`note'"'
+		global quipu_footnotes `"`note'"'
 	}
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
-	if (`"$estdb_footnotes"'!="") global estdb_insertnote "\insertTableNotes"
-	global estdb_starlevels starlevels(`starlevels')
+	if (`"$quipu_footnotes"'!="") global quipu_insertnote "\insertTableNotes"
+	global quipu_starlevels starlevels(`starlevels')
 end

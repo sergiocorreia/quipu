@@ -1,5 +1,5 @@
 
-# ESTDB
+# QUIPU
 
 ## Usage
 
@@ -8,9 +8,9 @@ This is an experimental package intended for personal use.
 ## Installation
 
 ```stata
-cap ado uninstall estdb
-net from https://raw.githubusercontent.com/sergiocorreia/estdb/master/package/
-net install estdb
+cap ado uninstall quipu
+net from https://raw.githubusercontent.com/sergiocorreia/quipu/master/package/
+net install quipu
 ```
 
 ## Abstracting

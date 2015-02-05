@@ -5,9 +5,9 @@
 cap pr drop Build_Index
 program define Build_Index
 	syntax , [keys(namelist local)] //  [Recursive] -> Always on one level
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
-	di as text `"estdb: saving index files on <`path'>"'
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
+	di as text `"quipu: saving index files on <`path'>"'
 
 	clear
 	clear results
@@ -37,7 +37,7 @@ program define Build_Index
 	sort path filename // fullpath
 	qui compress
 	order path filename /* fullpath */ time
-	la data "ESTDB.ADO - Index of .ster files (Stata Estimation Results)"
+	la data "QUIPU.ADO - Index of .ster files (Stata Estimation Results)"
 	format %tc time
 	
 	local fn "`path'/index"
@@ -89,7 +89,7 @@ program define Build_Index
 	if _rc==601 {
 		tempname fh
 		file open `fh' using `"`fn'"', write text
-		file write `fh' "* Key-Value Metadata for ESTDB" _n
+		file write `fh' "* Key-Value Metadata for QUIPU" _n
 		file write `fh' "*  - You can set headers with #, ##, etc." _n
 		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
 		file write `fh' "somekey: Some value" _n _n

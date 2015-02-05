@@ -14,11 +14,11 @@ program define CompilePDF
 
 	tempfile stderr stdout
 	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
-	if ($estdb_verbose<=1) local quiet "-quiet"
+	if ($quipu_verbose<=1) local quiet "-quiet"
 	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
-	if ($estdb_verbose>1) noi type "`stderr'"
-	if ($estdb_verbose>1) di as text "{hline}"
-	if ($estdb_verbose>1) noi type "`stdout'"
+	if ($quipu_verbose>1) noi type "`stderr'"
+	if ($quipu_verbose>1) di as text "{hline}"
+	if ($quipu_verbose>1) noi type "`stdout'"
 	cap conf file "`filename'.pdf"
 	if _rc==601 {
 		di as error "(pdf could not be created - run with -verbose(2)- to see details)"

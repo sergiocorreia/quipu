@@ -17,7 +17,7 @@ program define AddFootnote, rclass
 		mata: st_local("symbol", tokenget(symboltoken))
 		mata: asarray(symboldict, "`footnote'", "`symbol'")
 		assert_msg ("`symbol'"!=""), msg("we run out of footnote symbols")
-		global estdb_footnotes "${estdb_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
+		global quipu_footnotes "${quipu_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
 	}
 	local symbolcell "\tnote{`symbol'}"
 	return local symbolcell "`symbolcell'"

@@ -19,7 +19,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 	}
 
 	rename depvar varname
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes ///
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
 		 keepusing(varlabel footnote)
 	sort _index_ // rearrange
 	rename varname depvar
@@ -92,6 +92,6 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		}
 	}
 	local ans "`ans'`header_end'"
-	global estdb_header `"`ans'"'
+	global quipu_header `"`ans'"'
 	drop varlabel footnote
 end

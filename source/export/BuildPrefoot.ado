@@ -1,4 +1,4 @@
 capture program drop BuildPrefoot
 program define BuildPrefoot
-	global estdb_prefoot "$TAB\midrule"
+	global quipu_prefoot "$TAB\midrule"
 end

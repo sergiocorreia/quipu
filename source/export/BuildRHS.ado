@@ -12,7 +12,7 @@ syntax, [rename(string asis) drop(string asis)]
 		gettoken indepvar indepvars : indepvars
 		qui replace varname = "`indepvar'" in `i'
 	}
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes ///
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
 		keepusing(varlabel footnote sort_indepvar sort_depvar)
 
 	* Drop variables
@@ -23,7 +23,7 @@ syntax, [rename(string asis) drop(string asis)]
 			qui replace dropit = 1 if regexm(varname, "^`s1'$")
 		}
 		qui levelsof varname if dropit, local(rhsdrop) clean
-		if ($estdb_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		if ($quipu_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
 		qui drop if dropit
 		drop dropit
 	}
@@ -45,14 +45,14 @@ syntax, [rename(string asis) drop(string asis)]
 			local renamed = renamed[`i']
 			if (`renamed') {
 				local rhsrename `rhsrename' `=original[`i']' `=varname[`i']'
-				if ($estdb_verbose>0) {
+				if ($quipu_verbose>0) {
 					local notice `"`notice' as text " `=original[`i']'" as result " `=varname[`i']'""'
 				}
 			}
 		}
 
 		if (`"`rhsrename'"'!="") {
-			if ($estdb_verbose>0) di as text "(renaming variables:" `notice' as text ")"
+			if ($quipu_verbose>0) di as text "(renaming variables:" `notice' as text ")"
 
 			* We don't want the labels of a renamed variable (else, why did we rename it?)
 			replace varlabel = "" if renamed
@@ -88,5 +88,5 @@ syntax, [rename(string asis) drop(string asis)]
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
-	global estdb_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
 end

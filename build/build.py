@@ -4,7 +4,7 @@
 build
 ~~~~~~~~~~~~~~~
 
-Puts together all files for estdb.ado and place them in the ../package folder
+Puts together all files for quipu.ado and place them in the ../package folder
 You need to run this from the /build folder
 
 Note: Wrote in Python 2.7 but should work with Python 3.
@@ -27,7 +27,7 @@ import os, time, re, shutil
 # Constants
 source_path = u"../source"
 server_path = u"../package"
-fns = ["estdb.ado", "estdb_export.ado"]
+fns = ["quipu.ado", "quipu_export.ado"]
 
 # Update the main ADO files
 for fn in fns:
@@ -57,17 +57,17 @@ for fn in fns:
 	    new_fh.write(data)
 
 # Update reghdfe.pkg
-print("updating date in estdb.pkg")
-full_pkg = os.path.join(source_path, u"estdb.pkg")
+print("updating date in quipu.pkg")
+full_pkg = os.path.join(source_path, u"quipu.pkg")
 pkg = open(full_pkg, "rb").read()
 today = time.strftime("%Y%m%d")
 pkg = re.sub(ur'Distribution-Date: \d+', ur'Distribution-Date: ' + today, pkg)
 open(full_pkg, 'wb').write(pkg)
-shutil.copy(full_pkg, os.path.join(server_path, u"estdb.pkg"))
+shutil.copy(full_pkg, os.path.join(server_path, u"quipu.pkg"))
 
 # Copy
 print("Copying misc files...")
-fns = ["estdb.sthlp", "stata.toc", "estdb-associate-template.reg.ado", "estdb-top.tex.ado", "estdb-bottom.tex.ado"]
+fns = ["quipu.sthlp", "stata.toc", "quipu-associate-template.reg.ado", "quipu-top.tex.ado", "quipu-bottom.tex.ado"]
 for fn in fns:
 	shutil.copy(os.path.join(source_path, fn), os.path.join(server_path, fn))
 

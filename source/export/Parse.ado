@@ -23,7 +23,7 @@ program define Parse
 	* Note: Remember to update any changes here before the bottom c_local!
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
-	global estdb_verbose `verbose'
+	global quipu_verbose `verbose'
 
 	* Syntax can't handle -if- ot in dataset
 	* Will save locals filename (path+filename, w/out extension) and ifcond
@@ -52,10 +52,10 @@ program define Parse
 	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
 		rename drop header cellformat metadata options
-	if ($estdb_verbose>1) di as text "Parsed options:"
+	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
-			if ($estdb_verbose>1) di as text `"  `name' = "' as result `"``name''"'
+			if ($quipu_verbose>1) di as text `"  `name' = "' as result `"``name''"'
 			c_local `name' `"``name''"'
 		}
 	}

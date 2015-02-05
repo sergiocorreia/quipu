@@ -4,13 +4,13 @@ program define Setpath
 	syntax anything(everything name=path id=path) , [REPLACE APPEND]
 	
 	local path `path' // Remove the quotes
-	global estdb_path // set to empty
+	global quipu_path // set to empty
 	cap mkdir `path' // Try to create the path in case it doesn't exist
 
 	* Check that the path is writeable
 	local fn `path'/deletethis
-	qui file open estdb_handle using `fn', write replace
-	file close estdb_handle
+	qui file open quipu_handle using `fn', write replace
+	file close quipu_handle
 	erase `fn'
 
 	if ("`append'"=="") {
@@ -18,7 +18,7 @@ program define Setpath
 		local empty = (`"`files'"'=="")
 
 		if ("`replace'"=="") {
-			assert_msg `empty', msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
+			assert_msg `empty', msg("quipu error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
 		}
 		else if ("`replace'"!="" & !`empty') {
 			local pattern "`path'/*.ster"
@@ -34,8 +34,8 @@ program define Setpath
 		}
 	}
 	else {
-		assert_msg ("`replace'"==""), msg("estdb setpath: options -replace- and -append- are mutually exclusive")
+		assert_msg ("`replace'"==""), msg("quipu setpath: options -replace- and -append- are mutually exclusive")
 	}
-	global estdb_path `path'
+	global quipu_path `path'
 end
 

@@ -1,8 +1,8 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB - Save and manage regr. estimates and export tables via -estout-
+// QUIPU - Save and manage regr. estimates and export tables via -estout-
 // -------------------------------------------------------------------------------------------------
-capture program drop estdb
-program define estdb
+capture program drop quipu
+program define quipu
 	local subcmd_list1 associate setpath add build_index update_varlist view
 	local subcmd_list2 use tabulate list browse table export replay
 
@@ -19,9 +19,9 @@ program define estdb
 	local subcmd_commas1 : subinstr local subcmd_list1 " "   `"", ""', all
 	local subcmd_commas2 : subinstr local subcmd_list2 " "   `"", ""', all
 	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
-	 	msg("Valid subcommands for -estdb- are: " as input "`subcmd_list1' `subcmd_list2'")
+	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
-	if ("`subcmd'"=="Export") local subcmd estdb_export
+	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
 end
 

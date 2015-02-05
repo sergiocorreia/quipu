@@ -25,7 +25,7 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 		}
 	}
 	if (`use_default') local stats `stats' `morestats'
-	if ($estdb_verbose>1) di as text "(stats included: " as result "`stats'" as text ")"
+	if ($quipu_verbose>1) di as text "(stats included: " as result "`stats'" as text ")"
 
 	* List of common stats with their label and desired format
 	local labels_N			"Observations"
@@ -76,5 +76,5 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 	local numstats : word count `stats'
 	local statlayout = "`layout'" * `numstats'
 
-	global estdb_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
+	global quipu_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
 end

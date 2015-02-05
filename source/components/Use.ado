@@ -8,8 +8,8 @@ program define Use, rclass
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"
 	}
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
 	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)

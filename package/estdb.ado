@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB - Save and manage regr. estimates and export tables via -estout-
+// QUIPU - Save and manage regr. estimates and export tables via -estout-
 // -------------------------------------------------------------------------------------------------
-program define estdb
+program define quipu
 	local subcmd_list1 associate setpath add build_index update_varlist view
 	local subcmd_list2 use tabulate list browse table export replay
 
@@ -18,16 +18,16 @@ program define estdb
 	local subcmd_commas1 : subinstr local subcmd_list1 " "   `"", ""', all
 	local subcmd_commas2 : subinstr local subcmd_list2 " "   `"", ""', all
 	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
-	 	msg("Valid subcommands for -estdb- are: " as input "`subcmd_list1' `subcmd_list2'")
+	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
-	if ("`subcmd'"=="Export") local subcmd estdb_export
+	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
 end
 
 	
 * Associate .ster files with stata, so you can double click and view them
 program define Associate
-	assert_msg ("`c(os)'"=="Windows"), msg("estdb can only associate .ster files on Windows")
+	assert_msg ("`c(os)'"=="Windows"), msg("quipu can only associate .ster files on Windows")
 	local fn "associate-ster.reg"
 		
 	local path_binary : sysdir STATA
@@ -50,7 +50,7 @@ program define Associate
 	local binary : subinstr local binary "/" "\", all
 	di as text "Stata binary: `binary'"
 	local binary : subinstr local binary "\" "\BS\BS", all
-	qui findfile "estdb-associate-template.reg.ado"
+	qui findfile "quipu-associate-template.reg.ado"
 	local template `r(fn)'
 
 	tempfile regfile
@@ -68,13 +68,13 @@ program define Setpath
 	syntax anything(everything name=path id=path) , [REPLACE APPEND]
 	
 	local path `path' // Remove the quotes
-	global estdb_path // set to empty
+	global quipu_path // set to empty
 	cap mkdir `path' // Try to create the path in case it doesn't exist
 
 	* Check that the path is writeable
 	local fn `path'/deletethis
-	qui file open estdb_handle using `fn', write replace
-	file close estdb_handle
+	qui file open quipu_handle using `fn', write replace
+	file close quipu_handle
 	erase `fn'
 
 	if ("`append'"=="") {
@@ -82,7 +82,7 @@ program define Setpath
 		local empty = (`"`files'"'=="")
 
 		if ("`replace'"=="") {
-			assert_msg `empty', msg("estdb error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
+			assert_msg `empty', msg("quipu error: folder <`path'> already contains saved estimates! Use the option -append- or -replace-")
 		}
 		else if ("`replace'"!="" & !`empty') {
 			local pattern "`path'/*.ster"
@@ -98,16 +98,16 @@ program define Setpath
 		}
 	}
 	else {
-		assert_msg ("`replace'"==""), msg("estdb setpath: options -replace- and -append- are mutually exclusive")
+		assert_msg ("`replace'"==""), msg("quipu setpath: options -replace- and -append- are mutually exclusive")
 	}
-	global estdb_path `path'
+	global quipu_path `path'
 end
 
 
 	
 * Run this after a command, or together with <prefix : cmd>
-* [SYNTAX 1] estdb add, notes(..) [prefix(..)] // after estdb setpath ..
-* [SYNTAX 2] estdb add, notes(..) filename(..)
+* [SYNTAX 1] quipu add, notes(..) [prefix(..)] // after quipu setpath ..
+* [SYNTAX 2] quipu add, notes(..) filename(..)
 program define Add, eclass
 	
 	* Parse (with our without colon)
@@ -127,8 +127,8 @@ program define Add, eclass
 
 	* Get or create filename
 	if !`has_filename' {
-		local path $estdb_path
-		assert_msg `"`path'"'!="",  msg("Don't know where to save the .sest file! Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+		local path $quipu_path
+		assert_msg `"`path'"'!="",  msg("Don't know where to save the .sest file! Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 		* Make up a filename
 		mata: st_local("cmd_hash", strofreal(hash1(`"`e(cmdline)'"', 1e8), "%30.0f"))
 		mata: st_local("obs_hash", strofreal(hash1("`c(N)'", 1e4), "%30.0f"))
@@ -180,9 +180,9 @@ end
 * - recursive only goes ONE level deep!!!
 program define Build_Index
 	syntax , [keys(namelist local)] //  [Recursive] -> Always on one level
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
-	di as text `"estdb: saving index files on <`path'>"'
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
+	di as text `"quipu: saving index files on <`path'>"'
 
 	clear
 	clear results
@@ -212,7 +212,7 @@ program define Build_Index
 	sort path filename // fullpath
 	qui compress
 	order path filename /* fullpath */ time
-	la data "ESTDB.ADO - Index of .ster files (Stata Estimation Results)"
+	la data "QUIPU.ADO - Index of .ster files (Stata Estimation Results)"
 	format %tc time
 	
 	local fn "`path'/index"
@@ -264,7 +264,7 @@ program define Build_Index
 	if _rc==601 {
 		tempname fh
 		file open `fh' using `"`fn'"', write text
-		file write `fh' "* Key-Value Metadata for ESTDB" _n
+		file write `fh' "* Key-Value Metadata for QUIPU" _n
 		file write `fh' "*  - You can set headers with #, ##, etc." _n
 		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
 		file write `fh' "somekey: Some value" _n _n
@@ -332,8 +332,8 @@ syntax, path(string) filename(string) keys(string) pos(integer)
 	*assert fullpath!="" in 1/`pos'
 end
 program define Update_Varlist
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	conf file "`path'/varlist_template.dta"
 
 	* Backup if possible
@@ -375,13 +375,13 @@ program define Update_Varlist
 	qui export delimited "`fn'", replace nolabel delim(tab) quote
 	cap drop unused
 
-	la data "ESTDB Table Labels - AUTOGENERATED FILE, don't update directly"
+	la data "QUIPU Table Labels - AUTOGENERATED FILE, don't update directly"
 	qui save "`path'/varlist", replace
 	
-	*di as text "estdb: update done, you can edit " as result "`fn'"
-	di as text _n "estdb: update done, you can now edit " _c
+	*di as text "quipu: update done, you can edit " as result "`fn'"
+	di as text _n "quipu: update done, you can now edit " _c
 	di as smcl `"{stata "shell `fn'":`fn'}"' _c
-	di as smcl `" and update any changes with {stata estdb update}"'.
+	di as smcl `" and update any changes with {stata quipu update}"'.
 	clear
 end
 
@@ -422,8 +422,8 @@ program define Use, rclass
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"
 	}
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
 	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
@@ -471,7 +471,7 @@ syntax [anything(everything)] , [*]
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
 		di %3.0f `i' _c
-		di as text `"{stata "estdb view `fn'" : `fn' } "'
+		di as text `"{stata "quipu view `fn'" : `fn' } "'
 	}
 
 	drop path filename time
@@ -510,24 +510,24 @@ syntax [anything(everything)] , [*]
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
 		di as text _n "{bf:replay `i'/`c(N)':}"
-		estdb view "`fn'"
+		quipu view "`fn'"
 		di as text "{hline}"
 	}
 	clear
 end
 program define Table
 syntax [anything(everything)] , [*]
-	cap estimates drop estdb*
+	cap estimates drop quipu*
 	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
 		estimates use "`fn'"
 		estimates title: "`fn'"
-		estimates store estdb`i', nocopy
+		estimates store quipu`i', nocopy
 	}
 	clear
 	estimates table _all , `options'
-	estimates drop estdb*
+	estimates drop quipu*
 end
 
 

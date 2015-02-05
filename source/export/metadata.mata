@@ -7,7 +7,7 @@ mata set matastrict off
 void read_metadata()
 {
 	external metadata
-	fn = st_global("estdb_path") + "/" + "metadata.txt"
+	fn = st_global("quipu_path") + "/" + "metadata.txt"
 	fh = fopen(fn, "r")
 	metadata = asarray_create() // container dict
 	headers = J(1, 5, "")
@@ -52,7 +52,7 @@ void read_metadata()
 	}
 	fclose(fh)
 	if (is_verbose) {
-		printf("{txt}(%s key-value pairs added to estdb metadata)\n", strofreal(i))
+		printf("{txt}(%s key-value pairs added to quipu metadata)\n", strofreal(i))
 	}
 }
 end

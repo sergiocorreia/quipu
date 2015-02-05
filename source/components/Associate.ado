@@ -1,7 +1,7 @@
 * Associate .ster files with stata, so you can double click and view them
 capture program drop Associate
 program define Associate
-	assert_msg ("`c(os)'"=="Windows"), msg("estdb can only associate .ster files on Windows")
+	assert_msg ("`c(os)'"=="Windows"), msg("quipu can only associate .ster files on Windows")
 	local fn "associate-ster.reg"
 		
 	local path_binary : sysdir STATA
@@ -24,7 +24,7 @@ program define Associate
 	local binary : subinstr local binary "/" "\", all
 	di as text "Stata binary: `binary'"
 	local binary : subinstr local binary "\" "\BS\BS", all
-	qui findfile "estdb-associate-template.reg.ado"
+	qui findfile "quipu-associate-template.reg.ado"
 	local template `r(fn)'
 
 	tempfile regfile

@@ -1,6 +1,6 @@
 v 3
 d Sergio Correia, Duke University (sergio.correia@duke.edu)
-p estdb ESTDB - Manage Estimation Results and Tables (wraps estout)
+p quipu QUIPU - Manage Estimation Results and Tables (wraps estout)
 
 * l word-to-show path-or-url [description]
 * t: Directories within site:

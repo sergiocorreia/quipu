@@ -11,7 +11,7 @@ syntax [anything(everything)] , [*]
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
 		di %3.0f `i' _c
-		di as text `"{stata "estdb view `fn'" : `fn' } "'
+		di as text `"{stata "quipu view `fn'" : `fn' } "'
 	}
 
 	drop path filename time

@@ -1,11 +1,11 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB_EXPORT - Exports the Estimation Tables
+// QUIPU_EXPORT - Exports the Estimation Tables
 // -------------------------------------------------------------------------------------------------
 /// SYNTAX
-/// estdb export [using] [if] , as(..) [estdb_options] [esttab_options] [estout_options]
+/// quipu export [using] [if] , as(..) [quipu_options] [esttab_options] [estout_options]
 
-capture program drop estdb_export
-program define estdb_export
+capture program drop quipu_export
+program define quipu_export
 	*preserve
 	nobreak {
 		Cleanup // Ensure globals start empty

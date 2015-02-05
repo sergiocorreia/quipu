@@ -1,9 +1,9 @@
 // -------------------------------------------------------------------------------------------------
-// ESTDB_EXPORT - Exports the Estimation Tables
+// QUIPU_EXPORT - Exports the Estimation Tables
 // -------------------------------------------------------------------------------------------------
 /// SYNTAX
-/// estdb export [using] [if] , as(..) [estdb_options] [esttab_options] [estout_options]
-program define estdb_export
+/// quipu export [using] [if] , as(..) [quipu_options] [esttab_options] [estout_options]
+program define quipu_export
 	*preserve
 	nobreak {
 		Cleanup // Ensure globals start empty
@@ -26,18 +26,18 @@ program define Export
 	LoadEstimates `header' // Loads estimates and sort them in the correct order
 
 	BuildPrehead, colformat(`colformat') title(`title') label(`label') ifcond(`"`ifcond'"') orientation(`orientation') size(`size')	
-	BuildHeader `header' // Build header and saves it in $estdb_header (passed to posthead)
+	BuildHeader `header' // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats'
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
-	BuildRHS, rename(`rename') drop(`drop') // $estdb_rhsoptions -> rename() drop() varlabels() order()
+	BuildRHS, rename(`rename') drop(`drop') // $quipu_rhsoptions -> rename() drop() varlabels() order()
 	BuildPrefoot
 	BuildPostfoot, orientation(`orientation') size(`size') `pagebreak'
-	BuildFootnotes, notes(`notes') stars(`stars') // Updates $estdb_footnotes
+	BuildFootnotes, notes(`notes') stars(`stars') // Updates $quipu_footnotes
 
-	if ($estdb_verbose>1) local noisily noisily
-	local prepost prehead($estdb_prehead) posthead($estdb_header) prefoot($estdb_prefoot) postfoot($estdb_postfoot)
-	local base_opt `noisily' $estdb_rhsoptions $estdb_starlevels mlabels(none) nonumbers `cellformat' ${estdb_stats} `prepost'
+	if ($quipu_verbose>1) local noisily noisily
+	local prepost prehead($quipu_prehead) posthead($quipu_header) prefoot($quipu_prefoot) postfoot($quipu_postfoot)
+	local base_opt `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
 	if ("`html'"!="") BuildHTML, filename(`filename') `base_opt' `options'
 	if ("`pdf'"!="") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
 	if ("`tex'"!="") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
@@ -68,7 +68,7 @@ program define Parse
 	* Note: Remember to update any changes here before the bottom c_local!
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
-	global estdb_verbose `verbose'
+	global quipu_verbose `verbose'
 
 	* Syntax can't handle -if- ot in dataset
 	* Will save locals filename (path+filename, w/out extension) and ifcond
@@ -99,10 +99,10 @@ program define Parse
 	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
 		rename drop header cellformat metadata options
-	if ($estdb_verbose>1) di as text "Parsed options:"
+	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
-			if ($estdb_verbose>1) di as text `"  `name' = "' as result `"``name''"'
+			if ($quipu_verbose>1) di as text `"  `name' = "' as result `"``name''"'
 			c_local `name' `"``name''"'
 		}
 	}
@@ -140,7 +140,7 @@ program define Initialize
 	global BACKSLASH "`=char(92)'"
 	
 	* Load metadata
-	if ($estdb_verbose>1) di as text "(loading metadata)"
+	if ($quipu_verbose>1) di as text "(loading metadata)"
 	mata: read_metadata()
 
 	* Additional metadata from the options
@@ -151,7 +151,7 @@ program define Initialize
 	}
 
 	* Clear potentialy possible previous estimates (from e.g. a failed run)
-	cap estimates drop estdb*
+	cap estimates drop quipu*
 
 	* Symbol mess
 	mata: symboltoken = tokeninit()
@@ -169,21 +169,21 @@ program define Cleanup
 	global ENTER
 	global BACKSLASH
 	global indepvars
-	global estdb_verbose
+	global quipu_verbose
 
-	global estdb_prehead
-	global estdb_header
-	global estdb_footnotes
-	global estdb_insertnote
-	global estdb_rhsoptions
-	global estdb_prefoot
-	global estdb_postfoot
-	global estdb_starlevels
-	global estdb_vcenote
-	global estdb_stats
+	global quipu_prehead
+	global quipu_header
+	global quipu_footnotes
+	global quipu_insertnote
+	global quipu_rhsoptions
+	global quipu_prefoot
+	global quipu_postfoot
+	global quipu_starlevels
+	global quipu_vcenote
+	global quipu_stats
 
 	clear
-	cap estimates drop estdb*
+	cap estimates drop quipu*
 	local mata_objects metadata symboltoken symbols symboldict
 	foreach obj of local mata_objects {
 		cap mata: mata drop `obj'
@@ -194,7 +194,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) keepusing(sort_depvar) nogen nolabel nonotes
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) keepusing(sort_depvar) nogen nolabel nonotes
 	rename varname depvar
 	assert "${indepvars}"=="" // bugbug drop
 
@@ -256,7 +256,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		estimates title: "`fn'"
 		local indepvars : colnames e(b)
 		local indepvarlist : list indepvarlist | indepvars
-		estimates store estdb`i', nocopy
+		estimates store quipu`i', nocopy
 	}
 	global indepvars `indepvarlist'
 end
@@ -280,10 +280,10 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
-	global estdb_prehead $ENTER\begin{comment} ///
-		"$TAB`hr' ESTDB - Stata Regression `hr'" ///
+	global quipu_prehead $ENTER\begin{comment} ///
+		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
 		`"$TAB - Criteria: `ifcond'"' ///
-		`"$TAB - Estimates: ${estdb_path}"' ///
+		`"$TAB - Estimates: ${quipu_path}"' ///
 		"\end{comment}" ///
 		"`wrapper'" ///
 		"$BACKSLASH`size_name'" ///
@@ -291,13 +291,13 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
 		"\centering" /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
 		"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}" /// Different line for table number and table title
 		"\begin{ThreePartTable}" ///
-		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${estdb_footnotes}$ENTER$TAB\end{TableNotes}" ///
+		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
 		"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
 		"$TAB\caption{`title'}\label{table:`label'} \\" ///
 		"$TAB\toprule\endfirsthead" ///
 		"$TAB\midrule\endhead" ///
 		"$TAB\midrule\endfoot" ///
-		"$TAB\${estdb_insertnote}\endlastfoot"
+		"$TAB\${quipu_insertnote}\endlastfoot"
 end
 program define BuildHeader
 syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
@@ -319,7 +319,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 	}
 
 	rename depvar varname
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes ///
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
 		 keepusing(varlabel footnote)
 	sort _index_ // rearrange
 	rename varname depvar
@@ -392,11 +392,11 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		}
 	}
 	local ans "`ans'`header_end'"
-	global estdb_header `"`ans'"'
+	global quipu_header `"`ans'"'
 	drop varlabel footnote
 end
 program define BuildPrefoot
-	global estdb_prefoot "$TAB\midrule"
+	global quipu_prefoot "$TAB\midrule"
 end
 program define BuildVCENote
 syntax, [vcenote(string)]
@@ -407,27 +407,27 @@ syntax, [vcenote(string)]
 			di as error "(cannot autogenerate vce note for vcetype <`vce'>, use -vcenote- option if you don't want it empty)"
 		}
 		else if ("`vce'"=="ols") {
-			global estdb_vcenote "Standard errors in parentheses"
+			global quipu_vcenote "Standard errors in parentheses"
 		}
 		else if ("`vce'"=="robust") {
-			global estdb_vcenote "Robust standard errors in parentheses"
+			global quipu_vcenote "Robust standard errors in parentheses"
 		}
 		else if ("`vce'"=="cluster") {
 			qui levelsof clustvar, missing local(clustvar) clean
 			local cond = `"inlist(varname, ""' + subinstr("`clustvar'", "#", `"", ""', .) + `"")"'
-			qui use varname varlabel if `cond' using "${estdb_path}/varlist", clear
+			qui use varname varlabel if `cond' using "${quipu_path}/varlist", clear
 			qui replace varlabel = varname if missing(varlabel)
 			forval i = 1/`c(N)' {
 				local sep = cond(`i'==1, "", cond(`i'==c(N), " and ", ", "))
 				local varlabel = varlabel[`i']
 				local clustlabel `clustlabel'`sep'`varlabel'
 			}
-			global estdb_vcenote "Robust standard errors in parentheses, clustered by `clustlabel'."
+			global quipu_vcenote "Robust standard errors in parentheses, clustered by `clustlabel'."
 		}
 	}
 
-	if "$estdb_vcenote"=="" {
-		global estdb_vcenote "`vcenote'"
+	if "$quipu_vcenote"=="" {
+		global quipu_vcenote "`vcenote'"
 	}
 	clear // Because we -use-d the dataset
 end
@@ -444,7 +444,7 @@ syntax, [rename(string asis) drop(string asis)]
 		gettoken indepvar indepvars : indepvars
 		qui replace varname = "`indepvar'" in `i'
 	}
-	qui merge m:1 varname using "${estdb_path}/varlist", keep(master match) nogen nolabel nonotes ///
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
 		keepusing(varlabel footnote sort_indepvar sort_depvar)
 
 	* Drop variables
@@ -455,7 +455,7 @@ syntax, [rename(string asis) drop(string asis)]
 			qui replace dropit = 1 if regexm(varname, "^`s1'$")
 		}
 		qui levelsof varname if dropit, local(rhsdrop) clean
-		if ($estdb_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		if ($quipu_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
 		qui drop if dropit
 		drop dropit
 	}
@@ -477,14 +477,14 @@ syntax, [rename(string asis) drop(string asis)]
 			local renamed = renamed[`i']
 			if (`renamed') {
 				local rhsrename `rhsrename' `=original[`i']' `=varname[`i']'
-				if ($estdb_verbose>0) {
+				if ($quipu_verbose>0) {
 					local notice `"`notice' as text " `=original[`i']'" as result " `=varname[`i']'""'
 				}
 			}
 		}
 
 		if (`"`rhsrename'"'!="") {
-			if ($estdb_verbose>0) di as text "(renaming variables:" `notice' as text ")"
+			if ($quipu_verbose>0) di as text "(renaming variables:" `notice' as text ")"
 
 			* We don't want the labels of a renamed variable (else, why did we rename it?)
 			replace varlabel = "" if renamed
@@ -520,7 +520,7 @@ syntax, [rename(string asis) drop(string asis)]
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
-	global estdb_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
 end
 program define BuildStats
 syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string asis)]
@@ -548,7 +548,7 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 		}
 	}
 	if (`use_default') local stats `stats' `morestats'
-	if ($estdb_verbose>1) di as text "(stats included: " as result "`stats'" as text ")"
+	if ($quipu_verbose>1) di as text "(stats included: " as result "`stats'" as text ")"
 
 	* List of common stats with their label and desired format
 	local labels_N			"Observations"
@@ -599,7 +599,7 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 	local numstats : word count `stats'
 	local statlayout = "`layout'" * `numstats'
 
-	global estdb_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
+	global quipu_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
 end
 program define BuildFootnotes
 syntax, stars(string) [notes(string)] [vcnote(string)]
@@ -616,20 +616,20 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' `sign' `num'"
 	}
 
-	local sep1 = cond("${estdb_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
-	local sep2 = cond("${estdb_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
-	local note "\Note{${estdb_vcenote}`sep1'`starnote'`sep2'`note'}"
+	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
+	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
+	local note "\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"
 
-	if (`"${estdb_footnotes}"'!="") {
-		global estdb_footnotes `"${estdb_footnotes}${ENTER}$TAB$TAB`note'"'
+	if (`"${quipu_footnotes}"'!="") {
+		global quipu_footnotes `"${quipu_footnotes}${ENTER}$TAB$TAB`note'"'
 	}
 	else {
-		global estdb_footnotes `"`note'"'
+		global quipu_footnotes `"`note'"'
 	}
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
-	if (`"$estdb_footnotes"'!="") global estdb_insertnote "\insertTableNotes"
-	global estdb_starlevels starlevels(`starlevels')
+	if (`"$quipu_footnotes"'!="") global quipu_insertnote "\insertTableNotes"
+	global quipu_starlevels starlevels(`starlevels')
 end
 program define BuildPostfoot
 syntax, orientation(string) size(integer) [PAGEBREAK]
@@ -644,7 +644,7 @@ syntax, orientation(string) size(integer) [PAGEBREAK]
 	* clearpage vs newpage http://tex.stackexchange.com/questions/45609/is-it-wrong-to-use-clearpage-instead-of-newpage
 	local flush = cond("`pagebreak'"!="", "$ENTER\newpage", "")
 
-	global estdb_postfoot $TAB\bottomrule ///
+	global quipu_postfoot $TAB\bottomrule ///
 		"$TAB\end{longtable}" ///
 		"\end{ThreePartTable}" ///
 		"`wrapper'" ///
@@ -670,7 +670,7 @@ program define AddFootnote, rclass
 		mata: st_local("symbol", tokenget(symboltoken))
 		mata: asarray(symboldict, "`footnote'", "`symbol'")
 		assert_msg ("`symbol'"!=""), msg("we run out of footnote symbols")
-		global estdb_footnotes "${estdb_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
+		global quipu_footnotes "${quipu_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
 	}
 	local symbolcell "\tnote{`symbol'}"
 	return local symbolcell "`symbolcell'"
@@ -689,7 +689,7 @@ syntax, filename(string) [*]
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
 	local substitute `substitute' "\_cons " Constant
-	local cmd esttab estdb* using "`filename'.tex"
+	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	RunCMD `cmd', `tex_opt' `options'
 end
@@ -697,9 +697,9 @@ program define BuildPDF
 syntax, filename(string) latex_engine(string) VIEW [*]
 
 	* PDF preface and epilogue
-	qui findfile estdb-top.tex.ado
+	qui findfile quipu-top.tex.ado
 	local fn_top = r(fn)
-	qui findfile estdb-bottom.tex.ado
+	qui findfile quipu-bottom.tex.ado
 	local fn_bottom = r(fn)
 
 
@@ -710,7 +710,7 @@ syntax, filename(string) latex_engine(string) VIEW [*]
 	}
 	local substitute `substitute' "\_cons " Constant "..." "\ldots"
 
-	local cmd esttab estdb* using "`filename'.tex"
+	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'
@@ -743,11 +743,11 @@ program define CompilePDF
 
 	tempfile stderr stdout
 	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
-	if ($estdb_verbose<=1) local quiet "-quiet"
+	if ($quipu_verbose<=1) local quiet "-quiet"
 	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
-	if ($estdb_verbose>1) noi type "`stderr'"
-	if ($estdb_verbose>1) di as text "{hline}"
-	if ($estdb_verbose>1) noi type "`stdout'"
+	if ($quipu_verbose>1) noi type "`stderr'"
+	if ($quipu_verbose>1) di as text "{hline}"
+	if ($quipu_verbose>1) noi type "`stdout'"
 	cap conf file "`filename'.pdf"
 	if _rc==601 {
 		di as error "(pdf could not be created - run with -verbose(2)- to see details)"
@@ -755,7 +755,7 @@ program define CompilePDF
 	}
 end
 program define RunCMD
-	if ($estdb_verbose>0) {
+	if ($quipu_verbose>0) {
 		di as text "[cmd] " as input `"`0'"'
 	}
 	`0'
@@ -796,8 +796,8 @@ program define Use, rclass
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"
 	}
-	local path $estdb_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -estdb setpath PATH- to set the global estdb_path") rc(101)
+	local path $quipu_path
+	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
 	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
@@ -820,7 +820,7 @@ mata set matastrict off
 void read_metadata()
 {
 	external metadata
-	fn = st_global("estdb_path") + "/" + "metadata.txt"
+	fn = st_global("quipu_path") + "/" + "metadata.txt"
 	fh = fopen(fn, "r")
 	metadata = asarray_create() // container dict
 	headers = J(1, 5, "")
@@ -865,7 +865,7 @@ void read_metadata()
 	}
 	fclose(fh)
 	if (is_verbose) {
-		printf("{txt}(%s key-value pairs added to estdb metadata)\n", strofreal(i))
+		printf("{txt}(%s key-value pairs added to quipu metadata)\n", strofreal(i))
 	}
 }
 end
