@@ -39,10 +39,12 @@ Sometimes you may want to index estimates by more than just names in e(). One op
 
 ```stata
 quipu index, keys(model) {
-	gen byte subsample = strpos(e(cmdline), " if ") > 0
+	gen byte subsample = strpos(cmdline, " if ") > 0
     gen byte horizon = real(regexs(2)) if regexm(depvar, "will_(default|late)([0-9]+)")
 }
 ```
+
+In this case, the code inside brackets will be run on the index dataset after all colums are added (so we can't operate on e(), but we could store the e()s and then drop those that we don't need).
 
 ### Adding labels, ordering, footnotes, etc.
 
