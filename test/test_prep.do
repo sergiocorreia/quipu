@@ -59,5 +59,6 @@
 	*quipu list if ..
 	*quipu browse if ..
 	*quipu table if ..
+	quipu replay
 
 exit
