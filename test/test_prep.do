@@ -26,10 +26,10 @@
 * Run regressions and add results to db
 	sysuse auto
 
-	quipu add: reg price weight
-	quipu add: reg weight price
-	quipu add, notes(model=ols smpl=2 vars=all): reg price length
-	quipu add, prefix("bar"): reg price head length
+	quipu save: reg price weight
+	quipu save: reg weight price
+	quipu save, notes(model=ols smpl=2 vars=all): reg price length
+	quipu save, prefix("bar"): reg price head length
 	local fn = e(filename)
 	// note that the final path should be returned in a hidden e(filename)
 	di as text "`fn'"
@@ -41,7 +41,7 @@
 
 * Build index
 	quipu setpath "`path'"
-	quipu build_index, keys(depvar model)
+	quipu index, keys(depvar model)
 	quipu update_varlist
 
 * View one result

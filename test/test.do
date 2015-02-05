@@ -20,13 +20,13 @@
 	sysuse auto
 
 	reg price weight
-	quipu add
-	quipu add: reg weight price
+	quipu save
+	quipu save: reg weight price
 	reg price length
-	quipu add, notes(model=ols smpl=2 vars=all)
+	quipu save, notes(model=ols smpl=2 vars=all)
 
 	reg price head length
-	quipu add, prefix("bar")
+	quipu save, prefix("bar")
 	local fn = e(filename)
 	// note that the final path should be returned in a hidden e(filename)
 	di as text "`fn'"
@@ -38,7 +38,7 @@
 
 * Build index
 	quipu setpath "`path'"
-	quipu build_index, keys(depvar model)
+	quipu index, keys(depvar model)
 	quipu update_varlist
 
 * View one result

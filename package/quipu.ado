@@ -2,7 +2,7 @@
 // QUIPU - Save and manage regr. estimates and export tables via -estout-
 // -------------------------------------------------------------------------------------------------
 program define quipu
-	local subcmd_list1 associate setpath add build_index update_varlist view
+	local subcmd_list1 associate setpath save index update_varlist view
 	local subcmd_list2 use tabulate list browse table export replay
 
 	* Remove subcmd from 0
@@ -12,7 +12,7 @@ program define quipu
 	if (substr("`subcmd'", 1,3)=="tab" & "`subcmd'"!="table") local subcmd "tabulate"
 	if (substr("`subcmd'", 1,2)=="br") local subcmd "browse"
 	if (substr("`subcmd'", 1,2)=="li") local subcmd "list"
-	if (substr("`subcmd'", 1,5)=="build") local subcmd "build_index"
+	if (substr("`subcmd'", 1,5)=="build") local subcmd "index"
 	if (substr("`subcmd'", 1,6)=="update") local subcmd "update_varlist"
 
 	local subcmd_commas1 : subinstr local subcmd_list1 " "   `"", ""', all

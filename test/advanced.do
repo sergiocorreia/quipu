@@ -20,14 +20,14 @@
 	
 * Run regressions and add results to db
 	sysuse auto
-	quipu add, notes(test=1): areg price weight, a(turn)
-	quipu add, notes(test=1): areg price weight, a(rep)
-	quipu add, notes(test=1): reg price weight
-	quipu add, notes(test=1): areg price length, a(rep)
+	quipu save, notes(test=1): areg price weight, a(turn)
+	quipu save, notes(test=1): areg price weight, a(rep)
+	quipu save, notes(test=1): reg price weight
+	quipu save, notes(test=1): areg price length, a(rep)
 
 	
 * Build index
-	quipu build_index, keys(depvar model absvar)
+	quipu index, keys(depvar model absvar)
 
 *		quipu use
 *		asd

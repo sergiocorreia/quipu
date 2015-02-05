@@ -17,12 +17,12 @@ The typical way to use it is:{p_end}
 {p 8 15 2}{cmd:quipu setpath} {it:SomePath}{p_end}
 
 {pstd}2) Run and save estimates:{p_end}
-{p 8 15 2}{cmd:quipu add, } {opt notes(key=SomeValue)} : {cmd:reg price weight}{p_end}
+{p 8 15 2}{cmd:quipu save, } {opt notes(key=SomeValue)} : {cmd:reg price weight}{p_end}
 {p 8 15 2}...{p_end}
-{p 8 15 2}{cmd:quipu add, } {opt notes(key=AnotherValue)} : {cmd:reg length weight price}{p_end}
+{p 8 15 2}{cmd:quipu save, } {opt notes(key=AnotherValue)} : {cmd:reg length weight price}{p_end}
 
 {pstd}3)Index the estimates by {it:notes} and the specified {it:keys}:{p_end}
-{p 8 15 2}{cmd:quipu build_index, } {opt keys(depvar)}{p_end}
+{p 8 15 2}{cmd:quipu index, } {opt keys(depvar)}{p_end}
 
 {pstd}4)To change the names of a variable, their orden in the tables, etc. edit the {it:varlist.tsv} file and then update:{p_end}
 {p 8 15 2}{cmd:>>>} Double click on the {it:varlist.tsv} file, and edit it.{p_end}
@@ -49,10 +49,10 @@ on the .sest files (which will open Stata and run {cmd:quipu view{it: SomeFilena
   {bf:(2)} {title:Saving estimates}
 
 {phang}{it:Simple syntax:}{p_end}
-{phang}{cmd:quipu} {opt add} [ , {opt note:s(key1=value1 ...)}] : {it:{help regression command}}{p_end}
+{phang}{cmd:quipu} {opt save} [ , {opt note:s(key1=value1 ...)}] : {it:{help regression command}}{p_end}
 
 {phang}{it:Advanced syntax:}{p_end}
-{phang}{cmd:quipu} {opt add} [ , {opt note:s(key1=value1 ...)}] [{opt prefix(string)} {opt filename(string)}]
+{phang}{cmd:quipu} {opt save} [ , {opt note:s(key1=value1 ...)}] [{opt prefix(string)} {opt filename(string)}]
 [ : {it:{help regression command}} ]{p_end}
 
 {pmore}Save a the estimates into a file with a .ster extension.
@@ -71,14 +71,14 @@ e(cmdline), c(N), and the key-value pairs. EG: {it:6156-6557-65206297.ster}.{p_e
 
 {phang}
 {cmd:quipu}
-{opt build_index}
+{opt index}
 [ , {opt keys(key1 key2 ...)}
 {p_end}
 
 {pmore}Will index all .ster files located in $quipu_path (and the first level of subfolders).
  It will create an index.dta and varlist_template.dta files, and then call {it: quipu update_varlist}.{p_end}
 
-{pmore}The keys can be any of the e() results (notes specified in {it:quipu add} are automatically added,
+{pmore}The keys can be any of the e() results (notes specified in {it:quipu save} are automatically added,
  as well as four default ones: path, filename, fullpath, time (in %tc format)).{p_end}
 
 {phang}
@@ -93,7 +93,7 @@ e(cmdline), c(N), and the key-value pairs. EG: {it:6156-6557-65206297.ster}.{p_e
 {p 12 14 2} (4) sort_indepvar: the position of the variable in the table (row wise).{p_end}
 
 {pmore}The filename is {it:varlist.tsv}. Only update that file. After updating, run {quipu update_varlist}
-again (no need if also running {it: quipu build_index}.{p_end}
+again (no need if also running {it: quipu index}.{p_end}
 
   {bf:(optional)} {title:Inspecting the Estimates Index}
 
