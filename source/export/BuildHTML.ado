@@ -1,6 +1,22 @@
 capture program drop BuildHTML
 program define BuildHTML
-syntax, filename(string) [*]
+syntax, filename(string) [VIEW] [*]
+
+  * PDF preface and epilogue
+  qui findfile quipu-top.html.ado
+  local fn_top = r(fn)
+  qui findfile quipu-bottom.html.ado
+  local fn_bottom = r(fn)
+
+  * Substitute characters conflicting with html
+  local substitute < &lt; > &gt; & &amp;
+
+  local cmd esttab quipu* using "`filename'.html"
+  local html_opt top(`fn_top') bottom(`fn_bottom')
+  RunCMD `cmd', `html_opt' `options'
+  *di as text `"(output written to {stata "shell `filename'.html":`filename'.html})"'
+  if ("`view'"!="") RunCMD shell `filename'.html
+
 	di as error "NOT YET SUPPORTED"
 	error 1234
 end

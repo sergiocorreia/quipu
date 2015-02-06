@@ -18,10 +18,10 @@ program define Export
 
 	if ($quipu_verbose>1) local noisily noisily
 	local prepost prehead($quipu_prehead) posthead($quipu_header) prefoot($quipu_prefoot) postfoot($quipu_postfoot)
-	local base_opt `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
-	if ("`html'"!="") BuildHTML, filename(`filename') `base_opt' `options'
-	if ("`pdf'"!="") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
-	if ("`tex'"!="") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
+	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
+	if ("`ext'"=="html") BuildHTML, filename(`filename') `base_opt' // `options' style(html)
+	if ("`ext'"=="pdf") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
+	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
 	Cleanup
 end

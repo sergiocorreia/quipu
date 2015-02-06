@@ -1,0 +1,46 @@
+
+\begin{comment}
+	******************************** QUIPU - Stata Regression ********************************
+	 - Criteria: `"if depvar=="price""'
+	 - Estimates: D:\Github\quipu\test/tmp
+\end{comment}
+{
+\normalsize
+\tabcolsep=0.30cm
+\centering
+\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}
+\begin{ThreePartTable}
+	\begin{TableNotes}
+		\Note{Standard errors in parentheses Levels of significance:  * \(p<0.10\),  ** \(p<0.05\),  *** \(p<0.01\).}
+	\end{TableNotes}
+	\begin{longtable}{l*{3}{C{2cm}}}
+	\caption{}\label{table:} \\
+	\toprule\endfirsthead
+	\midrule\endhead
+	\midrule\endfoot
+	\insertTableNotes\endlastfoot
+	\multicolumn{1}{l}{} & \multicolumn{3}{c}{price}	\\
+	\cmidrule(lr){2-4}
+	\multicolumn{1}{c}{} & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)}	\\
+	\midrule
+Constant      &       -6.71   &     -4584.9*  &     -4942.3*  \\
+            &    (1174.4)   &    (2664.4)   &    (2673.3)   \\
+
+headroom    &               &               &      -515.5   \\
+            &               &               &     (431.5)   \\
+
+length      &               &        57.2***&        67.3***\\
+            &               &      (14.1)   &      (16.4)   \\
+
+weight      &        2.04***&               &               \\
+            &      (0.38)   &               &               \\
+	\midrule
+Observations&\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{74}   \\
+R\(^2\)     &\multicolumn{1}{r}{0.2901}   &\multicolumn{1}{r}{0.1865}   &\multicolumn{1}{r}{0.2025}   \\
+Adjusted R\(^2\)&\multicolumn{1}{r}{0.2802}   &\multicolumn{1}{r}{0.1752}   &\multicolumn{1}{r}{0.1800}   \\
+	\bottomrule
+	\end{longtable}
+\end{ThreePartTable}
+\vspace{15pt}
+}
+\restoregeometry

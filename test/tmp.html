@@ -1,0 +1,48 @@
+FILL TOP
+
+\begin{comment}
+	******************************** QUIPU - Stata Regression ********************************
+	 - Criteria: `"if depvar=="price""'
+	 - Estimates: D:\Github\quipu\test/tmp
+\end{comment}
+{
+\normalsize
+\tabcolsep=0.30cm
+\centering
+\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}
+\begin{ThreePartTable}
+	\begin{TableNotes}
+		\Note{Standard errors in parentheses Levels of significance:  * \(p<0.10\),  ** \(p<0.05\),  *** \(p<0.01\).}
+	\end{TableNotes}
+	\begin{longtable}{l*{3}{C{2cm}}}
+	\caption{}\label{table:} \\
+	\toprule\endfirsthead
+	\midrule\endhead
+	\midrule\endfoot
+	\insertTableNotes\endlastfoot
+	\multicolumn{1}{l}{} & \multicolumn{3}{c}{price}	\\
+	\cmidrule(lr){2-4}
+	\multicolumn{1}{c}{} & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)}	\\
+	\midrule
+<tr><td>_cons       </td><td>       -6.71   </td><td>     -4584.9*  </td><td>     -4942.3*  </td></tr>
+<tr><td>            </td><td>    (1174.4)   </td><td>    (2664.4)   </td><td>    (2673.3)   </td></tr>
+
+<tr><td>headroom    </td><td>               </td><td>               </td><td>      -515.5   </td></tr>
+<tr><td>            </td><td>               </td><td>               </td><td>     (431.5)   </td></tr>
+
+<tr><td>length      </td><td>               </td><td>        57.2***</td><td>        67.3***</td></tr>
+<tr><td>            </td><td>               </td><td>      (14.1)   </td><td>      (16.4)   </td></tr>
+
+<tr><td>weight      </td><td>        2.04***</td><td>               </td><td>               </td></tr>
+<tr><td>            </td><td>      (0.38)   </td><td>               </td><td>               </td></tr>
+	\midrule
+<tr><td>Observations</td><td>\multicolumn{1}{r}{74}   </td><td>\multicolumn{1}{r}{74}   </td><td>\multicolumn{1}{r}{74}   </td></tr>
+<tr><td>R\(^2\)     </td><td>\multicolumn{1}{r}{0.2901}   </td><td>\multicolumn{1}{r}{0.1865}   </td><td>\multicolumn{1}{r}{0.2025}   </td></tr>
+<tr><td>Adjusted R\(^2\)</td><td>\multicolumn{1}{r}{0.2802}   </td><td>\multicolumn{1}{r}{0.1752}   </td><td>\multicolumn{1}{r}{0.1800}   </td></tr>
+	\bottomrule
+	\end{longtable}
+\end{ThreePartTable}
+\vspace{15pt}
+}
+\restoregeometry
+FILL BOTTOM

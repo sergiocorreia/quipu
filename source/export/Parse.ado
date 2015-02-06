@@ -1,10 +1,9 @@
 capture program drop Parse
 program define Parse
 	syntax [anything(everything)] , ///
-		as(string) /// tex pdf html
 		[VERBOSE(integer 0) /// 0=No Logging, 2=Log Everything
 		VIEW /// Open the PDF/HTML viewer  at the end?
-		LATEX_engine(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
+		ENGINE(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
 		SIZE(integer 5) ORIENTation(string) PAGEBREAK /// More PDF options
 		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
 		NOTEs(string) /// Misc notes (i.e. everything besides the glossaries for symbols, stars, and vcv)
@@ -26,18 +25,14 @@ program define Parse
 	global quipu_verbose `verbose'
 
 	* Syntax can't handle -if- ot in dataset
-	* Will save locals filename (path+filename, w/out extension) and ifcond
+	* Will save 3 locals: filename (full path+fn WITHOUT THE EXT!), extension, and ifcond
 	ParseUsingIf `anything'
 
-	* Validate contents of as()
-	assert_msg inlist("`as'", "tex", "pdf", "html"), msg("<`format'> is an invalid output format")
-	local `as' `as' // Create local -tex- if that is the output format, and so on
-	
 	* Set default options
 	if ("`header'"=="") local header depvar #
 	if ("`colformat'"=="") local colformat C{2cm}
-	if ("`latex_engine'"=="") local latex_engine "xelatex"
-	assert_msg inlist("`latex_engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `latex_engine'")
+	if ("`engine'"=="") local engine "xelatex"
+	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
 	if ("`orientation'"=="") local orientation "portrait"
 	assert_msg inlist("`orientation'", "landscape", "portrait"), msg("invalid page orientation (needs to be landscape or portrait)")
 	assert_msg inrange(`size', 1, 10), msg("invalid table size (needs to be an integer between 1 and 10)")
@@ -49,7 +44,7 @@ program define Parse
 	if ("`cellformat'"=="") local cellformat "b(a2) se(a2)"
 	
 	* Inject values into caller (Export.ado)
-	local names filename ifcond tex pdf html view latex_engine orientation size pagebreak ///
+	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
 		rename drop header cellformat metadata options
 	if ($quipu_verbose>1) di as text "Parsed options:"
@@ -67,12 +62,16 @@ program define ParseUsingIf
 		gettoken tmp 0 : 0
 		if ("`tmp'"=="using") {
 			gettoken filename 0 : 0
-			* Remove extension (which will be ignored!)
-			foreach ext in tex htm html pdf {
-				local filename : subinstr local filename ".`ext'" ""
-			}
+			* Extract the extension
+			local ext_match = regexm(`"`filename'"', "\.([a-zA-Z0-9_]+)$")
+			assert_msg `ext_match', msg(`"quipu export: filename has no file extension (`filename')"')
+			local ext = lower(regexs(1))
+			assert_msg inlist("`ext'", "tex", "pdf", "html"), msg(`"quipu export: invalid file extension "`ext'", valid are tex, pdf, html"')
+			local filename = substr(`"`filename'"', 1, strlen(`"`filename'"') - strlen("`ext'") - 1)
+
 			* Remove quotes (will include by default)
 			local filename `filename'
+			
 			* Windows shell can't handle "/" folder separators:
 			if c(os)=="Windows" {
 				local filename = subinstr(`"`filename'"', "/", "\", .)
@@ -85,5 +84,6 @@ program define ParseUsingIf
 		}
 	}
 	c_local filename `filename'
+	c_local ext `ext'
 	c_local ifcond   `ifcond'
 end

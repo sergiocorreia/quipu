@@ -1,6 +1,6 @@
 capture program drop BuildPDF
 program define BuildPDF
-syntax, filename(string) latex_engine(string) VIEW [*]
+syntax, filename(string) engine(string) [VIEW] [*]
 
 	* PDF preface and epilogue
 	qui findfile quipu-top.tex.ado

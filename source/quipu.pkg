@@ -8,7 +8,7 @@ d
 d quipu: Saves, manage and export estimation results (requires estout)
 d
 d
-d Distribution-Date: 20150205
+d Distribution-Date: 20150206
 d
 f quipu.ado
 f quipu_export.ado
@@ -16,4 +16,6 @@ f quipu.sthlp
 f quipu-associate-template.reg.ado
 f quipu-top.tex.ado
 f quipu-bottom.tex.ado
+f quipu-top.html.ado
+f quipu-bottom.html.ado
 e

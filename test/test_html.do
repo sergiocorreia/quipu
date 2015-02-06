@@ -13,8 +13,10 @@
 	*quipu table if ..
 
 * Build latex table
-	quipu export if depvar=="price" using "`repo'\test\tmp" , as(tex pdf) replace view
+	quipu export if depvar=="price" using "`repo'\test\tmp.html" , verbose(1) replace view
 
+	asd
+	
 exit
 * TODO: Cleanup
 

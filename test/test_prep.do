@@ -48,7 +48,6 @@
 		gen byte with_p =  strpos(lower(depvar), "p")==1
 	}
 	
-	asd
 	quipu update_varlist
 
 * View one result
