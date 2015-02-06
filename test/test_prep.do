@@ -42,6 +42,13 @@
 * Build index
 	quipu setpath "`path'"
 	quipu index, keys(depvar model)
+	set trace off
+	quipu index, keys(depvar model) locals(spam 123 eggs 456) {
+		gen spam = `spam'+`eggs'
+		gen byte with_p =  strpos(lower(depvar), "p")==1
+	}
+	
+	asd
 	quipu update_varlist
 
 * View one result

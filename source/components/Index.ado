@@ -4,7 +4,21 @@
 * - recursive only goes ONE level deep!!!
 cap pr drop Index
 program define Index
-	syntax , [keys(namelist local)] //  [Recursive] -> Always on one level
+	local inline 0
+	if strpos(trim(`"`0'"'), "{")==1 {
+		local inline 1
+		local terminator = cond(strpos(trim(`"`0'"'), "{{")==1, "}}", "}")
+	}
+	else {
+		syntax , [keys(namelist local)] /// [Recursive] -> Always on one level
+			[locals(string asis)] [*] // Multiline
+		if ("`options'"!="") {
+			assert_msg strpos(trim(`"`options'"'), "{")==1 , msg("quipu index only allows keys(), locals(), and -{- or -{{-")
+			local inline 1
+			local terminator = cond(strpos(trim(`"`options'"'), "{ {")==1, "}}", "}")
+		}
+	}
+
 	local path $quipu_path
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	di as text `"quipu: saving index files on <`path'>"'
@@ -28,6 +42,40 @@ program define Index
 		local varlist : list varlist | tmp_varlist
 	}
 	qui destring _all, replace // Try to convert to numbers
+	qui compress
+
+	* Add inlined block of commands
+	if (`inline') {
+		di as text `" - running inlined block of code"'
+		while ("`locals'"!="") {
+			gettoken key locals : locals, parse(" ")
+			gettoken value locals : locals, parse(" ")
+			local arg_keys `arg_keys' `key'
+			local arg_values `"`arg_values' "`value'""'
+		}
+		tempfile source
+		tempname fh
+		qui file open `fh' using `"`source'"', write text replace
+		if ("`arg_keys'"!="") file write `fh' `"qui args `arg_keys'"' _n
+		local maxlines 1024
+		forval i = 1/`maxlines' {
+			assert_msg (`i'<`maxlines'), msg("quipu index error: maxlines (`maxlines') reached in inline block!" _n "(did you forget to close the block?)")
+			qui disp _request2(_curline)
+			**di as error `"[`i'] <`curline'>"'
+			local trimcurline `curline' // Remove trailing comments and surrounding spaces
+			if strpos(`"`trimcurline'"', "`terminator'")==1 {
+				continue, break
+			}
+			*di as error `"[`i'] <`curline'>"'
+			file write `fh' `"`macval(curline)'"' _n
+		}
+		qui file close `fh'
+		**di as text _n "<<< Contents of inline block <<<"
+		**type "`source'"
+		**di as text ">>> Contents of inline block >>>" _n
+		run `"`source'"' `arg_values'
+		qui compress
+	}
 
 	* Save index
 	**sort path
@@ -35,7 +83,6 @@ program define Index
 	**encode _path, gen(path)
 	**drop _path
 	sort path filename // fullpath
-	qui compress
 	order path filename /* fullpath */ time
 	la data "QUIPU.ADO - Index of .ster files (Stata Estimation Results)"
 	format %tc time
