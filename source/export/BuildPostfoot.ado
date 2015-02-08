@@ -1,5 +1,22 @@
 capture program drop BuildPostfoot
 program define BuildPostfoot
+syntax, EXTension(string) [*]
+	if ("`extension'"=="html") {
+		BuildPostfootHTML, `options'
+	}
+	else {
+		BuildPostfootTEX, `options'
+	}
+end
+
+capture program drop BuildPostfootHTML
+program define BuildPostfootHTML
+syntax, [*]
+	global quipu_postfoot </table>
+end
+
+capture program drop BuildPostfootTEX
+program define BuildPostfootTEX
 syntax, orientation(string) size(integer) [PAGEBREAK]
 
 	if ("`orientation'"=="landscape") {

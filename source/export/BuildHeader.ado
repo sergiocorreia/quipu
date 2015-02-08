@@ -1,6 +1,6 @@
 capture program drop BuildHeader
 program define BuildHeader
-syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
+syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(string asis)]
 
 	* Set replacement locals
 	local header : subinstr local header "#" "autonumeric", word
@@ -25,16 +25,34 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 	rename varname depvar
 	qui replace varlabel = depvar if missing(varlabel)
 
-	local cell_start "\multicolumn{\`n'}{c}{"
-	local cell_end "}"
-	local cell_sep " & "
-	local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
-	local row_start "${TAB}"
-	local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
-	local row_sep ""
-	local header_start ""
-	local header_end "$TAB\midrule"
-	local offset 1 // First cell in row is usually empty
+	if ("`extension'"=="html") {
+		local cell_start `"$TAB$TAB<th colspan="\`n'">"'
+		local cell_end "$TAB$TAB</th>"
+		local cell_sep "${ENTER}"
+		local cell_line // "\cmidrule(lr){\`start_col'-\`end_col'} "
+		local row_start "${TAB}<tr>"
+		local row_end "${TAB}</tr>"
+		local row_sep ""
+		local header_start "<thead>"
+		local header_end "</thead>"
+		local offset 1 // First cell in row is usually empty
+		local topleft "$TAB$TAB<th></th>$ENTER"
+		local topleft_auto `"`topleft'"'
+	}
+	else {
+		local cell_start "\multicolumn{\`n'}{c}{"
+		local cell_end "}"
+		local cell_sep " & "
+		local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
+		local row_start "${TAB}"
+		local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
+		local row_sep ""
+		local header_start ""
+		local header_end "$TAB\midrule"
+		local offset 1 // First cell in row is usually empty
+		local topleft "\multicolumn{1}{l}{} & "
+		local topleft_auto "\multicolumn{1}{c}{} & "
+	}
 
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
@@ -43,7 +61,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		local line "$TAB"
 		local numcell 0
 		if ("`cat'"=="autonumeric") {
-			local row "`row_start'\multicolumn{1}{c}{} & "
+			local row "`row_start'`topleft_auto'"
 			forval i = 1/`c(N)' {
 				local cell = subinstr("`template_`cat''", "@", "`i'", .)
 				local n 1
@@ -54,7 +72,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 			local ans "`ans'`sep'`row'`row_end'"
 		}
 		else {
-			local row "`row_start'\multicolumn{1}{l}{} & " // TODO: Allow a header instead of empty or `cat'
+			local row "`row_start'`topleft'" // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
 				local inactive = inactive_`cat'[`i']
 				if (!`inactive') {

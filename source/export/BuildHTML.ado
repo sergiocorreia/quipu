@@ -16,9 +16,6 @@ syntax, filename(string) [VIEW] [*]
   RunCMD `cmd', `html_opt' `options'
   *di as text `"(output written to {stata "shell `filename'.html":`filename'.html})"'
   if ("`view'"!="") RunCMD shell `filename'.html
-
-	di as error "NOT YET SUPPORTED"
-	error 1234
 end
 
 

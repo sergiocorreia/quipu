@@ -1,5 +1,40 @@
 capture program drop BuildPrehead
 program define BuildPrehead
+syntax, EXTension(string) [*]
+	if ("`extension'"=="html") {
+		BuildPreheadHTML, `options'
+	}
+	else {
+		BuildPreheadTEX, `options'
+	}
+end
+
+capture program drop BuildPreheadHTML
+program define BuildPreheadHTML
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
+	orientation(string) // THESE WILL BE IGNORED
+
+	local hr = 32 * "*"
+
+	global quipu_prehead $ENTER<!-- ///
+		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
+		`"$TAB - Criteria: `ifcond'"' ///
+		`"$TAB - Estimates: ${quipu_path}"' ///
+		"-->" ///
+		"`wrapper'" ///
+		`"<table class=="estimates">"' ///
+
+		*"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
+		*"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
+		*"$TAB\caption{`title'}\label{table:`label'} \\" ///
+		*"$TAB\toprule\endfirsthead" ///
+		*"$TAB\midrule\endhead" ///
+		*"$TAB\midrule\endfoot" ///
+		*"$TAB\${quipu_insertnote}\endlastfoot"
+end
+
+capture program drop BuildPreheadTEX
+program define BuildPreheadTEX
 syntax, colformat(string) orientation(string) size(integer) [title(string) label(string) ifcond(string asis)]
 
 	local hr = 32 * "*"
