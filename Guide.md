@@ -46,6 +46,8 @@ quipu index, keys(model) {
 
 In this case, the code inside brackets will be run on the index dataset after all colums are added (so we can't operate on e(), but we could store the e()s and then drop those that we don't need).
 
+Note: the option -test- will only load the first 10 estimates per folder; use it for debugging if you have too many estimates.
+
 ### Adding labels, ordering, footnotes, etc.
 
 After creating the index, two files will be created: `varlist.tsv` and `metadata.txt`.
