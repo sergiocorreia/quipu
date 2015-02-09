@@ -1,4 +1,10 @@
 capture program drop BuildPrefoot
 program define BuildPrefoot
-	global quipu_prefoot "$TAB\midrule"
+	syntax, EXTension(string)
+	if ("`extension'"=="html") {
+		global quipu_prefoot "  </tbody>$ENTER$ENTER  <tfoot>$ENTER"
+	}
+	else {
+		global quipu_prefoot "$TAB\midrule"
+	}
 end

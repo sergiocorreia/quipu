@@ -12,7 +12,7 @@ end
 capture program drop BuildPostfootHTML
 program define BuildPostfootHTML
 syntax, [*]
-	global quipu_postfoot </table>
+	global quipu_postfoot `"  </tfoot>$ENTER$ENTER  </table>${quipu_footnotes}"'
 end
 
 capture program drop BuildPostfootTEX

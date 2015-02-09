@@ -1,6 +1,6 @@
 capture program drop BuildRHS
 program define BuildRHS
-syntax, [rename(string asis) drop(string asis)]
+syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 	local indepvars $indepvars
 	local N : word count `indepvars'
@@ -79,8 +79,8 @@ syntax, [rename(string asis) drop(string asis)]
 		local varlabel = cond(varlabel[`i']=="", "`varname'", varlabel[`i'])
 		local footnote = footnote[`i']
 		local order `order' `varname'
-		AddFootnote `footnote'
-		local varlabels `"`varlabels' `varname' "`varlabel'`r(symbolcell)'" "'
+		AddFootnote, ext(`extension') footnote(`footnote')
+		local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
 	}
 
 	drop _all // BUGBUG: clear?

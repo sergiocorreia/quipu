@@ -1,38 +1,41 @@
+discard
 pr drop _all
 set more off
 clear all
 cls
-adopath + "D:\Dropbox\Projects\stata\misc"
+*adopath + "D:\Dropbox\Projects\stata\misc"
 cd ../source
 
-quipu setpath "D:\Dropbox\Projects\CreditCards\out\Regression"
-local keys cmd subcmd vce vcetype depvar endogvars indepvars instruments absvars dofmethod N_hdfe
+*quipu update
 
-/*
-tic
-* Create index
-	quipu build, keys(`keys')
+*quipu use
+*quipu use if cmd!="reghdfe"
 
-* Quick and dirty (maybe allow a program to run at the end of -build- to generate all this?)
-	use "${quipu_path}/index"
-	gen definition = regexs(1) if regexm(depvar, "will_(default|late)([0-9]+)")
-	gen byte horizon = real(regexs(2)) if regexm(depvar, "will_(default|late)([0-9]+)")
-	save, replace
-toc, report
-*/
+* asdlocal cond cmd=="reghdfe" & subcmd=="ivreg2" & model=="second" // & depvar=="will_default24" & logfile=="Robustness_Simple" & N_hdfe==5 & ubigeos=="" & smpl==.
 
-quipu update
+local cond logfile=="Individuals_Debtors" // & stage=="second" // & depvar=="S_ihs_lt2_all"
 
-quipu use
-quipu use if cmd!="reghdfe"
+quipu use if `cond'
+quipu tabulate if `cond'
+
+assert c(N)<20 // Stop if too many estimates match the criteria
+quipu table if `cond'
+
+set trace off
+set tracedepth 4
+quipu export using "../test/tmp/tabla.html" if `cond' , verbose(2) view	title("El Titulo") header(stage depvar #)
+
+asd
+
 
 *quipu list if cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
 *quipu br if cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple"
 
-local cond cmd=="reghdfe" & subcmd=="ivreg2" & depvar=="will_default24" & logfile=="Robustness_Simple" & N_hdfe==5 & ubigeos=="" & smpl==.
-local cond strpos(path, "individuals_debtors") & strpos(depvar, "will_") & model=="second" & subcmd=="ivreg2" & instruments=="entry_store_*"
+
+*local cond strpos(path, "individuals_debtors") & strpos(depvar, "will_") & model=="second" & subcmd=="ivreg2" & instruments=="entry_store_*"
 *quipu tab if `cond' , plot
 *quipu replay if `cond'
+set trace off
 quipu table if `cond' , b(%3.2f)
 
 *quipu export if `cond', as(tex) replace

@@ -1,6 +1,6 @@
 capture program drop BuildHeader
 program define BuildHeader
-syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(string asis)]
+syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
 
 	* Set replacement locals
 	local header : subinstr local header "#" "autonumeric", word
@@ -26,18 +26,24 @@ syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(stri
 	qui replace varlabel = depvar if missing(varlabel)
 
 	if ("`extension'"=="html") {
-		local cell_start `"$TAB$TAB<th colspan="\`n'">"'
-		local cell_end "$TAB$TAB</th>"
-		local cell_sep "${ENTER}"
+		
+		local cell_start `"      <th colspan="\`n'">"'
+		local cell_end "</th>${ENTER}"
+		local cell_sep ""
 		local cell_line // "\cmidrule(lr){\`start_col'-\`end_col'} "
-		local row_start "${TAB}<tr>"
-		local row_end "${TAB}</tr>"
-		local row_sep ""
-		local header_start "<thead>"
-		local header_end "</thead>"
+
+		local row_start "    <tr>${ENTER}"
+		local row_end `"    </tr>${ENTER}"'
+		local row_sep
+		
+		local header_start "  <thead>${ENTER}"
+		local header_end "  </thead>${ENTER}"
 		local offset 1 // First cell in row is usually empty
-		local topleft "$TAB$TAB<th></th>$ENTER"
+		local topleft "      <th></th>${ENTER}"
 		local topleft_auto `"`topleft'"'
+
+		local linestart ""
+		local lineend ""
 	}
 	else {
 		local cell_start "\multicolumn{\`n'}{c}{"
@@ -52,27 +58,30 @@ syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(stri
 		local offset 1 // First cell in row is usually empty
 		local topleft "\multicolumn{1}{l}{} & "
 		local topleft_auto "\multicolumn{1}{c}{} & "
+
+		local linestart "$TAB"
+		local lineend "${ENTER}"
 	}
 
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
 	foreach cat of local header {
 		local ++numrow
-		local line "$TAB"
+		local line "`linestart'"
 		local numcell 0
 		if ("`cat'"=="autonumeric") {
-			local row "`row_start'`topleft_auto'"
+			local row `"`row_start'`topleft_auto'"'
 			forval i = 1/`c(N)' {
 				local cell = subinstr("`template_`cat''", "@", "`i'", .)
 				local n 1
 				local sep = cond(`i'>1, "`cell_sep'", "")
-				local row `row'`sep'`cell_start'`cell'`cell_end'
+				local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local ans "`ans'`sep'`row'`row_end'"
+			local ans `"`ans'`sep'`row'`row_end'"'
 		}
 		else {
-			local row "`row_start'`topleft'" // TODO: Allow a header instead of empty or `cat'
+			local row `"`row_start'`topleft'"' // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
 				local inactive = inactive_`cat'[`i']
 				if (!`inactive') {
@@ -81,7 +90,7 @@ syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(stri
 					if ("`cat'"=="depvar") {
 						local cell = varlabel[`i']	
 						local footnote = footnote[`i']
-						AddFootnote `footnote'
+						AddFootnote, ext(`extension') footnote(`footnote')
 						local cell "`cell'`r(symbolcell)'"
 					}
 					else {
@@ -94,18 +103,26 @@ syntax [anything(name=header equalok everything)] [ , EXTension(string) Fmt(stri
 					local start_col = `offset' + `i'
 					local end_col = `start_col' + `n' - 1
 					local sep = cond(`numcell'>1, "`cell_sep'", "")
-					local row `row'`sep'`cell_start'`cell'`cell_end'
+					local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
 					local line `line'`cell_line'
 				}
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local ans "`ans'`sep'`row'`row_end'"
+			
 			qui su span_`cat'
-			if (r(max)>1) {
-				local ans "`ans'`line'$ENTER"
+			if (r(max)==1) {
+				local ans "`ans'`sep'`row'`row_end'"
 			}
 			else {
-				* por ahora nada, quizas midrule?
+				if ("`extension'"=="html") {
+					* Replace "> (i.e. right after "<th colspan=..") with "><p..
+					local row : subinstr local row `"">"' `""><p class="underline">"' , all
+					local row : subinstr local row `"</th>"' `"</p></th>"' , all
+					local ans "`ans'`sep'`row'`row_end'"
+				}
+				else {
+					local ans "`ans'`sep'`row'`row_end'`line'`lineend'"
+				}
 			}
 		}
 	}

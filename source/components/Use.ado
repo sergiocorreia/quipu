@@ -12,12 +12,15 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
-	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
+	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 
+	* Drop empty columns
 	foreach var of varlist _all {
 		cap qui cou if `var'!=.
-		if (_rc==109) qui cou if `var'!=""
+		if (_rc==109) {
+			qui cou if `var'!=""
+		}
 		if (r(N)==0) drop `var'
 	}
 end

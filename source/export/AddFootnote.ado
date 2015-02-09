@@ -1,11 +1,13 @@
 * Receive a keyword, looks it up, and i) returns the symbol, ii) updates the global with the footnotes
 capture program drop AddFootnote
 program define AddFootnote, rclass
-	local footnote `0'
+syntax,  EXTension(string) [FOOTNOTE(string)]
+
 	if ("`footnote'"=="") {
 		return local symbol ""
 		exit
 	}
+
 	GetMetadata definition=footnotes.`footnote'
 	* Use existing symbols for footnotes previously used
 	mata: st_local("footnote_exists", strofreal(asarray_contains(symboldict, "`footnote'")))
@@ -17,8 +19,20 @@ program define AddFootnote, rclass
 		mata: st_local("symbol", tokenget(symboltoken))
 		mata: asarray(symboldict, "`footnote'", "`symbol'")
 		assert_msg ("`symbol'"!=""), msg("we run out of footnote symbols")
-		global quipu_footnotes "${quipu_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
+		if ("`extension'"=="html") {
+			local thisnote `"    <dt>`symbol'</dt><dd>`definition'</dd>$ENTER"' 
+		}
+		else {
+			local thisnote `"\item[`symbol'] `definition'${ENTER}${TAB}${TAB}"'
+		}
+		global quipu_footnotes `"${quipu_footnotes}`thisnote'"'
 	}
-	local symbolcell "\tnote{`symbol'}"
+	
+	if ("`extension'"=="html") {
+		local symbolcell `"<sup title="`definition'">`symbol'</sup>"'
+	}
+	else {
+		local symbolcell "\tnote{`symbol'}"
+	}
 	return local symbolcell "`symbolcell'"
 end

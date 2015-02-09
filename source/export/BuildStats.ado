@@ -1,6 +1,6 @@
 capture program drop BuildStats
 program define BuildStats
-syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string asis)]
+syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string) Labels(string asis)]
 
 	local DEFAULT_STATS_all N
 	local DEFAULT_STATS_ols r2 r2_a
@@ -31,8 +31,8 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 	local labels_N			"Observations"
 	local labels_N_clust	"Num. Clusters"
 	local labels_df_a		"Num. Fixed Effects"
-	local labels_r2		"R\(^2\)"
-	local labels_r2_a		"Adjusted R\(^2\)"
+	local labels_r2		"\(R^2\)"
+	local labels_r2_a		"Adjusted \(R^2\)"
 	local labels_idp		"Underid. P-val. (KP LM)"
 	local labels_widstat	"Weak id. F-stat (KP Wald)"
 	local labels_jp		"Overid. P-val (Hansen J)"
@@ -72,7 +72,7 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 		local statformats `"`statformats' `statfmt'"'
 	}
 
-	local layout "\multicolumn{1}{r}{@} "
+	local layout = cond("`extension'"=="html", "@ ", "\multicolumn{1}{r}{@} ")
 	local numstats : word count `stats'
 	local statlayout = "`layout'" * `numstats'
 

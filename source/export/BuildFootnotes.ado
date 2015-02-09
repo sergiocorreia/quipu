@@ -1,6 +1,6 @@
 capture program drop BuildFootnotes
 program define BuildFootnotes
-syntax, stars(string) [notes(string)] [vcnote(string)]
+syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 	* BUGBUG: Autoset starnote and vcnote!!!
 
 	local stars : list sort stars // Sort it
@@ -16,13 +16,20 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 
 	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
 	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
-	local note "\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"
-
-	if (`"${quipu_footnotes}"'!="") {
-		global quipu_footnotes `"${quipu_footnotes}${ENTER}$TAB$TAB`note'"'
+	
+	if ("`extension'"=="html") {
+		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
 	}
 	else {
-		global quipu_footnotes `"`note'"'
+		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+	}
+
+	local summary "<summary>Regression notes</summary>"
+	if (`"${quipu_footnotes}"'!="") {
+		global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
+	}
+	else {
+		global quipu_footnotes `"<details>`note'</details>"'
 	}
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)

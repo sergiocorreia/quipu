@@ -13,16 +13,15 @@ capture program drop BuildPreheadHTML
 program define BuildPreheadHTML
 syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
 	orientation(string) // THESE WILL BE IGNORED
+	local hr = 32 * " "
 
-	local hr = 32 * "*"
-
-	global quipu_prehead $ENTER<!-- ///
-		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
-		`"$TAB - Criteria: `ifcond'"' ///
-		`"$TAB - Estimates: ${quipu_path}"' ///
+	global quipu_prehead ///
+		`"<!-- `hr' QUIPU - Stata Regression `hr'"' ///
+		`"  - Criteria: `ifcond'"' ///
+		`"  - Estimates: ${quipu_path}"' ///
 		"-->" ///
-		"`wrapper'" ///
-		`"<table class=="estimates">"' ///
+		`"  <table class="estimates" name="`label'">"' ///
+		`"  <caption>`title'</caption>"'
 
 		*"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
 		*"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
@@ -51,7 +50,8 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
-	global quipu_prehead $ENTER\begin{comment} ///
+	global quipu_prehead ///
+		"$ENTER\begin{comment}" ///
 		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
 		`"$TAB - Criteria: `ifcond'"' ///
 		`"$TAB - Estimates: ${quipu_path}"' ///

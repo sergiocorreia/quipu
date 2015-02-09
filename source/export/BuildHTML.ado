@@ -9,10 +9,10 @@ syntax, filename(string) [VIEW] [*]
   local fn_bottom = r(fn)
 
   * Substitute characters conflicting with html
-  local substitute < &lt; > &gt; & &amp;
+  local substitute \& & _cons Constant // < &lt; > &gt; & &amp; 
 
   local cmd esttab quipu* using "`filename'.html"
-  local html_opt top(`fn_top') bottom(`fn_bottom')
+  local html_opt top(`fn_top') bottom(`fn_bottom') substitute(`substitute')
   RunCMD `cmd', `html_opt' `options'
   *di as text `"(output written to {stata "shell `filename'.html":`filename'.html})"'
   if ("`view'"!="") RunCMD shell `filename'.html

@@ -29,6 +29,7 @@ end
 // Building Blocks
 	include "export/BuildPrehead.ado"
 	include "export/BuildHeader.ado"
+	include "export/BuildPosthead.ado"
 	include "export/BuildPrefoot.ado"
 	include "export/BuildVCENote.ado"
 	include "export/BuildRHS.ado"

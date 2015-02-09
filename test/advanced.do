@@ -33,10 +33,10 @@
 *		asd
 * Show table
 set trace off
- 	quipu export using `path'/table if test==1, as(pdf) verbose(2) view ///
+ 	quipu export using "`path'/table.html" if test==1 , verbose(2) view ///
 		metadata(header.sort.absvar `"turn "" rep78"') ///
 		header(cmd rank # absvar depvar) title(asd) label(foo) begin(_tab) ///
-		stats(default F , l(N "Obs."))
+		stats(default F) //  , l(N "Obs.")
 
 exit
 rmdir `path'
