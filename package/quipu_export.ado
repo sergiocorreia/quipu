@@ -21,24 +21,24 @@ end
 program define Export
 	Parse `0'
 	
-	Initialize, metadata(`metadata') // Define globals and mata objects (including the metadata)
+	Initialize, ext(`ext') metadata(`metadata') // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
 	LoadEstimates `header' // Loads estimates and sort them in the correct order
-
-	BuildPrehead, colformat(`colformat') title(`title') label(`label') ifcond(`"`ifcond'"') orientation(`orientation') size(`size')	
-	BuildHeader `header' // Build header and saves it in $quipu_header (passed to posthead)
-	BuildStats `stats'
+	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	
+	BuildHeader `header', ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
+	BuildStats `stats', ext(`ext')
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
-	BuildRHS, rename(`rename') drop(`drop') // $quipu_rhsoptions -> rename() drop() varlabels() order()
-	BuildPrefoot
-	BuildPostfoot, orientation(`orientation') size(`size') `pagebreak'
-	BuildFootnotes, notes(`notes') stars(`stars') // Updates $quipu_footnotes
+	BuildRHS, ext(`ext') rename(`rename') drop(`drop') // $quipu_rhsoptions -> rename() drop() varlabels() order()
+	BuildPrefoot, ext(`ext')
+	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
+	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
+	BuildPosthead, ext(`ext')
 
 	if ($quipu_verbose>1) local noisily noisily
-	local prepost prehead($quipu_prehead) posthead($quipu_header) prefoot($quipu_prefoot) postfoot($quipu_postfoot)
+	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
 	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
-	if ("`ext'"=="html") BuildHTML, filename(`filename') `base_opt' // `options' style(html)
+	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' // `options' style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
@@ -131,7 +131,7 @@ program define ParseUsingIf
 	c_local ifcond   `ifcond'
 end
 program define Initialize
-	syntax, [METAdata(string asis)]
+	syntax, EXTension(string) [METAdata(string asis)]
 
 	global TAB "`=char(9)'"
 	global ENTER "`=char(13)'"
@@ -153,7 +153,12 @@ program define Initialize
 
 	* Symbol mess
 	mata: symboltoken = tokeninit()
-	mata: symbols = "\textdagger \textsection \textparagraph \textdaggerdbl 1 2 3 4 5 6 7 8 9"
+	if ("`extension'"=="html") {
+		mata: symbols = "&dagger; &sect; &para; &Dagger; 1 2 3 4 5 6 7 8 9"
+	}
+	else {
+		mata: symbols = "\textdagger \textsection \textparagraph \textdaggerdbl 1 2 3 4 5 6 7 8 9"
+	}
 	mata: tokenset(symboltoken, symbols)
 	mata: symboldict = asarray_create() // dict: footnote -> symbol (for already used footnotes)
 	* USAGE: mata: st_local("symbol", tokenget(symboltoken))  ... then assert_msg "`symbol'"!=""
@@ -262,6 +267,36 @@ end
 
 // Building Blocks
 program define BuildPrehead
+syntax, EXTension(string) [*]
+	if ("`extension'"=="html") {
+		BuildPreheadHTML, `options'
+	}
+	else {
+		BuildPreheadTEX, `options'
+	}
+end
+program define BuildPreheadHTML
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
+	orientation(string) // THESE WILL BE IGNORED
+	local hr = 32 * " "
+
+	global quipu_prehead ///
+		`"<!-- `hr' QUIPU - Stata Regression `hr'"' ///
+		`"  - Criteria: `ifcond'"' ///
+		`"  - Estimates: ${quipu_path}"' ///
+		"-->" ///
+		`"  <table class="estimates" name="`label'">"' ///
+		`"  <caption>`title'</caption>"'
+
+		*"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
+		*"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
+		*"$TAB\caption{`title'}\label{table:`label'} \\" ///
+		*"$TAB\toprule\endfirsthead" ///
+		*"$TAB\midrule\endhead" ///
+		*"$TAB\midrule\endfoot" ///
+		*"$TAB\${quipu_insertnote}\endlastfoot"
+end
+program define BuildPreheadTEX
 syntax, colformat(string) orientation(string) size(integer) [title(string) label(string) ifcond(string asis)]
 
 	local hr = 32 * "*"
@@ -278,7 +313,8 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
-	global quipu_prehead $ENTER\begin{comment} ///
+	global quipu_prehead ///
+		"$ENTER\begin{comment}" ///
 		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
 		`"$TAB - Criteria: `ifcond'"' ///
 		`"$TAB - Estimates: ${quipu_path}"' ///
@@ -298,7 +334,7 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
 		"$TAB\${quipu_insertnote}\endlastfoot"
 end
 program define BuildHeader
-syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
+syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
 
 	* Set replacement locals
 	local header : subinstr local header "#" "autonumeric", word
@@ -323,36 +359,63 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 	rename varname depvar
 	qui replace varlabel = depvar if missing(varlabel)
 
-	local cell_start "\multicolumn{\`n'}{c}{"
-	local cell_end "}"
-	local cell_sep " & "
-	local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
-	local row_start "${TAB}"
-	local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
-	local row_sep ""
-	local header_start ""
-	local header_end "$TAB\midrule"
-	local offset 1 // First cell in row is usually empty
+	if ("`extension'"=="html") {
+		
+		local cell_start `"      <th colspan="\`n'">"'
+		local cell_end "</th>${ENTER}"
+		local cell_sep ""
+		local cell_line // "\cmidrule(lr){\`start_col'-\`end_col'} "
+
+		local row_start "    <tr>${ENTER}"
+		local row_end `"    </tr>${ENTER}"'
+		local row_sep
+		
+		local header_start "  <thead>${ENTER}"
+		local header_end "  </thead>${ENTER}"
+		local offset 1 // First cell in row is usually empty
+		local topleft "      <th></th>${ENTER}"
+		local topleft_auto `"`topleft'"'
+
+		local linestart ""
+		local lineend ""
+	}
+	else {
+		local cell_start "\multicolumn{\`n'}{c}{"
+		local cell_end "}"
+		local cell_sep " & "
+		local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
+		local row_start "${TAB}"
+		local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
+		local row_sep ""
+		local header_start ""
+		local header_end "$TAB\midrule"
+		local offset 1 // First cell in row is usually empty
+		local topleft "\multicolumn{1}{l}{} & "
+		local topleft_auto "\multicolumn{1}{c}{} & "
+
+		local linestart "$TAB"
+		local lineend "${ENTER}"
+	}
 
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
 	foreach cat of local header {
 		local ++numrow
-		local line "$TAB"
+		local line "`linestart'"
 		local numcell 0
 		if ("`cat'"=="autonumeric") {
-			local row "`row_start'\multicolumn{1}{c}{} & "
+			local row `"`row_start'`topleft_auto'"'
 			forval i = 1/`c(N)' {
 				local cell = subinstr("`template_`cat''", "@", "`i'", .)
 				local n 1
 				local sep = cond(`i'>1, "`cell_sep'", "")
-				local row `row'`sep'`cell_start'`cell'`cell_end'
+				local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local ans "`ans'`sep'`row'`row_end'"
+			local ans `"`ans'`sep'`row'`row_end'"'
 		}
 		else {
-			local row "`row_start'\multicolumn{1}{l}{} & " // TODO: Allow a header instead of empty or `cat'
+			local row `"`row_start'`topleft'"' // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
 				local inactive = inactive_`cat'[`i']
 				if (!`inactive') {
@@ -361,7 +424,7 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 					if ("`cat'"=="depvar") {
 						local cell = varlabel[`i']	
 						local footnote = footnote[`i']
-						AddFootnote `footnote'
+						AddFootnote, ext(`extension') footnote(`footnote')
 						local cell "`cell'`r(symbolcell)'"
 					}
 					else {
@@ -374,18 +437,26 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 					local start_col = `offset' + `i'
 					local end_col = `start_col' + `n' - 1
 					local sep = cond(`numcell'>1, "`cell_sep'", "")
-					local row `row'`sep'`cell_start'`cell'`cell_end'
+					local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
 					local line `line'`cell_line'
 				}
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local ans "`ans'`sep'`row'`row_end'"
+			
 			qui su span_`cat'
-			if (r(max)>1) {
-				local ans "`ans'`line'$ENTER"
+			if (r(max)==1) {
+				local ans "`ans'`sep'`row'`row_end'"
 			}
 			else {
-				* por ahora nada, quizas midrule?
+				if ("`extension'"=="html") {
+					* Replace "> (i.e. right after "<th colspan=..") with "><p..
+					local row : subinstr local row `"">"' `""><p class="underline">"' , all
+					local row : subinstr local row `"</th>"' `"</p></th>"' , all
+					local ans "`ans'`sep'`row'`row_end'"
+				}
+				else {
+					local ans "`ans'`sep'`row'`row_end'`line'`lineend'"
+				}
 			}
 		}
 	}
@@ -393,8 +464,31 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 	global quipu_header `"`ans'"'
 	drop varlabel footnote
 end
+program define BuildPosthead
+syntax, EXTension(string) [*]
+	if ("`extension'"=="html") {
+		BuildPostheadHTML, `options'
+	}
+	else {
+		BuildPostheadTEX, `options'
+	}
+end
+program define BuildPostheadHTML
+syntax, [*]
+	global quipu_posthead `"  <tbody>$ENTER"'
+end
+program define BuildPostheadTEX
+syntax, [*]
+	global quipu_posthead "  <tbody>$ENTER"
+end
 program define BuildPrefoot
-	global quipu_prefoot "$TAB\midrule"
+	syntax, EXTension(string)
+	if ("`extension'"=="html") {
+		global quipu_prefoot "  </tbody>$ENTER$ENTER  <tfoot>$ENTER"
+	}
+	else {
+		global quipu_prefoot "$TAB\midrule"
+	}
 end
 program define BuildVCENote
 syntax, [vcenote(string)]
@@ -430,7 +524,7 @@ syntax, [vcenote(string)]
 	clear // Because we -use-d the dataset
 end
 program define BuildRHS
-syntax, [rename(string asis) drop(string asis)]
+syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 	local indepvars $indepvars
 	local N : word count `indepvars'
@@ -509,8 +603,8 @@ syntax, [rename(string asis) drop(string asis)]
 		local varlabel = cond(varlabel[`i']=="", "`varname'", varlabel[`i'])
 		local footnote = footnote[`i']
 		local order `order' `varname'
-		AddFootnote `footnote'
-		local varlabels `"`varlabels' `varname' "`varlabel'`r(symbolcell)'" "'
+		AddFootnote, ext(`extension') footnote(`footnote')
+		local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
 	}
 
 	drop _all // BUGBUG: clear?
@@ -521,7 +615,7 @@ syntax, [rename(string asis) drop(string asis)]
 	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
 end
 program define BuildStats
-syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string asis)]
+syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string) Labels(string asis)]
 
 	local DEFAULT_STATS_all N
 	local DEFAULT_STATS_ols r2 r2_a
@@ -552,8 +646,8 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 	local labels_N			"Observations"
 	local labels_N_clust	"Num. Clusters"
 	local labels_df_a		"Num. Fixed Effects"
-	local labels_r2		"R\(^2\)"
-	local labels_r2_a		"Adjusted R\(^2\)"
+	local labels_r2		"\(R^2\)"
+	local labels_r2_a		"Adjusted \(R^2\)"
 	local labels_idp		"Underid. P-val. (KP LM)"
 	local labels_widstat	"Weak id. F-stat (KP Wald)"
 	local labels_jp		"Overid. P-val (Hansen J)"
@@ -593,14 +687,14 @@ syntax [anything(name=stats equalok everything)] [ , Fmt(string) Labels(string a
 		local statformats `"`statformats' `statfmt'"'
 	}
 
-	local layout "\multicolumn{1}{r}{@} "
+	local layout = cond("`extension'"=="html", "@ ", "\multicolumn{1}{r}{@} ")
 	local numstats : word count `stats'
 	local statlayout = "`layout'" * `numstats'
 
 	global quipu_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
 end
 program define BuildFootnotes
-syntax, stars(string) [notes(string)] [vcnote(string)]
+syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 	* BUGBUG: Autoset starnote and vcnote!!!
 
 	local stars : list sort stars // Sort it
@@ -616,13 +710,20 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 
 	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
 	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
-	local note "\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"
-
-	if (`"${quipu_footnotes}"'!="") {
-		global quipu_footnotes `"${quipu_footnotes}${ENTER}$TAB$TAB`note'"'
+	
+	if ("`extension'"=="html") {
+		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
 	}
 	else {
-		global quipu_footnotes `"`note'"'
+		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+	}
+
+	local summary "<summary>Regression notes</summary>"
+	if (`"${quipu_footnotes}"'!="") {
+		global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
+	}
+	else {
+		global quipu_footnotes `"<details>`note'</details>"'
 	}
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
@@ -630,6 +731,19 @@ syntax, stars(string) [notes(string)] [vcnote(string)]
 	global quipu_starlevels starlevels(`starlevels')
 end
 program define BuildPostfoot
+syntax, EXTension(string) [*]
+	if ("`extension'"=="html") {
+		BuildPostfootHTML, `options'
+	}
+	else {
+		BuildPostfootTEX, `options'
+	}
+end
+program define BuildPostfootHTML
+syntax, [*]
+	global quipu_postfoot `"  </tfoot>$ENTER$ENTER  </table>${quipu_footnotes}"'
+end
+program define BuildPostfootTEX
 syntax, orientation(string) size(integer) [PAGEBREAK]
 
 	if ("`orientation'"=="landscape") {
@@ -652,11 +766,13 @@ end
 	
 * Receive a keyword, looks it up, and i) returns the symbol, ii) updates the global with the footnotes
 program define AddFootnote, rclass
-	local footnote `0'
+syntax,  EXTension(string) [FOOTNOTE(string)]
+
 	if ("`footnote'"=="") {
 		return local symbol ""
 		exit
 	}
+
 	GetMetadata definition=footnotes.`footnote'
 	* Use existing symbols for footnotes previously used
 	mata: st_local("footnote_exists", strofreal(asarray_contains(symboldict, "`footnote'")))
@@ -668,9 +784,21 @@ program define AddFootnote, rclass
 		mata: st_local("symbol", tokenget(symboltoken))
 		mata: asarray(symboldict, "`footnote'", "`symbol'")
 		assert_msg ("`symbol'"!=""), msg("we run out of footnote symbols")
-		global quipu_footnotes "${quipu_footnotes}\item[`symbol'] `definition'`ENTER'`TAB'`TAB'"
+		if ("`extension'"=="html") {
+			local thisnote `"    <dt>`symbol'</dt><dd>`definition'</dd>$ENTER"' 
+		}
+		else {
+			local thisnote `"\item[`symbol'] `definition'${ENTER}${TAB}${TAB}"'
+		}
+		global quipu_footnotes `"${quipu_footnotes}`thisnote'"'
 	}
-	local symbolcell "\tnote{`symbol'}"
+	
+	if ("`extension'"=="html") {
+		local symbolcell `"<sup title="`definition'">`symbol'</sup>"'
+	}
+	else {
+		local symbolcell "\tnote{`symbol'}"
+	}
 	return local symbolcell "`symbolcell'"
 end
 program define BuildHTML
@@ -683,16 +811,13 @@ syntax, filename(string) [VIEW] [*]
   local fn_bottom = r(fn)
 
   * Substitute characters conflicting with html
-  local substitute < &lt; > &gt; & &amp;
+  local substitute \& & _cons Constant // < &lt; > &gt; & &amp; 
 
   local cmd esttab quipu* using "`filename'.html"
-  local html_opt top(`fn_top') bottom(`fn_bottom')
+  local html_opt top(`fn_top') bottom(`fn_bottom') substitute(`substitute')
   RunCMD `cmd', `html_opt' `options'
   *di as text `"(output written to {stata "shell `filename'.html":`filename'.html})"'
   if ("`view'"!="") RunCMD shell `filename'.html
-
-	di as error "NOT YET SUPPORTED"
-	error 1234
 end
 
 
@@ -891,12 +1016,15 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
-	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
+	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 
+	* Drop empty columns
 	foreach var of varlist _all {
 		cap qui cou if `var'!=.
-		if (_rc==109) qui cou if `var'!=""
+		if (_rc==109) {
+			qui cou if `var'!=""
+		}
 		if (r(N)==0) drop `var'
 	}
 end

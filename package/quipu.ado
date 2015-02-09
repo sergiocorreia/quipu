@@ -185,7 +185,7 @@ program define Index
 		local terminator = cond(strpos(trim(`"`0'"'), "{{")==1, "}}", "}")
 	}
 	else {
-		syntax , [keys(namelist local)] /// [Recursive] -> Always on one level
+		syntax , [TEST keys(namelist local)] /// [Recursive] -> Always on one level
 			[locals(string asis)] [*] // Multiline
 		if ("`options'"!="") {
 			assert_msg strpos(trim(`"`options'"'), "{")==1 , msg("quipu index only allows keys(), locals(), and -{- or -{{-")
@@ -197,7 +197,7 @@ program define Index
 	local path $quipu_path
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	di as text `"quipu: saving index files on <`path'>"'
-
+	if ("`test'"!="") di as error `" - Warning: test mode; using only the first 10 estimates per folder"'
 	clear
 	clear results
 	local i 1 // Cursor position
@@ -212,7 +212,7 @@ program define Index
 	* One level deep
 	local folders : dir "`path'" dirs "*"
 	foreach folder of local folders {
-		ProcessFolder, path(`path'/`folder') keys(`keys')
+		ProcessFolder, `test' path(`path'/`folder') keys(`keys')
 		local tmp_varlist = r(varlist)
 		local varlist : list varlist | tmp_varlist
 	}
@@ -329,7 +329,7 @@ program define Index
 	}
 end
 program define ProcessFolder, rclass
-	syntax, path(string) keys(string)
+	syntax, [TEST] path(string) keys(string)
 	
 	local files : dir "`path'" files "*.ster"
 	local n : word count `files'
@@ -337,13 +337,18 @@ program define ProcessFolder, rclass
 	local pos = c(N) // Start with current number of obs
 	qui set obs `=`pos'+`n''
 
+	* The following are keys that I will likely need when creating the table
+	* model is used by BuildStats, clustvar used by BuildVCE
+	local extrakeys time depvar vce clustvar model
+
+	* The following are variables that I also want to keep in the varlist.dta file
+	local extravars depvar vce clustvar ivar // e(absvars)? // xtreg uses ivar
+	
 	local i 0
 	foreach filename of local files {
-		ProcessFile, path(`path') filename(`filename') keys(`keys') pos(`++pos') // Fill row in index.dta
+		ProcessFile, path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`++pos') // Fill row in index.dta
 		local indepvars : colnames e(b)
 		
-		* model used by BuildStats, clustvar used by BuildVCE
-		local extravars depvar clustvar ivar model // e(absvars)? // xtreg uses ivar
 		foreach var of local extravars {
 			local `var' = cond("`e(`var')'"==".","", "`e(`var')'")
 		}
@@ -354,6 +359,14 @@ program define ProcessFolder, rclass
 		if !mod(`i',10) {
 			di as text "." _c
 		}
+		if ("`test'"!="") & (`i'>=10) {
+			continue, break
+		}
+	}
+
+	if (c(N)>0) {
+		conf var model
+		assert_msg model!="", msg("e(model) is empty in at least one regr")
 	}
 	di // empty to flush line
 	return local varlist `varlist'
@@ -367,7 +380,8 @@ syntax, path(string) filename(string) keys(string) pos(integer)
 	qui replace filename = `"`filename'"' in `pos'
 	* qui replace fullpath = `"`fullpath'"' in `pos'
 	estimates use "`fullpath'"
-	local keys `keys' `e(keys)' time depvar vce clustvar
+
+	local keys `keys' `e(keys)'
 	local keys : list uniq keys
 	* depvar is used to sort the table columns
 	* vce and clustvar are used to build the VCV footnotes
@@ -473,12 +487,15 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
-	assert_msg c(N), msg("condition <`if'> matched no results") rc(2000)
+	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 
+	* Drop empty columns
 	foreach var of varlist _all {
 		cap qui cou if `var'!=.
-		if (_rc==109) qui cou if `var'!=""
+		if (_rc==109) {
+			qui cou if `var'!=""
+		}
 		if (r(N)==0) drop `var'
 	}
 end
