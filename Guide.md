@@ -156,3 +156,4 @@ quipu export
 2. `save` creates a .sest file, with the filename based on the command, notes, etc. so that if you run the same regr. twice it will overwrite the previous file.
 2. `index` just creates an index.dta file with one row for each estimate and one column for each note.
 3. `index' with brackets uses `qui disp _request2(_curline)` under the hood, stopping when `strpos(trim(LINE),"}")==1`
+4. Most of the subcommands (export, tabulate, etc.) depend on the hardcoded path of the estimates. To change it, use the option `moved(FROM TO)` that will perform a quick replacement in the path string.
