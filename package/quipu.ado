@@ -194,9 +194,9 @@ program define Index
 		}
 	}
 
-	local path $quipu_path
-	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
-	di as text `"quipu: saving index files on <`path'>"'
+	local basepath $quipu_path
+	assert_msg `"`basepath'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
+	di as text `"quipu: saving index files on <`basepath'>"'
 	if ("`test'"!="") di as error `" - Warning: test mode; using only the first 10 estimates per folder"'
 	clear
 	clear results
@@ -207,12 +207,12 @@ program define Index
 	* gen fullpath = "" // path + filename
 
 	* Root of path
-	ProcessFolder, path(`path') keys(`keys')
+	ProcessFolder, basepath(`basepath') path() keys(`keys')
 
 	* One level deep
-	local folders : dir "`path'" dirs "*"
+	local folders : dir "`basepath'" dirs "*"
 	foreach folder of local folders {
-		ProcessFolder, `test' path(`path'/`folder') keys(`keys')
+		ProcessFolder, `test' basepath(`basepath') path(`folder') keys(`keys')
 		local tmp_varlist = r(varlist)
 		local varlist : list varlist | tmp_varlist
 	}
@@ -262,7 +262,7 @@ program define Index
 	la data "QUIPU.ADO - Index of .ster files (Stata Estimation Results)"
 	format %tc time
 	
-	local fn "`path'/index"
+	local fn "`basepath'/index"
 	qui save "`fn'", replace
 	di as text `"index saved in {stata "use `fn'":`fn'}"'
 
@@ -299,14 +299,14 @@ program define Index
 	qui gen int sort_depvar = . // Order in which to show the variable columnwise (in depvars)
 	qui gen int sort_indepvar = . // Order in which to show the variable rowsise (in indepvars)
 
-	local fn "`path'/varlist_template"
+	local fn "`basepath'/varlist_template"
 	qui save "`fn'", replace
 	di as text `"varlist template saved in {stata "use `fn'":`fn'}"'
 
 	Update_Varlist
 
 	* Save metadata.txt *IF* it doesn't exist already
-	local fn "`path'/metadata.txt"
+	local fn "`basepath'/metadata.txt"
 	cap conf file "`fn'"
 	if _rc==601 {
 		tempname fh
@@ -329,11 +329,12 @@ program define Index
 	}
 end
 program define ProcessFolder, rclass
-	syntax, [TEST] path(string) keys(string)
+	syntax, [TEST] basepath(string) [path(string)] keys(string)
 	
-	local files : dir "`path'" files "*.ster"
+	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
+	local files : dir "`bothpath'" files "*.ster"
 	local n : word count `files'
-	di as text `" - parsing <`path'>, `n' files found "' _c
+	di as text `" - parsing <`bothpath'>, `n' files found "' _c
 	local pos = c(N) // Start with current number of obs
 	qui set obs `=`pos'+`n''
 
@@ -346,7 +347,7 @@ program define ProcessFolder, rclass
 	
 	local i 0
 	foreach filename of local files {
-		ProcessFile, path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`++pos') // Fill row in index.dta
+		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`++pos') // Fill row in index.dta
 		local indepvars : colnames e(b)
 		
 		foreach var of local extravars {
@@ -374,8 +375,10 @@ end
 
 * Parse a single .ster file
 program define ProcessFile
-syntax, path(string) filename(string) keys(string) pos(integer)
-	local fullpath "`path'/`filename'"
+syntax, basepath(string) [path(string)] filename(string) keys(string) pos(integer)
+	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
+	local fullpath "`bothpath'/`filename'"
+
 	qui replace path = `"`path'"' in `pos'
 	qui replace filename = `"`filename'"' in `pos'
 	* qui replace fullpath = `"`fullpath'"' in `pos'
@@ -487,6 +490,7 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
+	replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
 	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 

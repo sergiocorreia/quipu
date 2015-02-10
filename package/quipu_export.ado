@@ -1016,6 +1016,7 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
+	replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
 	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 
