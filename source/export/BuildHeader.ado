@@ -111,6 +111,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					
 					if ("`extension'"=="html" & `is_group') {
 						local row `"`row'`sep'`cell_start'<p class="underline">`cell'</p>`cell_end'"'
+					}
 					else {
 						local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
 						local line `line'`cell_line'
@@ -127,7 +128,6 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					local ans "`ans'`sep'`row'`row_end'"
 				}
 			}
-
 		}
 	}
 	local ans "`ans'`header_end'"
