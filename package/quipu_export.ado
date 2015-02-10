@@ -415,6 +415,11 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 			local ans `"`ans'`sep'`row'`row_end'"'
 		}
 		else {
+
+			qui su span_`cat'
+			local is_group = (r(max)>1)
+			assert inlist(`is_group', 0, 1)
+
 			local row `"`row_start'`topleft'"' // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
 				local inactive = inactive_`cat'[`i']
@@ -437,27 +442,26 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					local start_col = `offset' + `i'
 					local end_col = `start_col' + `n' - 1
 					local sep = cond(`numcell'>1, "`cell_sep'", "")
-					local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
-					local line `line'`cell_line'
+					
+					if ("`extension'"=="html" & `is_group') {
+						local row `"`row'`sep'`cell_start'<p class="underline">`cell'</p>`cell_end'"'
+					else {
+						local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
+						local line `line'`cell_line'
+					}
 				}
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
 			
-			qui su span_`cat'
-			if (r(max)==1) {
-				local ans "`ans'`sep'`row'`row_end'"
-			}
-			else {
-				if ("`extension'"=="html") {
-					* Replace "> (i.e. right after "<th colspan=..") with "><p..
-					local row : subinstr local row `"">"' `""><p class="underline">"' , all
-					local row : subinstr local row `"</th>"' `"</p></th>"' , all
-					local ans "`ans'`sep'`row'`row_end'"
-				}
-				else {
+			if ("`extension'"!="html") {
+				if (`is_group') {
 					local ans "`ans'`sep'`row'`row_end'`line'`lineend'"
 				}
+				else {
+					local ans "`ans'`sep'`row'`row_end'"
+				}
 			}
+
 		}
 	}
 	local ans "`ans'`header_end'"
