@@ -1,17 +1,19 @@
 cap pr drop Tabulate
 program define Tabulate
-syntax [anything(everything)] , [*]
+syntax [anything(everything)] , [noLIst] [*]
 	qui Use `anything'
 	
 	di as text _n "{bf:List of keys:}"
 	de, simple
 	if (c(N)==0) exit
 
-	di as text _n "{bf:List of saved estimates:}"
-	forv i=1/`c(N)' {
-		local fn = path[`i'] +"/"+filename[`i']
-		di %3.0f `i' _c
-		di as text `"{stata "quipu view `fn'" : `fn' } "'
+	if ("`list'"!="nolist") {
+		di as text _n "{bf:List of saved estimates:}"
+		forv i=1/`c(N)' {
+			local fn = path[`i'] +"/"+filename[`i']
+			di %3.0f `i' _c
+			di as text `"{stata "quipu view `fn'" : `fn' } "'
+		}
 	}
 
 	drop path filename time
