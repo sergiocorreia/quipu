@@ -1,8 +1,8 @@
 cap pr drop Table
 program define Table
-syntax [anything(everything)], [MOVED(string asis)] [*]
+syntax [anything(everything)] , [*]
 	cap estimates drop quipu*
-	qui Use `anything', moved(`"`moved'"')
+	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
 		estimates use "`fn'"

@@ -1,7 +1,7 @@
 cap pr drop Tabulate
 program define Tabulate
-syntax [anything(everything)] , [MOVED(string asis)] [noLIst] [*]
-	qui Use `anything', moved(`"`moved'"')
+syntax [anything(everything)] , [noLIst] [*]
+	qui Use `anything'
 	
 	di as text _n "{bf:List of keys:}"
 	de, simple

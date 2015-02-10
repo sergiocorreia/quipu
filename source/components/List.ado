@@ -1,7 +1,7 @@
 cap pr drop List
 program define List
-syntax [anything(everything)] , [MOVED(string asis)] [*]
-	qui Use `anything', moved(`"`moved'"')
+syntax [anything(everything)] , [*]
+	qui Use `anything'
 	qui ds path filename time, not
 	list `r(varlist)' , `options' constant
 	return clear
