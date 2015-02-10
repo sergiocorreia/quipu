@@ -158,7 +158,7 @@ again (no need if also running {it: quipu index}.{p_end}
 [{help if}]
 [{help using} FilenameWithoutExtension]
 , {opt as(tex | pdf | html)}
-[{opt view} {opt latex_engine(xelatex | pdflatex)}]
+[{opt view} {opt engine(xelatex | pdflatex)}]
 [{opt verbose(0|1|2)}]
 {p_end}
 
@@ -172,7 +172,7 @@ so most {cmd:esttab} and {cmd:estout} options are supported.{p_end}
 {syntab:Output}
 {p2coldent:* {opt as(formatlist)}}list of formats to output (tex, pdf, and/or html){p_end}
 {synopt: {opt view}}open the resulting PDF file if appropiate{p_end}
-{synopt: {opt latex_engine(xelatex | pdflatex)}}latex engine to use{p_end}
+{synopt: {opt engine(xelatex | pdflatex)}}latex engine to use{p_end}
 
 {syntab:Format}
 {synopt: {opt rename(pat rep ...)}}list of pattern-replace strings; matched with regex against the entire varname.{p_end}

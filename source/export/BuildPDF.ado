@@ -21,7 +21,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'
 
-	local args latex_engine(`latex_engine') filename(`filename')
+	local args engine(`engine') filename(`filename')
 	cap erase "`filename'.log"
 	cap erase "`filename'.aux"
 	CompilePDF, `args'

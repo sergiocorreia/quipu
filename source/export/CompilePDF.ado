@@ -1,6 +1,6 @@
 capture program drop CompilePDF
 program define CompilePDF
-	syntax, filename(string) latex_engine(string)
+	syntax, filename(string) engine(string)
 	
 	* Get folder
 	local tmp `filename'
@@ -15,7 +15,7 @@ program define CompilePDF
 	tempfile stderr stdout
 	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
 	if ($quipu_verbose<=1) local quiet "-quiet"
-	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
+	RunCMD shell `engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
 	if ($quipu_verbose>1) noi type "`stderr'"
 	if ($quipu_verbose>1) di as text "{hline}"
 	if ($quipu_verbose>1) noi type "`stdout'"

@@ -17,7 +17,8 @@ set trace off
 set tracedepth 4
 set traceexpand on
 	quipu export if depvar=="price" using "`repo'\test\tmp.html" , verbose(2) ///
-		replace view title("The Title \( \gamma^3 \)") label(tableurl) notes(Tenemos varios temas aca)
+		replace view title("The Title \( \gamma^3 \)") label(tableurl) ///
+		notes(Tenemos varios temas aca) header(depvar #)
 
 	asd
 	

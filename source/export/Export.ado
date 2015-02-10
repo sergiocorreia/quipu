@@ -20,7 +20,7 @@ program define Export
 	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
 	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' // `options' style(html)
-	if ("`ext'"=="pdf") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
+	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
 	Cleanup

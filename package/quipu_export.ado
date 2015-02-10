@@ -39,7 +39,7 @@ program define Export
 	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
 	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' // `options' style(html)
-	if ("`ext'"=="pdf") BuildPDF, filename(`filename') latex_engine(`latex_engine') `view' `base_opt' `options'
+	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
 	Cleanup
@@ -445,6 +445,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					
 					if ("`extension'"=="html" & `is_group') {
 						local row `"`row'`sep'`cell_start'<p class="underline">`cell'</p>`cell_end'"'
+						di as error `"`row'"'
 					}
 					else {
 						local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
@@ -454,13 +455,11 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 			}
 			local sep = cond(`numrow'>1, "`row_sep'", "")
 			
-			if ("`extension'"!="html") {
-				if (`is_group') {
-					local ans "`ans'`sep'`row'`row_end'`line'`lineend'"
-				}
-				else {
-					local ans "`ans'`sep'`row'`row_end'"
-				}
+			if ("`extension'"!="html" & `is_group') {
+				local ans "`ans'`sep'`row'`row_end'`line'`lineend'"
+			}
+			else {
+				local ans "`ans'`sep'`row'`row_end'"
 			}
 		}
 	}
@@ -935,7 +934,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'
 
-	local args latex_engine(`latex_engine') filename(`filename')
+	local args engine(`engine') filename(`filename')
 	cap erase "`filename'.log"
 	cap erase "`filename'.aux"
 	CompilePDF, `args'
@@ -949,7 +948,7 @@ end
 
 // Input-Output
 program define CompilePDF
-	syntax, filename(string) latex_engine(string)
+	syntax, filename(string) engine(string)
 	
 	* Get folder
 	local tmp `filename'
@@ -964,7 +963,7 @@ program define CompilePDF
 	tempfile stderr stdout
 	cap erase "`filename'.pdf" // I don't want to BELIEVE there is no bug
 	if ($quipu_verbose<=1) local quiet "-quiet"
-	RunCMD shell `latex_engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
+	RunCMD shell `engine' "`filename'.tex" -halt-on-error `quiet' -output-directory="`dir'" 2> "`stderr'" 1> "`stdout'" // -quiet
 	if ($quipu_verbose>1) noi type "`stderr'"
 	if ($quipu_verbose>1) di as text "{hline}"
 	if ($quipu_verbose>1) noi type "`stdout'"
