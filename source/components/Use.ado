@@ -2,12 +2,13 @@ capture program drop Use
 program define Use, rclass
 	* Parse (including workaround that allows to use if <cond> with variables not in dataset)
 	estimates clear
-	syntax [anything(name=ifcond id="if condition" everything)]
+	syntax [anything(name=ifcond id="if condition" everything)], [MOVED(string)]
 	if (`"`ifcond'"'!="") {
 		gettoken ifword ifcond : ifcond
 		assert_msg "`ifword'"=="if", msg("condition needs to start with -if-") rc(101)
 		local if "if`ifcond'"
 	}
+
 	local path $quipu_path
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
@@ -23,4 +24,13 @@ program define Use, rclass
 		}
 		if (r(N)==0) drop `var'
 	}
+
+	if (`"`moved'"'!="") {
+		gettoken pathfrom moved : moved
+		gettoken pathto moved : moved
+		assert_msg `"`moved'"'=="", msg("moved() had more than two arguments; it required just <from to>")
+		replace path = subinstr(path, "`pathfrom'", "`pathto'", .)
+		di as text `"(`c(N)' replaced path of stored estimates from <`pathfrom'> to <`pathto'>)"'
+	}
+
 end
