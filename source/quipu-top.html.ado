@@ -8,13 +8,15 @@
   <meta name="author" content="Sergio Correia">
 
   <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <!--
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <script type="application/javascript" src="https://cdn.rawgit.com/ndp/align-column/master/jquery.align-column.js"></script>
   <script type="text/javascript">
       $(function () {
         $('table.estimates').alignColumn([1, 2, 3]);
       });
-    </script>
+  </script>
+  -->
 
   <style type="text/css">
     body {
