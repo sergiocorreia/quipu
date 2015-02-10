@@ -19,18 +19,25 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 	
 	if ("`extension'"=="html") {
 		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
+		local summary "<summary>Regression notes</summary>"
+		if (`"${quipu_footnotes}"'!="") {
+			global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
+		}
+		else {
+			global quipu_footnotes `"<details open>`note'</details>"'
+		}
 	}
 	else {
 		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+		if (`"${quipu_footnotes}"'!="") {
+			global quipu_footnotes `"${ENTER}`summary'${ENTER}${TAB}${ENTER}${quipu_footnotes}${ENTER}${TAB}`note'"'
+		}
+		else {
+			global quipu_footnotes `"`note'"'
+		}
 	}
 
-	local summary "<summary>Regression notes</summary>"
-	if (`"${quipu_footnotes}"'!="") {
-		global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
-	}
-	else {
-		global quipu_footnotes `"<details>`note'</details>"'
-	}
+
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
 	if (`"$quipu_footnotes"'!="") global quipu_insertnote "\insertTableNotes"

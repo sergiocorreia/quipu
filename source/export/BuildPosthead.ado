@@ -18,5 +18,5 @@ end
 capture program drop BuildPostheadTEX
 program define BuildPostheadTEX
 syntax, [*]
-	global quipu_posthead "  <tbody>$ENTER"
+	global quipu_posthead "  $ENTER"
 end

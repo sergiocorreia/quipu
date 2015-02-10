@@ -314,24 +314,24 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_colseps : word `size' of `size_colseps'
 
 	global quipu_prehead ///
-		"$ENTER\begin{comment}" ///
-		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
+		`"$ENTER\begin{comment}"' ///
+		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
 		`"$TAB - Criteria: `ifcond'"' ///
 		`"$TAB - Estimates: ${quipu_path}"' ///
-		"\end{comment}" ///
-		"`wrapper'" ///
-		"$BACKSLASH`size_name'" ///
-		"\tabcolsep=0.`size_colseps'cm" ///
-		"\centering" /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
-		"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}" /// Different line for table number and table title
-		"\begin{ThreePartTable}" ///
-		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
-		"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
-		"$TAB\caption{`title'}\label{table:`label'} \\" ///
-		"$TAB\toprule\endfirsthead" ///
-		"$TAB\midrule\endhead" ///
-		"$TAB\midrule\endfoot" ///
-		"$TAB\${quipu_insertnote}\endlastfoot"
+		`"\end{comment}"' ///
+		`"`wrapper'"' ///
+		`"$BACKSLASH`size_name'"' ///
+		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+		`"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}"' /// Different line for table number and table title
+		`"\begin{ThreePartTable}"' ///
+		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
+		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
+		`"$TAB\toprule\endfirsthead"' ///
+		`"$TAB\midrule\endhead"' ///
+		`"$TAB\midrule\endfoot"' ///
+		`"$TAB\${quipu_insertnote}\endlastfoot"'
 end
 program define BuildHeader
 syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
@@ -445,7 +445,6 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					
 					if ("`extension'"=="html" & `is_group') {
 						local row `"`row'`sep'`cell_start'<p class="underline">`cell'</p>`cell_end'"'
-						di as error `"`row'"'
 					}
 					else {
 						local row `"`row'`sep'`cell_start'`cell'`cell_end'"'
@@ -482,7 +481,7 @@ syntax, [*]
 end
 program define BuildPostheadTEX
 syntax, [*]
-	global quipu_posthead "  <tbody>$ENTER"
+	global quipu_posthead "  $ENTER"
 end
 program define BuildPrefoot
 	syntax, EXTension(string)
@@ -716,18 +715,25 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 	
 	if ("`extension'"=="html") {
 		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
+		local summary "<summary>Regression notes</summary>"
+		if (`"${quipu_footnotes}"'!="") {
+			global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
+		}
+		else {
+			global quipu_footnotes `"<details open>`note'</details>"'
+		}
 	}
 	else {
 		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+		if (`"${quipu_footnotes}"'!="") {
+			global quipu_footnotes `"${ENTER}`summary'${ENTER}${TAB}${ENTER}${quipu_footnotes}${ENTER}${TAB}`note'"'
+		}
+		else {
+			global quipu_footnotes `"`note'"'
+		}
 	}
 
-	local summary "<summary>Regression notes</summary>"
-	if (`"${quipu_footnotes}"'!="") {
-		global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
-	}
-	else {
-		global quipu_footnotes `"<details>`note'</details>"'
-	}
+
 
 	* ThreePartTable fails w/out footnotes (although above we are kinda ensuring it will not be empty)
 	if (`"$quipu_footnotes"'!="") global quipu_insertnote "\insertTableNotes"
@@ -759,11 +765,12 @@ syntax, orientation(string) size(integer) [PAGEBREAK]
 	* clearpage vs newpage http://tex.stackexchange.com/questions/45609/is-it-wrong-to-use-clearpage-instead-of-newpage
 	local flush = cond("`pagebreak'"!="", "$ENTER\newpage", "")
 
-	global quipu_postfoot $TAB\bottomrule ///
-		"$TAB\end{longtable}" ///
-		"\end{ThreePartTable}" ///
-		"`wrapper'" ///
-		"\restoregeometry`flush'"
+	global quipu_postfoot ///
+		`"$TAB\bottomrule"' ///
+		`"$TAB\end{longtable}"' ///
+		`"\end{ThreePartTable}"' ///
+		`"`wrapper'"' ///
+		`"\restoregeometry`flush'"'
 end
 
 	

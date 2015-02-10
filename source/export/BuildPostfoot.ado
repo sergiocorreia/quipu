@@ -29,9 +29,10 @@ syntax, orientation(string) size(integer) [PAGEBREAK]
 	* clearpage vs newpage http://tex.stackexchange.com/questions/45609/is-it-wrong-to-use-clearpage-instead-of-newpage
 	local flush = cond("`pagebreak'"!="", "$ENTER\newpage", "")
 
-	global quipu_postfoot $TAB\bottomrule ///
-		"$TAB\end{longtable}" ///
-		"\end{ThreePartTable}" ///
-		"`wrapper'" ///
-		"\restoregeometry`flush'"
+	global quipu_postfoot ///
+		`"$TAB\bottomrule"' ///
+		`"$TAB\end{longtable}"' ///
+		`"\end{ThreePartTable}"' ///
+		`"`wrapper'"' ///
+		`"\restoregeometry`flush'"'
 end

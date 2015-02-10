@@ -51,22 +51,22 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
     local size_colseps : word `size' of `size_colseps'
 
 	global quipu_prehead ///
-		"$ENTER\begin{comment}" ///
-		"$TAB`hr' QUIPU - Stata Regression `hr'" ///
+		`"$ENTER\begin{comment}"' ///
+		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
 		`"$TAB - Criteria: `ifcond'"' ///
 		`"$TAB - Estimates: ${quipu_path}"' ///
-		"\end{comment}" ///
-		"`wrapper'" ///
-		"$BACKSLASH`size_name'" ///
-		"\tabcolsep=0.`size_colseps'cm" ///
-		"\centering" /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
-		"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}" /// Different line for table number and table title
-		"\begin{ThreePartTable}" ///
-		"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
-		"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
-		"$TAB\caption{`title'}\label{table:`label'} \\" ///
-		"$TAB\toprule\endfirsthead" ///
-		"$TAB\midrule\endhead" ///
-		"$TAB\midrule\endfoot" ///
-		"$TAB\${quipu_insertnote}\endlastfoot"
+		`"\end{comment}"' ///
+		`"`wrapper'"' ///
+		`"$BACKSLASH`size_name'"' ///
+		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+		`"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}"' /// Different line for table number and table title
+		`"\begin{ThreePartTable}"' ///
+		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
+		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
+		`"$TAB\toprule\endfirsthead"' ///
+		`"$TAB\midrule\endhead"' ///
+		`"$TAB\midrule\endfoot"' ///
+		`"$TAB\${quipu_insertnote}\endlastfoot"'
 end
