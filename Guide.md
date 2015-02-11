@@ -112,6 +112,12 @@ Note that many of these options are magic-like and do a lot of things under the 
 * VCE notes are autoinferred from the estimates (e.g. clustering, robust SEs)
 * rename() and drop() are actually doing regex matching
 
+### Fixed-Effects Checklists
+
+To add identifiers for fixed effects, use the option `identifier`. By default, it will add all FEs used in commands such as `xtreg, fe`, `areg` and `reghdfe`. To add additional fixed effects, put them in parenthesis: `identifier(i.zipcode)` will include all zipcode factor variables, and so on. To include *all* factor variables, use `identifier(_all)`. To also include patterns, you can use * and ? wildcars as in `identifier(zipcode_?)`. The options can be combined.
+
+To change the Yes/No labels, edit metadata.txt (under the `#misc` header). To change the labels, also edit metadata.txt, adding the entries under the `#indicate` header.
+
 ### Noting FEs
 
 (not coded yet)
