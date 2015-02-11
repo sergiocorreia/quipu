@@ -316,6 +316,9 @@ program define Index
 		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
 		file write `fh' "somekey: Some value" _n _n
 		file write `fh' "anotherkey: Another value" _n _n
+		file write `fh' "#misc" _n _n
+		file write `fh' "indicate_yes: Yes" _n
+		file write `fh' "indicate_no: no" _n
 		file write `fh' "#footnotes" _n _n
 		file write `fh' " - foobar: Lorem ipsum dolor sit amet." _n
 		file write `fh' " - example: this is an example" _n _n
@@ -323,6 +326,9 @@ program define Index
 		file write `fh' "##mygroup" _n _n
 		file write `fh' " - spam: eggs" _n
 		file write `fh' " - foo: bar" _n
+		file write `fh' "#indicate" _n _n
+		file write `fh' "t: Time" _n _n
+		file write `fh' "id: Individual" _n _n
 		file write `fh' _n
 		file close `fh'
 		di as text `"metadata template saved in {stata "use `fn'":`fn'}"'
@@ -490,7 +496,7 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
-	replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
+	qui replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
 	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 

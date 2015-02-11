@@ -17,9 +17,18 @@ program define Parse
 		STARs(string) /// Cutoffs for statistical significance
 		CELLFORMAT(string) /// Decimal format of coefs and SDs
 		STATs(string asis) ///
-		Order(string asis) VARLabels(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
+		Indicate(string) ///
+		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
+
+	* Parse -indicate- vs -indicate()-
+	if ("`indicate'"=="") {
+		local 0 , `options'
+		syntax, [Indicate] [*]
+		if ("`indicate'"!="") local indicate _cons
+		* HACK: _all and _cons are reserved names; in this case _all = _cons + all i.xyz variables
+	}
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
 	global quipu_verbose `verbose'
@@ -46,7 +55,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
-		rename drop header cellformat metadata options
+		rename drop indicate header cellformat metadata options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {

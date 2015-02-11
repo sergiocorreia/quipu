@@ -22,11 +22,14 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 			gettoken s1 drop : drop
 			qui replace dropit = 1 if regexm(varname, "^`s1'$")
 		}
-		qui levelsof varname if dropit, local(rhsdrop) clean
-		if ($quipu_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		if ($quipu_verbose>0) {
+			qui levelsof varname if dropit, local(rhsdrop) clean
+			di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		}
 		qui drop if dropit
 		drop dropit
 	}
+	qui levelsof varname, local(rhskeep) clean
 
 	* Rename variables
 	* Note: Can't use estout for simple renames b/c it messes up the varlabels
@@ -74,13 +77,20 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 	* Set varlabel option
 	sort sort_indepvar // orders RHS, and ensures footnote daggers will be in order
-	forv i=1/`N' {
+	forv i=1/`c(N)' {
 		local varname = varname[`i']
-		local varlabel = cond(varlabel[`i']=="", "`varname'", varlabel[`i'])
 		local footnote = footnote[`i']
+		local varlabel = varlabel[`i']
+
+		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
+		* This is critical if we have a regr. with 1000s of dummies
+		if ("`varlabel'"!="" | "`footnote'"!="" | strpos("`varname'", ".")==0 ) {
+			* We need *something* as varlabel, to put next to the footnote dagger
+			if ("`varlabel'"=="") local varlabel `"`varname'"'
+			AddFootnote, ext(`extension') footnote(`footnote')
+			local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
+		}
 		local order `order' `varname'
-		AddFootnote, ext(`extension') footnote(`footnote')
-		local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
 	}
 
 	drop _all // BUGBUG: clear?
@@ -88,5 +98,6 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
-	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
+	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') keep(`rhskeep')
 end

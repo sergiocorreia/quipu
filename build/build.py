@@ -13,6 +13,10 @@ Note: assert_msg loaded with git_submodules from externals/stata-misc/assert_msg
 (better than just copy-pasting, see
 http://stackoverflow.com/questions/2140985/how-to-set-up-a-git-project-to-use-an-external-repo-submodule
 
+To do a quick test w/out going through github, run:
+cap ado uninstall quipu
+net from D:\Github\quipu\package
+net install quipu
 """
 
 # -------------------------------------------------------------

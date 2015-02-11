@@ -23,14 +23,14 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header' // Loads estimates and sort them in the correct order
+	LoadEstimates `header', indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	
 	BuildHeader `header', ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats', ext(`ext')
+	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
 	BuildRHS, ext(`ext') rename(`rename') drop(`drop') // $quipu_rhsoptions -> rename() drop() varlabels() order()
-	BuildPrefoot, ext(`ext')
 	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
@@ -62,9 +62,18 @@ program define Parse
 		STARs(string) /// Cutoffs for statistical significance
 		CELLFORMAT(string) /// Decimal format of coefs and SDs
 		STATs(string asis) ///
-		Order(string asis) VARLabels(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
+		Indicate(string) ///
+		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
+
+	* Parse -indicate- vs -indicate()-
+	if ("`indicate'"=="") {
+		local 0 , `options'
+		syntax, [Indicate] [*]
+		if ("`indicate'"!="") local indicate _cons
+		* HACK: _all and _cons are reserved names; in this case _all = _cons + all i.xyz variables
+	}
 
 	assert_msg inlist("`verbose'", "0", "1", "2"), msg("Wrong verbose level (needs to be 0, 1 or 2)")
 	global quipu_verbose `verbose'
@@ -91,7 +100,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
-		rename drop header cellformat metadata options
+		rename drop indicate header cellformat metadata options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -172,6 +181,7 @@ program define Cleanup
 	global ENTER
 	global BACKSLASH
 	global indepvars
+	global absorbed
 	global quipu_verbose
 
 	global quipu_prehead
@@ -193,7 +203,7 @@ program define Cleanup
 	}
 end
 program define LoadEstimates
-syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
+syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt(string asis)]
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
@@ -257,11 +267,107 @@ syntax [anything(name=header equalok everything)] [ , Fmt(string asis)]
 		local fn = path[`i'] +"/"+filename[`i']
 		estimates use "`fn'"
 		estimates title: "`fn'"
-		local indepvars : colnames e(b)
+		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables
 		local indepvarlist : list indepvarlist | indepvars
 		estimates store quipu`i', nocopy
 	}
 	global indepvars `indepvarlist'
+	global absorb
+end
+
+* Get -indepvars- and base names for absorbed variables
+program define GetVars
+syntax, pos(integer) [indicate(string)]
+	
+	local vars : colnames e(b)
+
+	if ("`indicate'"=="") {
+		* Remove omitted
+		foreach var of local vars {
+			local is_omitted = regexm("`var'", "o\.")
+			if (!`is_omitted') {
+				local includedvars `includedvars' `var'
+			}
+		}
+		c_local indepvars `includedvars'
+		exit
+	}
+
+	* Default (always check for these)
+	if ("`e(cmd)'"=="xtreg" & "`e(model)'"=="fe") local absorbed `absorbed' `e(ivar)' // xtreg,fe
+	if ("`e(absvar)'"!="") local absorbed `absorbed' `e(absvar)' // areg
+	if ("`e(absvars)'"!="") local absorbed `absorbed' `e(absvars)' // reghdfe
+
+	* Check for patterns (id_*) and factor variables (123bn.id)
+	if ("`indicate'"!="_cons") {
+		local all "_all"
+		local match_all : list all in indicate
+
+		* This weird loop creates locals -basepatterns- -fn- (which evals a fn!) and -dotted- (which is kinda unnecesary)
+		local i 0
+		foreach pat of local indicate {
+			if (strpos("`pat'", "*") | strpos("`pat'", "?")) {
+				local basepatterns `patterns' `pat'
+				* Too bad if a var matches more than one pattern
+				local fn `macval(fn)' + `++i' * strmatch("\`var'", "`pat'")
+			}
+			else {
+				local dotted `dotted' `pat'
+			}
+		}
+
+		* Store non-indicator vars in `indepvars' and the base vars of the indicator ones in `absorbed'
+		foreach var of local vars {
+
+			local is_omitted = regexm("`var'", "o\.")
+			if (`is_omitted') continue
+
+			local is_indicator 0
+			local basevar `var'
+			while (regexm("`basevar'", "[0-9]+[bn]*\.")) {
+				local is_indicator 1
+				local basevar = regexr("`basevar'", "[0-9]+[bn]*\.", "i.")
+			}
+
+			* Only evaluate this fn when needed, b/c it's slow
+			local pattern_pos 0
+			if (!`is_indicator' & "`basepatterns'"!="") {
+				local pattern_pos = `fn'
+				assert `pattern_pos'>=0 & `pattern_pos'<.
+			}
+
+			if (`is_indicator' & `match_all') {
+				if ("`basevar'"!="`lastbasevar'") local absorbed `absorbed' `basevar'
+				local lastbasevar `basevar'
+			}
+			else if (`is_indicator' & `: list basevar in dotted') {
+				if ("`basevar'"!="`lastbasevar'") local absorbed `absorbed' `basevar'
+				local lastbasevar `basevar'
+			}
+			else if (`pattern_pos') {
+				local basevar : word `pattern_pos' of `basepatterns'
+				if ("`basevar'"!="`lastbasevar'") local absorbed `absorbed' `basevar'
+				local lastbasevar `basevar'
+			}
+			else {
+				local indepvars `indepvars' `var'
+			}
+		}
+	}
+
+	c_local indepvars `indepvars'
+
+	local absorbed : list uniq absorbed
+	foreach var of local absorbed {
+		* Remove Dots Hashes Question marks and Stars
+		local fixedvar `var'
+		local fixedvar = subinstr(subinstr("`fixedvar'", "?","_QQ_", .), "*","_SS_", .) // Pattern
+		local fixedvar = subinstr(subinstr("`fixedvar'", ".","_DD_", .), "#","_HH_", .) // Factor variables
+
+		cap gen byte ABSORBED_`fixedvar' = 0
+		if (!_rc) la var ABSORBED_`fixedvar' "`var'"
+		qui replace ABSORBED_`fixedvar' = 1 in `pos'
+	}
 end
 
 
@@ -485,12 +591,69 @@ syntax, [*]
 end
 program define BuildPrefoot
 	syntax, EXTension(string)
+
 	if ("`extension'"=="html") {
-		global quipu_prefoot "  </tbody>$ENTER$ENTER  <tfoot>$ENTER"
+		global quipu_prefoot "  </tbody>$ENTER$ENTER"
+
+		local cell_start `"      <td>"'
+		local cell_end "</td>${ENTER}"
+		local cell_sep ""
+		local cell_line
+
+		local row_start "    <tr>${ENTER}"
+		local row_end `"    </tr>${ENTER}"'
+		local row_sep
+
+		local region_start `"  <tbody class="absvars">"'
+		local region_end `"  </tbody>$ENTER$ENTER"'
 	}
 	else {
 		global quipu_prefoot "$TAB\midrule"
+
+		local cell_start "\multicolumn{\`n'}{c}{"
+		local cell_end "}"
+		local cell_sep " & "
+		local cell_line "\cmidrule(lr){\`start_col'-\`end_col'} "
+		local row_start "${TAB}"
+		local row_end "$TAB${BACKSLASH}${BACKSLASH}${ENTER}"
+		local row_sep ""
+
+		local region_start ""
+		local region_end "$TAB\midrule"
 	}
+
+	* Add rows with FEs Yes/No
+	cap ds ABSORBED_*
+	if (!_rc) {
+		
+		GetMetadata yes=misc.indicate_yes
+		GetMetadata no=misc.indicate_no
+
+		local absvars = r(varlist)
+		local region "`region_start'"
+		local numrow 0
+		foreach absvar of local absvars {
+			local ++numrow
+			local label : var label `absvar'
+			local row `"`cell_start'`label'`cell_end'"'
+			forval i = 1/`c(N)' {
+				local cell = cond(`absvar'[`i'], "`yes'", "`no'")
+				local row `"`row'`cell_sep'`cell_start'`cell'`cell_end'"'
+			}
+			local sep = cond(`numrow'>1, "`row_sep'", "")
+			local region `"`region'`sep'`row'`row_end'"'
+		}
+		local region `"`region'`region_end'"'
+	}
+
+	* Add what goes after the FEs
+	if ("`extension'"=="html") {
+		global quipu_prefoot `"${quipu_prefoot}`region'  <tfoot>$ENTER"'
+	}
+	else {
+		global quipu_prefoot `"{quipu_prefoot}`region'"'
+	}
+
 end
 program define BuildVCENote
 syntax, [vcenote(string)]
@@ -548,11 +711,14 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 			gettoken s1 drop : drop
 			qui replace dropit = 1 if regexm(varname, "^`s1'$")
 		}
-		qui levelsof varname if dropit, local(rhsdrop) clean
-		if ($quipu_verbose>0) di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		if ($quipu_verbose>0) {
+			qui levelsof varname if dropit, local(rhsdrop) clean
+			di as text "(dropping variables: " as result "`rhsdrop'" as text ")"
+		}
 		qui drop if dropit
 		drop dropit
 	}
+	qui levelsof varname, local(rhskeep) clean
 
 	* Rename variables
 	* Note: Can't use estout for simple renames b/c it messes up the varlabels
@@ -600,13 +766,20 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 	* Set varlabel option
 	sort sort_indepvar // orders RHS, and ensures footnote daggers will be in order
-	forv i=1/`N' {
+	forv i=1/`c(N)' {
 		local varname = varname[`i']
-		local varlabel = cond(varlabel[`i']=="", "`varname'", varlabel[`i'])
 		local footnote = footnote[`i']
+		local varlabel = varlabel[`i']
+
+		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
+		* This is critical if we have a regr. with 1000s of dummies
+		if ("`varlabel'"!="" | "`footnote'"!="" | strpos("`varname'", ".")==0 ) {
+			* We need *something* as varlabel, to put next to the footnote dagger
+			if ("`varlabel'"=="") local varlabel `"`varname'"'
+			AddFootnote, ext(`extension') footnote(`footnote')
+			local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
+		}
 		local order `order' `varname'
-		AddFootnote, ext(`extension') footnote(`footnote')
-		local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
 	}
 
 	drop _all // BUGBUG: clear?
@@ -614,7 +787,8 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
-	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') drop(`rhsdrop')
+	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') keep(`rhskeep')
 end
 program define BuildStats
 syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string) Labels(string asis)]
@@ -1026,7 +1200,7 @@ program define Use, rclass
 	assert_msg `"`path'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
 	
 	qui use `if' using "`path'/index", clear
-	replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
+	qui replace path = cond(path=="", "$quipu_path", "$quipu_path/" + path)
 	assert_msg c(N), msg(`"condition <`if'> matched no results"') rc(2000)
 	di as text "(`c(N)' estimation results loaded)"
 

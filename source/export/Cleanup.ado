@@ -6,6 +6,7 @@ program define Cleanup
 	global ENTER
 	global BACKSLASH
 	global indepvars
+	global absorbed
 	global quipu_verbose
 
 	global quipu_prehead
