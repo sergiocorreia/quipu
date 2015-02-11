@@ -121,11 +121,11 @@ There are three ways fixed effects may appear:
 2. Within absorb() in either areg() or reghdfe()
 3. As dummies in i##.varname
 
-The indicate() option helps with the third one only, and may also conflict with how -quipu- works.
+The indicate() option from -estout- helps with the third one only, and may also conflict with how -quipu- works.
 
 The soln. is to extend postfoot() or prefoot() to manually add the lines (like BuildHeader does). Now, what should be the syntax?
 
-* Just use -indicate- as option
+* Overlay our own -indicate()- option. By itself, -indicate- adds e(ivar) whenever e(model)==fe and e(cmd)==xtreg ,  e(absvar) (from areg), and e(absvars) (from reghdfe). To add dummies like i.identifier, you can use -indicate(identifier)-. To add dummies like identifier_* or *_identifier, you can use -indicate(*_identifier) (the program will look for the *? patterns and match them).
 * And in metadata.txt , add the keys `indicate_yes` and `indicate_no`.
 * Also in metadata add a group for the labels of the absorbed vars (maybe call it -indicate-)
  
