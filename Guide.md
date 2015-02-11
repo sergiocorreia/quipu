@@ -116,6 +116,7 @@ Note that many of these options are magic-like and do a lot of things under the 
 
 (not coded yet)
 There are three ways fixed effects may appear:
+
 1. Implicly in xtreg, fe (search for the tsvars)
 2. Within absorb() in either areg() or reghdfe()
 3. As dummies in i##.varname
