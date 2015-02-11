@@ -116,26 +116,9 @@ Note that many of these options are magic-like and do a lot of things under the 
 
 To add identifiers for fixed effects, use the option `identifier`. By default, it will add all FEs used in commands such as `xtreg, fe`, `areg` and `reghdfe`. To add additional fixed effects, put them in parenthesis: `identifier(i.zipcode)` will include all zipcode factor variables, and so on. To include *all* factor variables, use `identifier(_all)`. To also include patterns, you can use * and ? wildcars as in `identifier(zipcode_?)`. The options can be combined.
 
+Note that factor variables must include the "i." and/or "c." prefix.
+
 To change the Yes/No labels, edit metadata.txt (under the `#misc` header). To change the labels, also edit metadata.txt, adding the entries under the `#indicate` header.
-
-### Noting FEs
-
-(not coded yet)
-There are three ways fixed effects may appear:
-
-1. Implicly in xtreg, fe (search for the tsvars)
-2. Within absorb() in either areg() or reghdfe()
-3. As dummies in i##.varname
-
-The indicate() option from -estout- helps with the third one only, and may also conflict with how -quipu- works.
-
-The soln. is to extend postfoot() or prefoot() to manually add the lines (like BuildHeader does). Now, what should be the syntax?
-
-* Overlay our own -indicate()- option. By itself, -indicate- adds e(ivar) whenever e(model)==fe and e(cmd)==xtreg ,  e(absvar) (from areg), and e(absvars) (from reghdfe). To add dummies like i.identifier, you can use `indicate(identifier)`. To add dummies like `identifier_*` or `*_identifier`, you can use `indicate(*_identifier)` (the program will look for the `*?` patterns and match them). To just add all `i.*` dummies, use `indicate(_all)`.
-* And in metadata.txt , add the keys `indicate_yes` and `indicate_no`.
-* Also in metadata add a group for the labels of the absorbed vars (maybe call it -indicate-)
- 
-
 
 ## Summary
 
