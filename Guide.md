@@ -112,6 +112,24 @@ Note that many of these options are magic-like and do a lot of things under the 
 * VCE notes are autoinferred from the estimates (e.g. clustering, robust SEs)
 * rename() and drop() are actually doing regex matching
 
+### Noting FEs
+
+(not coded yet)
+There are three ways fixed effects may appear:
+1. Implicly in xtreg, fe (search for the tsvars)
+2. Within absorb() in either areg() or reghdfe()
+3. As dummies in i##.varname
+
+The indicate() option helps with the third one only, and may also conflict with how -quipu- works.
+
+The soln. is to extend postfoot() or prefoot() to manually add the lines (like BuildHeader does). Now, what should be the syntax?
+
+* Just use -indicate- as option
+* And in metadata.txt , add the keys `indicate_yes` and `indicate_no`.
+* Also in metadata add a group for the labels of the absorbed vars (maybe call it -indicate-)
+ 
+
+
 ## Summary
 
 To recap, these are the steps:
