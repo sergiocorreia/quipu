@@ -99,5 +99,5 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 	* Set global option
 	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
-	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') keep(`rhskeep')
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') keep(`rhskeep') // rename(`rhsrename') BUGBUG?
 end
