@@ -2,6 +2,10 @@ capture program drop BuildRHS
 program define BuildRHS
 syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
+	* NOTE: -estout- requires that after a rename, all the options MUST USE THE NEW NAME
+	* i.e. if I rename(price Precio), then when calling -esttab- I need to include keep(Precio)
+	* (and so oon for varlabels, order, etc.)
+
 	local indepvars $indepvars
 	local N : word count `indepvars'
 	qui set obs `N'
@@ -29,12 +33,8 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		qui drop if dropit
 		drop dropit
 	}
-	qui levelsof varname, local(rhskeep) clean
 
-	* Rename variables
-	* Note: Can't use estout for simple renames b/c it messes up the varlabels
-		* TODO (PERO DEMASIADO ENREDADO): permitir usar regexs()..
-		* basicamente, hacer primero una pasada con regexm, luego aplicar regexr que permita sumar regexs(1)
+	* Rename variables. Note: Can't use estout for simple renames b/c it messes up the varlabels
 	if (`"`rename'"'!="") {
 		qui gen original = varname
 		while (`"`rename'"'!="") {
@@ -71,6 +71,9 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 
 		drop original renamed
 	}
+
+	* Fill contents of keep (must be done after the renames are made)
+	qui levelsof varname, local(rhskeep) clean
 
 	* Groups +-+-
 	* ...
