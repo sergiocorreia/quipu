@@ -5,6 +5,11 @@
 
 This is an experimental package intended for personal use.
 
+## Editing Help Files
+
+- [Usage](http://prose.io/#sergiocorreia/quipu/edit/master/Using.md)
+- [Todo](http://prose.io/#sergiocorreia/quipu/edit/master/ToDo.md)
+
 ## Installation
 
 ```stata
