@@ -72,8 +72,13 @@ program define Setpath
 	cap mkdir `path' // Try to create the path in case it doesn't exist
 
 	* Check that the path is writeable
-	local fn `path'/deletethis
-	qui file open quipu_handle using `fn', write replace
+	local fn `path'/DummyFile
+	cap qui file open quipu_handle using `fn', write replace
+	local rc = _rc
+	if (`rc') {
+		di as error `"quipu setpath - cannot save files in path <`path'>, does the path exist?"'
+		error `rc'
+	}
 	file close quipu_handle
 	erase `fn'
 
