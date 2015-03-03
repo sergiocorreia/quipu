@@ -43,6 +43,7 @@ program define Index
 	}
 	qui destring _all, replace // Try to convert to numbers
 	qui compress
+	qui drop if missing(filename)
 
 	* Add inlined block of commands
 	if (`inline') {
@@ -169,7 +170,8 @@ program define ProcessFolder, rclass
 	local n : word count `files'
 	di as text `" - parsing <`bothpath'>, `n' files found "' _c
 	local pos = c(N) // Start with current number of obs
-	qui set obs `=`pos'+`n''
+	local new_obs = `pos' + `n' * 10 // Allow up to 10 estimation results per .sest file
+	qui set obs `new_obs'
 
 	* The following are keys that I will likely need when creating the table
 	* model is used by BuildStats, clustvar used by BuildVCE
@@ -180,7 +182,10 @@ program define ProcessFolder, rclass
 	
 	local i 0
 	foreach filename of local files {
-		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`++pos') // Fill row in index.dta
+
+		local ++pos // always one estimate by file at least
+		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos') // Fill row in index.dta
+		local pos = `pos' + s(extra_estimates) // adjust for estimates beyond first
 		local indepvars : colnames e(b)
 		
 		foreach var of local extravars {
@@ -208,7 +213,7 @@ end
 
 * Parse a single .ster file
 capture program drop ProcessFile
-program define ProcessFile
+program define ProcessFile, sclass
 syntax, basepath(string) [path(string)] filename(string) keys(string) pos(integer)
 	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
 	local fullpath "`bothpath'/`filename'"
@@ -216,16 +221,24 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 	qui replace path = `"`path'"' in `pos'
 	qui replace filename = `"`filename'"' in `pos'
 	* qui replace fullpath = `"`fullpath'"' in `pos'
-	estimates use "`fullpath'"
+	
+	qui estimates describe using "`filename'"
+	local num_estimates = r(nestresults)
+	assert `num_estimates'>0 & `num_estimates'<.
 
-	local keys `keys' `e(keys)'
-	local keys : list uniq keys
-	* depvar is used to sort the table columns
-	* vce and clustvar are used to build the VCV footnotes
+	forval i = 1/`num_estimates' {
+		estimates use "`fullpath'", number(`i')
+		qui replace estimate_number = `i' in `pos'
+		local keys `keys' `e(keys)'
+		local keys : list uniq keys
+		* depvar is used to sort the table columns
+		* vce and clustvar are used to build the VCV footnotes
 
-	foreach key of local keys {
-		cap qui gen `key' = ""
-		qui replace `key' = "`e(`key')'" in `pos'
+		foreach key of local keys {
+			cap qui gen `key' = ""
+			qui replace `key' = "`e(`key')'" in `pos'
+		}
+		*assert fullpath!="" in 1/`pos'
 	}
-	*assert fullpath!="" in 1/`pos'
+	sreturn extra_estimates = `num_estimates' - 1
 end
