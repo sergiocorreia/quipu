@@ -21,13 +21,13 @@ program define quipu
 	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
 
-	* Special case for Save for multiple estimates
-	if ("`subcmd'"=="Save" & "`e(stored_estimates)'"!="") {
-		local estimates `e(stored_estimates)'
+	* Special case for Save to deal with multiple estimates
+	if ("`subcmd'"=="Save") {
 		`subcmd' `0'
+		local estimates "`e(stored_estimates)'"
 		local prev_filename "`e(filename)'"
 		assert "`prev_filename'"!=""
-		
+
 		* Add filename carefully
 		cap _on_colon_parse `0'
 		if !_rc {
