@@ -21,6 +21,30 @@ program define quipu
 	assert_msg inlist("`subcmd'", "`subcmd_commas1'") | inlist("`subcmd'", "`subcmd_commas2'"), ///
 	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
+
+	* Special case for Save for multiple estimates
+	if ("`subcmd'"=="Save" & "`e(stored_estimates)'"!="") {
+		local estimates `e(stored_estimates)'
+		`subcmd' `0'
+		local prev_filename "`e(filename)'"
+		assert "`prev_filename'"!=""
+		
+		* Add filename carefully
+		cap _on_colon_parse `0'
+		if !_rc {
+			local cmd : `s(after)'
+			local 0 `s(before)'
+		}
+		syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)]
+		* We will ignore prefix() and the contents of filename()
+
+		foreach estimate of local estimates {
+			estimates restore `estimate'
+			`subcmd', filename("`prev_filename'") append notes(`notes') `cmd'
+		}
+	}
+
+
 	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
 end
