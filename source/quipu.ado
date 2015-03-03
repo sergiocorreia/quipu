@@ -32,7 +32,7 @@ program define quipu
 		* Add filename carefully
 		cap _on_colon_parse `0'
 		if !_rc {
-			local cmd : `s(after)'
+			local cmd `": `s(after)'"'
 			local 0 `s(before)'
 		}
 		syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)]
