@@ -39,9 +39,11 @@ program define quipu
 
 		foreach estimate of local estimates {
 			estimates restore `estimate'
+			reghdfe // bugbug
 			`subcmd', filename("`prev_filename'") append notes(`notes') `cmd'
 			dir F:\CreditCards\out\Regression\Individuals_Debtors_Full\
 		}
+		exit
 	}
 
 	if ("`subcmd'"=="Export") local subcmd quipu_export
@@ -200,6 +202,7 @@ program define Save, eclass
 	ereturn hidden local filename = "`filename'"
 
 	local savemode = cond("`append'"=="", "replace", "append")
+	noi di as error "<savemode>=<`savemode'> <stage>=<`e(stage)'>"
 	estimates save "`filename'", `savemode'
 end
 

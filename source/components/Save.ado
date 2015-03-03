@@ -65,6 +65,7 @@ program define Save, eclass
 	ereturn hidden local filename = "`filename'"
 
 	local savemode = cond("`append'"=="", "replace", "append")
+	noi di as error "<savemode>=<`savemode'> <stage>=<`e(stage)'>"
 	estimates save "`filename'", `savemode'
 end
 
