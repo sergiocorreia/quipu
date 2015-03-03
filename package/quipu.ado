@@ -40,9 +40,10 @@ program define quipu
 		foreach estimate of local estimates {
 			estimates restore `estimate'
 			`subcmd', filename("`prev_filename'") append notes(`notes') `cmd'
+			dir F:\CreditCards\out\Regression\Individuals_Debtors_Full\
 		}
+asd
 	}
-
 
 	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
