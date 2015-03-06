@@ -28,6 +28,9 @@ from __future__ import division
 
 import os, time, re, shutil
 
+# Change the working dir (our paths are relative to the build/ folder)
+os.chdir(os.path.split(__file__)[0])
+
 # Constants
 source_path = u"../source"
 server_path = u"../package"
