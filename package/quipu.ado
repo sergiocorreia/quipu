@@ -21,39 +21,6 @@ program define quipu
 	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
 
-	* Special case for Save to deal with multiple estimates
-	if ("`subcmd'"=="Save") {
-		
-		* This will i) run the regression in case we are using the "quipu save : cmd" syntax, ii) save the active results
-		`subcmd' `0'
-
-		local estimates "`e(stored_estimates)'"
-		local prev_filename "`e(filename)'"
-		assert "`prev_filename'"!=""
-
-		* Exit if no further estimates in file (this is redundant but done for clarity)
-		if ("`estimates'"=="") exit
-
-		* Extract notes() from the syntax
-		cap _on_colon_parse `0'
-		if !_rc {
-			local cmd `": `s(after)'"'
-			local 0 `s(before)'
-		}
-		syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)] // note: prefix() and filename() are ignored here
-
-		foreach estimate of local estimates {
-			estimates restore `estimate'
-			`subcmd', filename("`prev_filename'") append notes(`notes')
-		}
-
-		* Estimates clear (we either clear them, or backup+restore what was the initial active estimate)
-		estimates clear
-		ereturn clear
-
-		exit
-	}
-
 	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
 end
@@ -144,10 +111,47 @@ end
 
 
 	
+* Special case for Save to deal with multiple estimates
+program define Save, eclass
+	
+	* This will i) run the regression in case we are using the "quipu save : cmd" syntax, ii) save the active results
+	SaveOne `0'
+
+	local estimates "`e(stored_estimates)'"
+	local prev_filename "`e(filename)'"
+	assert "`prev_filename'"!=""
+
+	if ("`estimates'"!="") {
+		di as text "(saving additional stored estimates: " as result "`estimates'" as text ")"
+
+		* Extract notes() from the syntax
+		cap _on_colon_parse `0'
+		if !_rc {
+			local cmd `": `s(after)'"'
+			local 0 `s(before)'
+		}
+		syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)] // note: prefix() and filename() are ignored here
+
+		* Save each estimate
+		foreach estimate of local estimates {
+			qui estimates restore `estimate'
+			SaveOne, filename("`prev_filename'") append notes(`notes')
+		}
+
+		* Estimates clear (we either clear them, or backup+restore what was the initial active estimate)
+		estimates clear
+		ereturn clear
+	}
+	di as text `"(estimates saved on {stata "quipu view `prev_filename'":`prev_filename'})"'
+	ereturn local filename = "`prev_filename'" // overwrite in case we cleared before
+end
+
+
+	
 * Run this after a command, or together with <prefix : cmd>
 * [SYNTAX 1] quipu save, notes(..) [prefix(..)] // after quipu setpath ..
 * [SYNTAX 2] quipu save, notes(..) filename(..)
-program define Save, eclass
+program define SaveOne, eclass
 	
 	* Parse (with our without colon)
 	cap _on_colon_parse `0' // * See help _prefix
@@ -191,6 +195,7 @@ program define Save, eclass
 		local keys
 		while `"`notes'"'!="" {
 			gettoken key notes : notes, parse(" =")
+			assert_msg "`notes'"!="", msg("Error in quipu notes(): expected <key=value>, got <key>")
 			assert_msg !inlist("`key'","sample","time"), msg("Key cannot be -sample- or -time-") // Else -estimates- will fail
 			gettoken _ notes : notes, parse("=")
 			gettoken value notes : notes, quotes
@@ -210,8 +215,7 @@ program define Save, eclass
 	ereturn hidden local filename = "`filename'"
 
 	local savemode = cond("`append'"=="", "replace", "append")
-	noi di as error "<savemode>=<`savemode'> <stage>=<`e(stage)'>"
-	estimates save "`filename'", `savemode'
+	qui estimates save "`filename'", `savemode'
 end
 
 
@@ -245,11 +249,14 @@ program define Index
 	local i 1 // Cursor position
 	gen path = ""
 	gen filename = ""
+	gen byte num_estimate = .
 	gen depvar = "" // we need this to sort the table columns (in Export.ado)
 	* gen fullpath = "" // path + filename
 
 	* Root of path
 	ProcessFolder, basepath(`basepath') path() keys(`keys')
+	local varlist = r(varlist)
+	local varlist : list varlist | tmp_varlist
 
 	* One level deep
 	local folders : dir "`basepath'" dirs "*"
@@ -258,9 +265,14 @@ program define Index
 		local tmp_varlist = r(varlist)
 		local varlist : list varlist | tmp_varlist
 	}
-	qui destring _all, replace // Try to convert to numbers
+
+	assert_msg "`varlist'"!="", msg("quipu error: empty varlist")
+
+	qui ds path filename vce clustvar model, not // If I destring _all and there are no subfolders, path gets converted to a byte and fails
+	qui destring `r(varlist)', replace // Try to convert to numbers
 	qui compress
 	qui drop if missing(filename)
+	assert !missing(num_estimate)
 
 	* Add inlined block of commands
 	if (`inline') {
@@ -400,7 +412,7 @@ program define ProcessFolder, rclass
 
 		local ++pos // always one estimate by file at least
 		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos') // Fill row in index.dta
-		local pos = `pos' + s(extra_estimates) // adjust for estimates beyond first
+		local pos = `pos' + `s(extra_estimates)' // adjust for estimates beyond first
 		local indepvars : colnames e(b)
 		
 		foreach var of local extravars {
@@ -432,17 +444,16 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
 	local fullpath "`bothpath'/`filename'"
 
-	qui replace path = `"`path'"' in `pos'
-	qui replace filename = `"`filename'"' in `pos'
-	* qui replace fullpath = `"`fullpath'"' in `pos'
-	
-	qui estimates describe using "`filename'"
+
+	qui estimates describe using "`fullpath'"
 	local num_estimates = r(nestresults)
 	assert `num_estimates'>0 & `num_estimates'<.
 
 	forval i = 1/`num_estimates' {
+		qui replace path = `"`path'"' in `pos'
+		qui replace filename = `"`filename'"' in `pos'
 		estimates use "`fullpath'", number(`i')
-		qui replace estimate_number = `i' in `pos'
+		qui replace num_estimate = `i' in `pos'
 		local keys `keys' `e(keys)'
 		local keys : list uniq keys
 		* depvar is used to sort the table columns
@@ -452,9 +463,10 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 			cap qui gen `key' = ""
 			qui replace `key' = "`e(`key')'" in `pos'
 		}
-		*assert fullpath!="" in 1/`pos'
+		local ++pos
 	}
-	sreturn extra_estimates = `num_estimates' - 1
+
+	sreturn local extra_estimates = `num_estimates' - 1
 end
 program define Update_Varlist
 	local path $quipu_path
@@ -514,13 +526,24 @@ end
 	
 * Replay regression
 program define View, eclass
-	local filename `0'
+	syntax anything(name=filename) , [N(integer 0)]
+	local filename : subinstr local filename `"""' "", all
 	
 	qui estimates describe using "`filename'"
 	local num_estimates = r(nestresults)
 	assert `num_estimates'>0 & `num_estimates'<.
 
-	forval i = 1/`num_estimates' {
+	* Quick hack to show just the selected estimate
+	local start 1
+	local end `num_estimates'
+	if (`n'>0) {
+		local start `n'
+		local end `n'
+	}
+
+	if (`num_estimates'>1 & `n'==0) di as text "(showing `num_estimates' estimates)"
+
+	forval i = `start'/`end' {
 		estimates use "`filename'", number(`i')
 		if "`e(keys)'"!="" {
 			di as text "{title:Classification}"
@@ -597,8 +620,9 @@ syntax [anything(everything)] , [noLIst] [*]
 		di as text _n "{bf:List of saved estimates:}"
 		forv i=1/`c(N)' {
 			local fn = path[`i'] +"/"+filename[`i']
+			local num_estimate = num_estimate[`i']
 			di %3.0f `i' _c
-			di as text `"{stata "quipu view `fn'" : `fn' } "'
+			di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
 		}
 	}
 
@@ -633,15 +657,25 @@ syntax, index(string) [cond(string asis)] [noRESTORE]
 		}
 */
 program define Replay
-syntax [anything(everything)] , [*]
+syntax [anything(everything)] , [*] [CLS]
 	qui Use `anything'
+	
+	local more = c(more)
+	if ("`cls'"!="") set more on
+	cap `cls'
+
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
-		di as text _n "{bf:replay `i'/`c(N)':}"
-		quipu view "`fn'"
-		di as text "{hline}"
+		local num_estimate = num_estimate[`i']
+		if ("`cls'"=="") di
+		di as text "{bf:replay `i'/`c(N)':}"
+		quipu view `fn' , n(`num_estimate')
+		if ("`cls'"=="") di as text "{hline}"
+		if ("`cls'"!="") more
+		cap `cls'
 	}
 	clear
+	set more `more'
 end
 program define Table
 syntax [anything(everything)] , [*]
@@ -649,7 +683,8 @@ syntax [anything(everything)] , [*]
 	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
-		estimates use "`fn'"
+		local num_estimate = num_estimate[`i']
+		estimates use "`fn'", number(`num_estimate')
 		estimates title: "`fn'"
 		estimates store quipu`i', nocopy
 	}

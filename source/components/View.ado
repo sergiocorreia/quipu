@@ -1,13 +1,24 @@
 * Replay regression
 cap pr drop View
 program define View, eclass
-	local filename `0'
+	syntax anything(name=filename) , [N(integer 0)]
+	local filename : subinstr local filename `"""' "", all
 	
 	qui estimates describe using "`filename'"
 	local num_estimates = r(nestresults)
 	assert `num_estimates'>0 & `num_estimates'<.
 
-	forval i = 1/`num_estimates' {
+	* Quick hack to show just the selected estimate
+	local start 1
+	local end `num_estimates'
+	if (`n'>0) {
+		local start `n'
+		local end `n'
+	}
+
+	if (`num_estimates'>1 & `n'==0) di as text "(showing `num_estimates' estimates)"
+
+	forval i = `start'/`end' {
 		estimates use "`filename'", number(`i')
 		if "`e(keys)'"!="" {
 			di as text "{title:Classification}"

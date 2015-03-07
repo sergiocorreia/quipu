@@ -20,8 +20,11 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		qui gen `var' = ""
 	}
 	forv i=1/`c(N)' {
+		
 		local fn = path[`i'] +"/"+filename[`i']
-		estimates use "`fn'"
+		local num_estimate = num_estimate[`i']
+		estimates use "`fn'", number(`num_estimate')
+
 		foreach var of local newvars {
 			qui replace `var' = "`e(`var')'" in `i'
 		}

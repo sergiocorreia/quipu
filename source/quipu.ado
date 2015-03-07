@@ -22,39 +22,6 @@ program define quipu
 	 	msg("Valid subcommands for -quipu- are: " as input "`subcmd_list1' `subcmd_list2'")
 	local subcmd `=proper("`subcmd'")'
 
-	* Special case for Save to deal with multiple estimates
-	if ("`subcmd'"=="Save") {
-		
-		* This will i) run the regression in case we are using the "quipu save : cmd" syntax, ii) save the active results
-		`subcmd' `0'
-
-		local estimates "`e(stored_estimates)'"
-		local prev_filename "`e(filename)'"
-		assert "`prev_filename'"!=""
-
-		* Exit if no further estimates in file (this is redundant but done for clarity)
-		if ("`estimates'"=="") exit
-
-		* Extract notes() from the syntax
-		cap _on_colon_parse `0'
-		if !_rc {
-			local cmd `": `s(after)'"'
-			local 0 `s(before)'
-		}
-		syntax , [PREFIX(string) FILENAME(string)] [NOTEs(string)] // note: prefix() and filename() are ignored here
-
-		foreach estimate of local estimates {
-			estimates restore `estimate'
-			`subcmd', filename("`prev_filename'") append notes(`notes')
-		}
-
-		* Estimates clear (we either clear them, or backup+restore what was the initial active estimate)
-		estimates clear
-		ereturn clear
-
-		exit
-	}
-
 	if ("`subcmd'"=="Export") local subcmd quipu_export
 	`subcmd' `0'
 end
@@ -62,6 +29,7 @@ end
 	include "components/Associate.ado"
 	include "components/Setpath.ado"
 	include "components/Save.ado"
+	include "components/SaveOne.ado"
 	include "components/Index.ado"
 	include "components/Update_Varlist.ado"
 	include "components/View.ado"

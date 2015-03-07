@@ -11,8 +11,9 @@ syntax [anything(everything)] , [noLIst] [*]
 		di as text _n "{bf:List of saved estimates:}"
 		forv i=1/`c(N)' {
 			local fn = path[`i'] +"/"+filename[`i']
+			local num_estimate = num_estimate[`i']
 			di %3.0f `i' _c
-			di as text `"{stata "quipu view `fn'" : `fn' } "'
+			di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
 		}
 	}
 

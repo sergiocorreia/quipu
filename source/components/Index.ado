@@ -28,11 +28,14 @@ program define Index
 	local i 1 // Cursor position
 	gen path = ""
 	gen filename = ""
+	gen byte num_estimate = .
 	gen depvar = "" // we need this to sort the table columns (in Export.ado)
 	* gen fullpath = "" // path + filename
 
 	* Root of path
 	ProcessFolder, basepath(`basepath') path() keys(`keys')
+	local varlist = r(varlist)
+	local varlist : list varlist | tmp_varlist
 
 	* One level deep
 	local folders : dir "`basepath'" dirs "*"
@@ -41,9 +44,14 @@ program define Index
 		local tmp_varlist = r(varlist)
 		local varlist : list varlist | tmp_varlist
 	}
-	qui destring _all, replace // Try to convert to numbers
+
+	assert_msg "`varlist'"!="", msg("quipu error: empty varlist")
+
+	qui ds path filename vce clustvar model, not // If I destring _all and there are no subfolders, path gets converted to a byte and fails
+	qui destring `r(varlist)', replace // Try to convert to numbers
 	qui compress
 	qui drop if missing(filename)
+	assert !missing(num_estimate)
 
 	* Add inlined block of commands
 	if (`inline') {
@@ -185,7 +193,7 @@ program define ProcessFolder, rclass
 
 		local ++pos // always one estimate by file at least
 		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos') // Fill row in index.dta
-		local pos = `pos' + s(extra_estimates) // adjust for estimates beyond first
+		local pos = `pos' + `s(extra_estimates)' // adjust for estimates beyond first
 		local indepvars : colnames e(b)
 		
 		foreach var of local extravars {
@@ -218,17 +226,16 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
 	local fullpath "`bothpath'/`filename'"
 
-	qui replace path = `"`path'"' in `pos'
-	qui replace filename = `"`filename'"' in `pos'
-	* qui replace fullpath = `"`fullpath'"' in `pos'
-	
-	qui estimates describe using "`filename'"
+
+	qui estimates describe using "`fullpath'"
 	local num_estimates = r(nestresults)
 	assert `num_estimates'>0 & `num_estimates'<.
 
 	forval i = 1/`num_estimates' {
+		qui replace path = `"`path'"' in `pos'
+		qui replace filename = `"`filename'"' in `pos'
 		estimates use "`fullpath'", number(`i')
-		qui replace estimate_number = `i' in `pos'
+		qui replace num_estimate = `i' in `pos'
 		local keys `keys' `e(keys)'
 		local keys : list uniq keys
 		* depvar is used to sort the table columns
@@ -238,7 +245,8 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 			cap qui gen `key' = ""
 			qui replace `key' = "`e(`key')'" in `pos'
 		}
-		*assert fullpath!="" in 1/`pos'
+		local ++pos
 	}
-	sreturn extra_estimates = `num_estimates' - 1
+
+	sreturn local extra_estimates = `num_estimates' - 1
 end

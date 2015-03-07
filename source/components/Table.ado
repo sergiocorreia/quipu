@@ -5,7 +5,8 @@ syntax [anything(everything)] , [*]
 	qui Use `anything'
 	forv i=1/`c(N)' {
 		local fn = path[`i'] +"/"+filename[`i']
-		estimates use "`fn'"
+		local num_estimate = num_estimate[`i']
+		estimates use "`fn'", number(`num_estimate')
 		estimates title: "`fn'"
 		estimates store quipu`i', nocopy
 	}
