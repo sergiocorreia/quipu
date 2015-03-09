@@ -63,9 +63,9 @@ program define SaveOne, eclass
 	
 	* Save some keys by default
 	ereturn hidden local time = clock("`c(current_time)' `c(current_date)'", "hms DMY") // %tc
-	ereturn hidden local filename = "`filename'"
 
 	local savemode = cond("`append'"=="", "replace", "append")
 	qui estimates save "`filename'", `savemode'
+	c_local prev_filename = "`filename'
 end
 

@@ -6,7 +6,6 @@ program define Save, eclass
 	SaveOne `0'
 
 	local estimates "`e(stored_estimates)'"
-	local prev_filename "`e(filename)'"
 	assert "`prev_filename'"!=""
 
 	if ("`estimates'"!="") {
@@ -31,6 +30,5 @@ program define Save, eclass
 		ereturn clear
 	}
 	di as text `"(estimates saved on {stata "quipu view `prev_filename'":`prev_filename'})"'
-	ereturn local filename = "`prev_filename'" // overwrite in case we cleared before
 end
 

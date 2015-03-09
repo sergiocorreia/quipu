@@ -1,3 +1,10 @@
+
+
+- The paragraphs inside headers (due to the underlines) are making the cells too tall. It's because the top/bottom margins.
+- If there is a quote in the table (e.g. if i set stats(cmdline) ) then it gets trunkaed at the quote. Maybe I need compound quotes somewhere.
+
+
+
 ## Critical
 
 - Why am I still setting varlabels() for variables that stay the same?!??! EG:  varlabels( ALL_entry_store `"ALL_entry_store"' ..
