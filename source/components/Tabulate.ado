@@ -8,12 +8,15 @@ syntax [anything(everything)] , [noLIst] [*]
 	if (c(N)==0) exit
 
 	if ("`list'"!="nolist") {
+		sort path filename num_estimate
+		local last_fn
 		di as text _n "{bf:List of saved estimates:}"
 		forv i=1/`c(N)' {
 			local fn = path[`i'] +"/"+filename[`i']
 			local num_estimate = num_estimate[`i']
 			di %3.0f `i' _c
-			di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
+			if ("`last_fn'"!="`fn'") di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
+			local last_fn "`fn'"
 		}
 	}
 
