@@ -2,7 +2,7 @@
 
 - The paragraphs inside headers (due to the underlines) are making the cells too tall. It's because the top/bottom margins.
 - If there is a quote in the table (e.g. if i set stats(cmdline) ) then it gets trunkaed at the quote. Maybe I need compound quotes somewhere.
-
+- If model is iv BUT the stage is not iv, then I want to show r2 and other stats.. although i'm not sure that's what's going on..
 
 
 ## Critical
