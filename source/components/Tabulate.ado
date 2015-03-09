@@ -15,7 +15,7 @@ syntax [anything(everything)] , [noLIst] [*]
 			local fn = path[`i'] +"/"+filename[`i']
 			local num_estimate = num_estimate[`i']
 			di %3.0f `i' _c
-			if ("`last_fn'"!="`fn'") di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
+			if ("`last_fn'"!="`fn'") di as text `"{stata "quipu view `fn'" : `fn' } "' // , n(`num_estimate')
 			local last_fn "`fn'"
 		}
 	}

@@ -118,7 +118,6 @@ program define Save, eclass
 	SaveOne `0'
 
 	local estimates "`e(stored_estimates)'"
-	local prev_filename "`e(filename)'"
 	assert "`prev_filename'"!=""
 
 	if ("`estimates'"!="") {
@@ -143,7 +142,6 @@ program define Save, eclass
 		ereturn clear
 	}
 	di as text `"(estimates saved on {stata "quipu view `prev_filename'":`prev_filename'})"'
-	ereturn local filename = "`prev_filename'" // overwrite in case we cleared before
 end
 
 
@@ -212,10 +210,10 @@ program define SaveOne, eclass
 	
 	* Save some keys by default
 	ereturn hidden local time = clock("`c(current_time)' `c(current_date)'", "hms DMY") // %tc
-	ereturn hidden local filename = "`filename'"
 
 	local savemode = cond("`append'"=="", "replace", "append")
 	qui estimates save "`filename'", `savemode'
+	c_local prev_filename = "`filename'
 end
 
 
@@ -617,12 +615,15 @@ syntax [anything(everything)] , [noLIst] [*]
 	if (c(N)==0) exit
 
 	if ("`list'"!="nolist") {
+		sort path filename num_estimate
+		local last_fn
 		di as text _n "{bf:List of saved estimates:}"
 		forv i=1/`c(N)' {
 			local fn = path[`i'] +"/"+filename[`i']
 			local num_estimate = num_estimate[`i']
 			di %3.0f `i' _c
-			di as text `"{stata "quipu view `fn', n(`num_estimate')" : `fn' } "'
+			if ("`last_fn'"!="`fn'") di as text `"{stata "quipu view `fn'" : `fn' } "' // , n(`num_estimate')
+			local last_fn "`fn'"
 		}
 	}
 

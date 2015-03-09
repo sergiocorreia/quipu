@@ -267,8 +267,11 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 
 	* Load estimates
 	forv i=1/`c(N)' {
+		
 		local fn = path[`i'] +"/"+filename[`i']
-		estimates use "`fn'"
+		local num_estimate = num_estimate[`i']
+		estimates use "`fn'", number(`num_estimate')
+		
 		estimates title: "`fn'"
 		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables
 		local indepvarlist : list indepvarlist | indepvars
