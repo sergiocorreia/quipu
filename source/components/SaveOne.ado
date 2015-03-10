@@ -46,7 +46,7 @@ program define SaveOne, eclass
 		local keys
 		while `"`notes'"'!="" {
 			gettoken key notes : notes, parse(" =")
-			assert_msg "`notes'"!="", msg("Error in quipu notes(): expected <key=value>, got <key>")
+			assert_msg `"`notes'"'!="", msg("Error in quipu notes(): expected <key=value>, got <key>")
 			assert_msg !inlist("`key'","sample","time"), msg("Key cannot be -sample- or -time-") // Else -estimates- will fail
 			gettoken _ notes : notes, parse("=")
 			gettoken value notes : notes, quotes
