@@ -66,6 +66,6 @@ program define SaveOne, eclass
 
 	local savemode = cond("`append'"=="", "replace", "append")
 	qui estimates save "`filename'", `savemode'
-	c_local prev_filename = "`filename'
+	c_local prev_filename = "`filename'"
 end
 
