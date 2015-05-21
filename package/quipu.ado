@@ -404,25 +404,24 @@ program define Index
 		file write `fh' "# [quipu] key-value metadata" _n
 		file write `fh' "# comments start with a hash; empty lines are ignored" _n
 		file write `fh' "# format: key: value; value can be on the next line with two extra spaces" _n
-		file write `fh' "# nested dicts also require two extra spaces (no tabs!" _n _n
-		file write `fh' "misc:" _n _n
+		file write `fh' "# nested dicts also require two extra spaces (no tabs!" _n
+		file write `fh' _n "misc:" _n
 		file write `fh' "  indicate_yes: Yes" _n
 		file write `fh' "  indicate_no: no" _n
-		file write `fh' "footnotes:" _n _n
-		file write `fh' " foobar: Lorem ipsum dolor sit amet." _n
-		file write `fh' " example: this is an example" _n _n
-		file write `fh' "groups:" _n _n
-		file write `fh' "  mygroup:" _n _n
+		file write `fh' _n "footnotes:" _n
+		file write `fh' "  foobar: Lorem ipsum dolor sit amet." _n
+		file write `fh' "  example: this is an example" _n
+		file write `fh' _n "groups:" _n
+		file write `fh' "  mygroup:" _n
 		file write `fh' "    spam: eggs" _n
 		file write `fh' "    foo: bar" _n
-		file write `fh' "indicate:" _n _n
-		file write `fh' "  t: Time" _n _n
-		file write `fh' "  id: Individual" _n _n
-		file write `fh' _n
+		file write `fh' _n "indicate:" _n
+		file write `fh' "  t: Time" _n
+		file write `fh' "  id: Individual" _n
 		file close `fh'
 		di as text `" - metadata template saved in {stata "use `fn'":`fn'}"'
 	}
-	
+
 	Update_Varlist
 end
 program define ProcessFolder, rclass
