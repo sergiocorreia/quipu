@@ -47,7 +47,7 @@ program define Update_Varlist
 	qui save "`path'/varlist", replace
 	
 	*di as text "quipu: update done, you can edit " as result "`fn'"
-	di as text _n "quipu: update done, you can now edit " _c
+	di as text "quipu update: done! you can now edit " _c
 	di as smcl `"{stata "shell `fn'":`fn'}"' _c
 	di as smcl `" and update any changes with {stata quipu update}"'.
 	clear

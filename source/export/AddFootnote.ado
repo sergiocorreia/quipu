@@ -8,7 +8,7 @@ syntax,  EXTension(string) [FOOTNOTE(string)]
 		exit
 	}
 
-	GetMetadata definition=footnotes.`footnote'
+	yaml local definition=metadata.footnotes.`footnote'
 	* Use existing symbols for footnotes previously used
 	mata: st_local("footnote_exists", strofreal(asarray_contains(symboldict, "`footnote'")))
 	if (`footnote_exists') {

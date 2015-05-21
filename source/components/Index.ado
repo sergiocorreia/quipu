@@ -5,24 +5,42 @@
 cap pr drop Index
 program define Index
 	local inline 0
+
+	* Handle case with no options and just { or {{
 	if strpos(trim(`"`0'"'), "{")==1 {
-		local inline 1
-		local terminator = cond(strpos(trim(`"`0'"'), "{{")==1, "}}", "}")
+		local 0 , `0'
 	}
-	else {
-		syntax , [TEST keys(namelist local)] /// [Recursive] -> Always on one level
-			[locals(string asis)] [*] // Multiline
-		if ("`options'"!="") {
-			assert_msg strpos(trim(`"`options'"'), "{")==1 , msg("quipu index only allows keys(), locals(), and -{- or -{{-")
-			local inline 1
-			local terminator = cond(strpos(trim(`"`options'"'), "{ {")==1, "}}", "}")
-		}
+
+	syntax [anything(everything)] , ///
+		[TEST] /// Only load first 10 estimates per folder
+		[keys(namelist local)] /// Keys to index
+		[locals(string asis)] /// Locals to pass to bracket part
+		[FOLDERs(string asis)] /// Subfolders to index (besides root); empty=default=all
+		[*] // Multiline
+	if ("`options'"!="") {
+		assert_msg strpos(trim(`"`options'"'), "{")==1 , msg("quipu index unknown option: `options'")
+		local inline 1
+		local terminator = cond(strpos(trim(`"`options'"'), "{ {")==1, "}}", "}")
+	}
+
+	if ("`anything'"!="") {
+		gettoken ifword ifcond : anything
+		Assert "`ifword'"=="if"
+		local if `anything'
 	}
 
 	local basepath $quipu_path
 	assert_msg `"`basepath'"'!="",  msg("Path not set. Use -quipu setpath PATH- to set the global quipu_path") rc(101)
-	di as text `"quipu: saving index files on <`basepath'>"'
+	di as text `"quipu index: saving files on <`basepath'>"'
 	if ("`test'"!="") di as error `" - Warning: test mode; using only the first 10 estimates per folder"'
+
+	// if ("`folders'"!="") {
+	// 	di as text " - Note: indexing only the following subfolders:"
+	// 	foreach f of local folders {
+	// 		di as text "    {res}`f'"
+	// 	}
+	// }
+
 	clear
 	clear results
 	local i 1 // Cursor position
@@ -38,8 +56,9 @@ program define Index
 	local varlist : list varlist | tmp_varlist
 
 	* One level deep
-	local folders : dir "`basepath'" dirs "*"
-	foreach folder of local folders {
+	local all_folders : dir "`basepath'" dirs "*" , respectcase
+	foreach folder of local all_folders {
+		if ("`folders'"!="" & !`: list folder in folders') continue // Ignore folder
 		ProcessFolder, `test' basepath(`basepath') path(`folder') keys(`keys')
 		local tmp_varlist = r(varlist)
 		local varlist : list varlist | tmp_varlist
@@ -86,6 +105,14 @@ program define Index
 		qui compress
 	}
 
+	* Apply -if-
+	if ("`if'"!="") {
+		qui cou `if'
+		local numdrop = c(N) - r(N)
+		di as text " - dropping `numdrop'/`c(N)' estimates due to -if- condition"
+		qui keep `if'
+	}
+
 	* Save index
 	**sort path
 	**rename path _path
@@ -98,7 +125,7 @@ program define Index
 	
 	local fn "`basepath'/index"
 	qui save "`fn'", replace
-	di as text `"index saved in {stata "use `fn'":`fn'}"'
+	di as text `" - index saved in {stata "use `fn'":`fn'}"'
 
 	* Deal with indicator variables by just using the root variable
 	* (else with many indicators it becomes a mess)
@@ -135,7 +162,7 @@ program define Index
 
 	local fn "`basepath'/varlist_template"
 	qui save "`fn'", replace
-	di as text `"varlist template saved in {stata "use `fn'":`fn'}"'
+	di as text `" - varlist template saved in {stata "use `fn'":`fn'}"'
 
 	Update_Varlist
 
@@ -192,7 +219,10 @@ program define ProcessFolder, rclass
 	foreach filename of local files {
 
 		local ++pos // always one estimate by file at least
-		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos') // Fill row in index.dta
+
+		// Fill row in index.dta
+		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos')
+
 		local pos = `pos' + `s(extra_estimates)' // adjust for estimates beyond first
 		local indepvars : colnames e(b)
 		

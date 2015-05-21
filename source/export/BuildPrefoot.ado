@@ -36,8 +36,8 @@ program define BuildPrefoot
 	cap ds ABSORBED_*
 	if (!_rc) {
 		
-		GetMetadata yes=misc.indicate_yes
-		GetMetadata no=misc.indicate_no
+		yaml local yes=metadata.misc.indicate_yes
+		yaml local no=metadata.misc.indicate_no
 
 		local absvars = r(varlist)
 		local region "`region_start'"

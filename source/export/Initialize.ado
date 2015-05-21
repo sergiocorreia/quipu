@@ -8,7 +8,9 @@ program define Initialize
 	
 	* Load metadata
 	if ($quipu_verbose>1) di as text "(loading metadata)"
-	mata: read_metadata()
+	if ($quipu_verbose>1) local verbose verbose
+	local fn "${quipu_path}/metadata.yaml"
+	yaml read metadata using "`fn'" , `verbose'
 
 	* Additional metadata from the options
 	while (`"`metadata'"'!="") {

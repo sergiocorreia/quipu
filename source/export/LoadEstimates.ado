@@ -35,7 +35,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 	local groups
 	foreach var of local header {
 		if ("`var'"!="depvar") qui gen byte sort_`var' = .
-		cap GetMetadata cats=header.sort.`var'
+		cap yaml local cats=metadata.header.sort.`var'
 		assert inlist(_rc, 0, 510)
 		if (!_rc) {
 			local i 0

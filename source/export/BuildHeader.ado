@@ -100,7 +100,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					}
 					else {
 						local cell = `cat'[`i']
-						cap GetMetadata cell=groups.`cat'.`cell' // Will abort if label not found
+						cap yaml local cell=metadata.groups.`cat'.`cell' // Will abort if label not found
 						local cell = subinstr("`template_`cat''", "@", "`cell'", .)
 					}
 

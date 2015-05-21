@@ -26,6 +26,7 @@ program define quipu
 	`subcmd' `0'
 end
 
+	include "components/Assert.ado"
 	include "components/Associate.ado"
 	include "components/Setpath.ado"
 	include "components/Save.ado"

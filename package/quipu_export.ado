@@ -4,6 +4,8 @@
 /// SYNTAX
 /// quipu export [using] [if] , as(..) [quipu_options] [esttab_options] [estout_options]
 program define quipu_export
+	qui which yaml.ado
+
 	*preserve
 	nobreak {
 		Cleanup // Ensure globals start empty
@@ -21,7 +23,7 @@ end
 program define Export
 	Parse `0'
 	
-	Initialize, ext(`ext') metadata(`metadata') // Define globals and mata objects (including the metadata)
+	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
 	LoadEstimates `header', indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	
@@ -148,7 +150,9 @@ program define Initialize
 	
 	* Load metadata
 	if ($quipu_verbose>1) di as text "(loading metadata)"
-	mata: read_metadata()
+	if ($quipu_verbose>1) local verbose verbose
+	local fn "${quipu_path}/metadata.yaml"
+	yaml read metadata using "`fn'" , `verbose'
 
 	* Additional metadata from the options
 	while (`"`metadata'"'!="") {
@@ -238,7 +242,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 	local groups
 	foreach var of local header {
 		if ("`var'"!="depvar") qui gen byte sort_`var' = .
-		cap GetMetadata cats=header.sort.`var'
+		cap yaml local cats=metadata.header.sort.`var'
 		assert inlist(_rc, 0, 510)
 		if (!_rc) {
 			local i 0
@@ -546,7 +550,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 					}
 					else {
 						local cell = `cat'[`i']
-						cap GetMetadata cell=groups.`cat'.`cell' // Will abort if label not found
+						cap yaml local cell=metadata.groups.`cat'.`cell' // Will abort if label not found
 						local cell = subinstr("`template_`cat''", "@", "`cell'", .)
 					}
 
@@ -632,8 +636,8 @@ program define BuildPrefoot
 	cap ds ABSORBED_*
 	if (!_rc) {
 		
-		GetMetadata yes=misc.indicate_yes
-		GetMetadata no=misc.indicate_no
+		yaml local yes=metadata.misc.indicate_yes
+		yaml local no=metadata.misc.indicate_no
 
 		local absvars = r(varlist)
 		local region "`region_start'"
@@ -966,7 +970,7 @@ syntax,  EXTension(string) [FOOTNOTE(string)]
 		exit
 	}
 
-	GetMetadata definition=footnotes.`footnote'
+	yaml local definition=metadata.footnotes.`footnote'
 	* Use existing symbols for footnotes previously used
 	mata: st_local("footnote_exists", strofreal(asarray_contains(symboldict, "`footnote'")))
 	if (`footnote_exists') {
@@ -1169,20 +1173,6 @@ program define RunCMD
 	}
 	`0'
 end
-program define GetMetadata
-* Syntax: GetMetadata MyLocal=key -> Will store metadata[key] in the local MyLocal
-	local lclkey `0'
-	if ("`lclkey'"=="") error 100
-	gettoken lcl lclkey: lclkey , parse("=")
-	gettoken equalsign key: lclkey , parse("=")
-	local key `key' // Remove blanks
-	assert_msg "`key'"!="", msg("Key is empty! args=<`0'>")
-	mata: st_local("key_exists", strofreal(asarray_contains(metadata, "`key'")))
-	assert inlist(`key_exists', 0, 1)
-	assert_msg `key_exists'==1, msg("metadata[`key'] does not exist") rc(510)
-	mata: st_local("value", asarray(metadata, "`key'"))
-	c_local `lcl' `"`value'"'
-end
 program define SetMetadata
 	* [Syntax] SetMetadata key1.key2=value
 	assert "`0'"!=""
@@ -1221,66 +1211,6 @@ program define Use, rclass
 		}
 		if (r(N)==0) drop `var'
 	}
-end
-
-	
-// -------------------------------------------------------------------------------------------------
-// Import metadata.txt (kinda-markdown-syntax with metadata for footnotes, etc.)
-// -------------------------------------------------------------------------------------------------
-mata:
-mata set matastrict off
-
-void read_metadata()
-{
-	external metadata
-	fn = st_global("quipu_path") + "/" + "metadata.txt"
-	fh = fopen(fn, "r")
-	metadata = asarray_create() // container dict
-	headers = J(1, 5, "")
-	level = 0
-	i = 0
-	is_verbose = st_local("verbose")!="0"
-
-	while ( ( line = strtrim(fget(fh)) ) != J(0,0,"") ) {
-		//  Ignore comments
-		if ( strpos(line, "*")==1 | strlen(line)==0 ) continue
-
-		// Remove leading dash
-		if (substr(line, 1, 1)=="-") {
-			line = strtrim(substr(line, 2, .))
-		}
-
-		// Check that the line contents are not empty
-		assert(strlen(subinstr(line, "#", "", .)))
-		// metadata[header1.header2...key] = value
-		if ( strpos(line, "#")!=1 ) {
-			_ = regexm(line, "^[ \t]?([a-zA-Z0-9_]+)[ \t]?:(.+)$")
-			if (_==0) {
-				printf("{txt}key:value line could not be parsed <" + line + ">")
-			}
-			assert (_==1)
-			assert(strlen(strtrim(regexs(1)))>0)
-			assert(strlen(strtrim(regexs(2)))>0)
-			headers[level+1] = regexs(1)
-			value = strtrim(regexs(2))
-			key = invtokens(headers[., (1..level+1)], ".")
-			assert(asarray_contains(metadata, key)==0) // assert key not in metadata
-			++i
-			asarray(metadata, key, value) // metadata[key] = value
-			// printf("metadata.%s=<%s>\n", key, value)
-		}
-		// Get header and level
-		else {
-			_ = regexm(line, "^(#+)(.+)")
-			level = strlen(regexs(1))
-			headers[level] = strtrim(regexs(2))
-		}
-	}
-	fclose(fh)
-	if (is_verbose) {
-		printf("{txt}(%s key-value pairs added to quipu metadata)\n", strofreal(i))
-	}
-}
 end
 
 	

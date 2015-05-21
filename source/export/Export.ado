@@ -2,7 +2,7 @@ capture program drop Export
 program define Export
 	Parse `0'
 	
-	Initialize, ext(`ext') metadata(`metadata') // Define globals and mata objects (including the metadata)
+	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
 	LoadEstimates `header', indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	

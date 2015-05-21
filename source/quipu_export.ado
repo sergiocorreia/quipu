@@ -6,6 +6,8 @@
 
 capture program drop quipu_export
 program define quipu_export
+	qui which yaml.ado
+
 	*preserve
 	nobreak {
 		Cleanup // Ensure globals start empty
@@ -44,10 +46,8 @@ end
 // Input-Output
 	include "export/CompilePDF.ado"
 	include "export/RunCMD.ado"
-	include "export/GetMetadata.ado"
 	include "export/SetMetadata.ado"
 
 // Misc
 	include "components/Use.ado"
-	include "export/metadata.mata"
 	include "../externals/stata-misc/assert_msg.ado"
