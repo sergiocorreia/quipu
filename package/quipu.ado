@@ -397,30 +397,29 @@ program define Index
 
 	Update_Varlist
 
-	* Save metadata.txt *IF* it doesn't exist already
-	local fn "`basepath'/metadata.txt"
+	* Save metadata.yaml *IF* it doesn't exist already
+	local fn "`basepath'/metadata.yaml"
 	cap conf file "`fn'"
 	if _rc==601 {
 		tempname fh
 		file open `fh' using `"`fn'"', write text
-		file write `fh' "* Key-Value Metadata for QUIPU" _n
-		file write `fh' "*  - You can set headers with #, ##, etc." _n
-		file write `fh' "*  - Set key-value pairs with key:value (dash before is optional)" _n _n
-		file write `fh' "somekey: Some value" _n _n
-		file write `fh' "anotherkey: Another value" _n _n
-		file write `fh' "#misc" _n _n
-		file write `fh' "indicate_yes: Yes" _n
-		file write `fh' "indicate_no: no" _n
-		file write `fh' "#footnotes" _n _n
-		file write `fh' " - foobar: Lorem ipsum dolor sit amet." _n
-		file write `fh' " - example: this is an example" _n _n
-		file write `fh' "#groups" _n _n
-		file write `fh' "##mygroup" _n _n
-		file write `fh' " - spam: eggs" _n
-		file write `fh' " - foo: bar" _n
-		file write `fh' "#indicate" _n _n
-		file write `fh' "t: Time" _n _n
-		file write `fh' "id: Individual" _n _n
+		file write `fh' "# [quipu] key-value metadata" _n
+		file write `fh' "# comments start with a hash; empty lines are ignored" _n
+		file write `fh' "# format: key: value; value can be on the next line with two extra spaces" _n
+		file write `fh' "# nested dicts also require two extra spaces (no tabs!" _n _n
+		file write `fh' "misc:" _n _n
+		file write `fh' "  indicate_yes: Yes" _n
+		file write `fh' "  indicate_no: no" _n
+		file write `fh' "footnotes:" _n _n
+		file write `fh' " foobar: Lorem ipsum dolor sit amet." _n
+		file write `fh' " example: this is an example" _n _n
+		file write `fh' "groups:" _n _n
+		file write `fh' "  mygroup:" _n _n
+		file write `fh' "    spam: eggs" _n
+		file write `fh' "    foo: bar" _n
+		file write `fh' "indicate:" _n _n
+		file write `fh' "  t: Time" _n _n
+		file write `fh' "  id: Individual" _n _n
 		file write `fh' _n
 		file close `fh'
 		di as text `"metadata template saved in {stata "use `fn'":`fn'}"'
