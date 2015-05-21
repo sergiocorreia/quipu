@@ -164,8 +164,6 @@ program define Index
 	qui save "`fn'", replace
 	di as text `" - varlist template saved in {stata "use `fn'":`fn'}"'
 
-	Update_Varlist
-
 	* Save metadata.yaml *IF* it doesn't exist already
 	local fn "`basepath'/metadata.yaml"
 	cap conf file "`fn'"
@@ -191,8 +189,10 @@ program define Index
 		file write `fh' "  id: Individual" _n _n
 		file write `fh' _n
 		file close `fh'
-		di as text `"metadata template saved in {stata "use `fn'":`fn'}"'
+		di as text `" - metadata template saved in {stata "use `fn'":`fn'}"'
 	}
+	
+	Update_Varlist
 end
 
 capture program drop ProcessFolder
