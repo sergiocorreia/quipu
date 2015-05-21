@@ -231,9 +231,15 @@ end
 
 	
 * Build Index
+
 * Notes:
 * - keys() are *on top* of time, filename, path, fullpath, and the ones set when creating
 * - recursive only goes ONE level deep!!!
+
+* Logic of the program:
+* - A folder can have many subfolders (as well as the root content)
+* - Each subfolder has many files
+* - Each file can have many estimates
 program define Index
 	local inline 0
 
@@ -283,16 +289,16 @@ program define Index
 
 	* Root of path
 	ProcessFolder, basepath(`basepath') path() keys(`keys')
-	local varlist = r(varlist)
-	local varlist : list varlist | tmp_varlist
+	local vars `s(varlist)'
+	local varlist : list varlist | vars
 
 	* One level deep
 	local all_folders : dir "`basepath'" dirs "*" , respectcase
 	foreach folder of local all_folders {
 		if ("`folders'"!="" & !`: list folder in folders') continue // Ignore folder
 		ProcessFolder, `test' basepath(`basepath') path(`folder') keys(`keys')
-		local tmp_varlist = r(varlist)
-		local varlist : list varlist | tmp_varlist
+		local vars `s(varlist)'
+		local varlist : list varlist | vars
 	}
 
 	assert_msg "`varlist'"!="", msg("quipu error: empty varlist")
@@ -424,7 +430,7 @@ program define Index
 
 	Update_Varlist
 end
-program define ProcessFolder, rclass
+program define ProcessFolder, sclass
 	syntax, [TEST] basepath(string) [path(string)] keys(string)
 	
 	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
@@ -432,40 +438,32 @@ program define ProcessFolder, rclass
 	local n : word count `files'
 	di as text `" - parsing <`bothpath'>, `n' files found "' _c
 	local pos = c(N) // Start with current number of obs
-	local new_obs = `pos' + `n' * 10 // Allow up to 10 estimation results per .sest file
+	local new_obs = `pos' + `n' * 100 // Allow up to 100 estimation results per .sest file
 	qui set obs `new_obs'
 
 	* The following are keys that I will likely need when creating the table
 	* model is used by BuildStats, clustvar used by BuildVCE
 	local extrakeys time depvar vce clustvar model
 
+	* depvar is used to sort the table columns
+	* vce and clustvar are used to build the VCV footnotes
+
 	* The following are variables that I also want to keep in the varlist.dta file
 	local extravars depvar vce clustvar ivar // e(absvars)? // xtreg uses ivar
 	
 	local i 0
 	foreach filename of local files {
-
-		local ++pos // always one estimate by file at least
-
-		// Fill row in index.dta
-		ProcessFile, basepath(`basepath') path(`path') filename(`filename') keys(`keys' `extrakeys') pos(`pos')
-
-		local pos = `pos' + `s(extra_estimates)' // adjust for estimates beyond first
-		local indepvars : colnames e(b)
 		
-		foreach var of local extravars {
-			local `var' = cond("`e(`var')'"==".","", "`e(`var')'")
-		}
-
-		local vars `depvar' `indepvars'
+		// Fill `s(num_estimates)' rows in index.dta
+		ProcessFile, basepath(`basepath') path(`path') filename(`filename') pos(`pos') ///
+			keys(`keys' `extrakeys') extravars(`extravars')
+		local pos = `pos' + `s(num_estimates)'
+		local vars `s(varlist)'
 		local varlist : list varlist | vars
+
 		local ++i
-		if !mod(`i',10) {
-			di as text "." _c
-		}
-		if ("`test'"!="") & (`i'>=10) {
-			continue, break
-		}
+		if (!mod(`i',10)) di as text "." _c
+		if ("`test'"!="" &  `i'>=10) continue, break
 	}
 
 	if (c(N)>0) {
@@ -473,38 +471,53 @@ program define ProcessFolder, rclass
 		assert_msg model!="", msg("e(model) is empty in at least one regr")
 	}
 	di // empty to flush line
-	return local varlist `varlist'
+	sreturn local varlist `varlist'
 end
 
 * Parse a single .ster file
 program define ProcessFile, sclass
-syntax, basepath(string) [path(string)] filename(string) keys(string) pos(integer)
+syntax, basepath(string) [path(string)] filename(string) keys(string) pos(integer) extravars(string)
 	local bothpath = cond("`path'"=="", "`basepath'", "`basepath'/`path'")
 	local fullpath "`bothpath'/`filename'"
-
 
 	qui estimates describe using "`fullpath'"
 	local num_estimates = r(nestresults)
 	assert `num_estimates'>0 & `num_estimates'<.
+	local firstpos = `pos' + 1
 
 	forval i = 1/`num_estimates' {
-		qui replace path = `"`path'"' in `pos'
-		qui replace filename = `"`filename'"' in `pos'
-		estimates use "`fullpath'", number(`i')
-		qui replace num_estimate = `i' in `pos'
-		local keys `keys' `e(keys)'
-		local keys : list uniq keys
-		* depvar is used to sort the table columns
-		* vce and clustvar are used to build the VCV footnotes
-
-		foreach key of local keys {
-			cap qui gen `key' = ""
-			qui replace `key' = "`e(`key')'" in `pos'
-		}
 		local ++pos
+		qui replace num_estimate = `i' in `pos'
+		ProcessEstimate, fullpath("`fullpath'") number(`i') pos(`pos') keys(`keys') extravars(`extravars')
+		local vars `s(varlist)'
+		local varlist : list varlist | vars
 	}
 
-	sreturn local extra_estimates = `num_estimates' - 1
+	qui replace path = `"`path'"' in `firstpos'/`pos'
+	qui replace filename = `"`filename'"' in `firstpos'/`pos'
+	sreturn local num_estimates = `num_estimates'
+	sreturn local varlist `varlist'
+end
+program define ProcessEstimate, sclass
+syntax, fullpath(string) number(integer) pos(integer) keys(string) extravars(string)
+	estimates use "`fullpath'", number(`i')
+	
+	local keys `keys' `e(keys)'
+	local keys : list uniq keys
+	foreach key of local keys {
+		if ("`e(`key')'"=="") continue
+		cap replace `key' = "`e(`key')'" in `pos'
+		if (c(rc)) {
+			qui gen `key' = ""
+			qui replace `key' = "`e(`key')'" in `pos'
+		}
+	}
+
+	local varlist : colnames e(b)
+	foreach var of local extravars {
+		if ("`e(`var')'"=="") local varlist `varlist' `e(`var')'
+	}
+	sreturn local varlist `varlist'
 end
 program define Update_Varlist
 	local path $quipu_path
