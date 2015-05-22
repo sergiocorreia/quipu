@@ -500,8 +500,7 @@ syntax, basepath(string) [path(string)] filename(string) keys(string) pos(intege
 end
 program define ProcessEstimate, sclass
 syntax, fullpath(string) number(integer) pos(integer) keys(string) extravars(string)
-	estimates use "`fullpath'", number(`i')
-	
+	estimates use "`fullpath'", number(0`number')
 	local keys `keys' `e(keys)'
 	local keys : list uniq keys
 	foreach key of local keys {
@@ -515,7 +514,7 @@ syntax, fullpath(string) number(integer) pos(integer) keys(string) extravars(str
 
 	local varlist : colnames e(b)
 	foreach var of local extravars {
-		if ("`e(`var')'"=="") local varlist `varlist' `e(`var')'
+		if ("`e(`var')'"!="") local varlist `varlist' `e(`var')'
 	}
 	sreturn local varlist `varlist'
 end

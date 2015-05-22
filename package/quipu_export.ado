@@ -248,7 +248,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 			local i 0
 			while ("`cats'"!="") {
 				gettoken cat cats : cats
-				qui replace sort_`var' = `++i' if "`var'"=="`cat'"
+				qui replace sort_`var' = `++i' if `var'=="`cat'"
 			}
 		}
 
