@@ -37,6 +37,15 @@ rename: ...
 test: true # This will i) run a -quipu tab- before, and also only run -this- table so we can debug it
 ```
 
+to avoid strings that are too long on the criteria part, maybe we can do
+
+```yaml
+criteria:
+ - ...
+ - ...
+ - ...
+```
+
 After all estimates are parsed, a do file is created and run
 
 
