@@ -48,3 +48,7 @@ stata.estimates.path.source = PATH
 stata.estimates.path.output = PATH
 
 
+# Bugs/Improvements
+- Link stats (F, those in ivreg like KP, J) with their PValues and compute the stars
+- 
+
