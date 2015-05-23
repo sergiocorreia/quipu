@@ -661,7 +661,7 @@ program define BuildPrefoot
 		global quipu_prefoot `"${quipu_prefoot}`region'  <tfoot>$ENTER"'
 	}
 	else {
-		global quipu_prefoot `"{quipu_prefoot}`region'"'
+		global quipu_prefoot `"${quipu_prefoot}`region'"'
 	}
 
 end
@@ -740,7 +740,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 			gettoken s1 rename : rename
 			gettoken s2 rename : rename
 			assert_msg `"`s2'"'!="", msg("rename() must have an even number of strings")
-			qui replace varname = regexr(varname, "^`s1'$", "`s2'")
+			local ss2 `" "`s2'" "'
+			if (strpos(`"`ss2'"', "[")>1) {
+				forval i = 1/10 {
+					local ss2 = subinstr(`"`ss2'"', "[`i']", `"" + regexs(`i') + ""', .)
+				}
+			}
+			qui replace varname = `ss2' if regexm(varname, "^`s1'$")
 		}
 		gen byte renamed = original!=varname
 		forv i=1/`c(N)' {
@@ -897,11 +903,11 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' `sign' `num'"
 	}
 
-	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
-	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
+	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`notes'"!="", " ", "")
+	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`notes'"!="", " ", "")
 	
 	if ("`extension'"=="html") {
-		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
+		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`notes'"
 		local summary "<summary>Regression notes</summary>"
 		if (`"${quipu_footnotes}"'!="") {
 			global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
@@ -911,7 +917,7 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		}
 	}
 	else {
-		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`notes'}"'
 		if (`"${quipu_footnotes}"'!="") {
 			global quipu_footnotes `"${ENTER}`summary'${ENTER}${TAB}${ENTER}${quipu_footnotes}${ENTER}${TAB}`note'"'
 		}
@@ -1117,7 +1123,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 
 
 	* Substitute characters conflicting with latex
-	local specialchars _ % $ // Latex special characters (don't substitute \ so we can insert math with \( \) )
+	local specialchars _ % $ # // Latex special characters (don't substitute \ so we can insert math with \( \) )
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}

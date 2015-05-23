@@ -41,7 +41,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 			gettoken s1 rename : rename
 			gettoken s2 rename : rename
 			assert_msg `"`s2'"'!="", msg("rename() must have an even number of strings")
-			qui replace varname = regexr(varname, "^`s1'$", "`s2'")
+			local ss2 `" "`s2'" "'
+			if (strpos(`"`ss2'"', "[")>1) {
+				forval i = 1/10 {
+					local ss2 = subinstr(`"`ss2'"', "[`i']", `"" + regexs(`i') + ""', .)
+				}
+			}
+			qui replace varname = `ss2' if regexm(varname, "^`s1'$")
 		}
 		gen byte renamed = original!=varname
 		forv i=1/`c(N)' {

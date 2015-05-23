@@ -14,11 +14,11 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' `sign' `num'"
 	}
 
-	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`note'"!="", " ", "")
-	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`note'"!="", " ", "")
+	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`notes'"!="", " ", "")
+	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`notes'"!="", " ", "")
 	
 	if ("`extension'"=="html") {
-		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`note'"
+		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`notes'"
 		local summary "<summary>Regression notes</summary>"
 		if (`"${quipu_footnotes}"'!="") {
 			global quipu_footnotes `"<details open>${ENTER}`summary'${ENTER}  <dl class="estimates-notes">${ENTER}${quipu_footnotes}</dl>${ENTER}  <p class="estimates-notes">`note'</p></details>"'
@@ -28,7 +28,7 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		}
 	}
 	else {
-		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`note'}"'
+		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`notes'}"'
 		if (`"${quipu_footnotes}"'!="") {
 			global quipu_footnotes `"${ENTER}`summary'${ENTER}${TAB}${ENTER}${quipu_footnotes}${ENTER}${TAB}`note'"'
 		}

@@ -61,7 +61,7 @@ program define BuildPrefoot
 		global quipu_prefoot `"${quipu_prefoot}`region'  <tfoot>$ENTER"'
 	}
 	else {
-		global quipu_prefoot `"{quipu_prefoot}`region'"'
+		global quipu_prefoot `"${quipu_prefoot}`region'"'
 	}
 
 end

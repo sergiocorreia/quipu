@@ -4,8 +4,7 @@ program define Save, eclass
 	
 	* This will i) run the regression in case we are using the "quipu save : cmd" syntax, ii) save the active results
 	SaveOne `0'
-
-	local estimates "`e(stored_estimates)'"
+	local estimates "`e(stored_estimates)' `e(firsteqs)'"
 	assert "`prev_filename'"!=""
 
 	if ("`estimates'"!="") {

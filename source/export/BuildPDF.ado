@@ -10,7 +10,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 
 
 	* Substitute characters conflicting with latex
-	local specialchars _ % $ // Latex special characters (don't substitute \ so we can insert math with \( \) )
+	local specialchars _ % $ # // Latex special characters (don't substitute \ so we can insert math with \( \) )
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
