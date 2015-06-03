@@ -29,6 +29,12 @@ program define View, eclass
 		}
 		di as text "{title:Command}"
 		di as input `"`e(cmdline)'"' _n
+
+		if ("`e(estimates_title)'"!="") {
+			di as text "{title:Title}"
+			di as input `"`e(estimates_title)'"' _n			
+		}
+
 		di as text "{title:Estimation Results}"
 		`e(cmd)' // -estimates replay- writes an unwanted title row
 	}
