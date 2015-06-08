@@ -299,7 +299,7 @@ program define Index
 
 	assert_msg "`varlist'"!="", msg("quipu error: empty varlist")
 
-	qui ds path filename vce clustvar model, not // If I destring _all and there are no subfolders, path gets converted to a byte and fails
+	qui ds path filename vce /*clustvar*/ model, not // If I destring _all and there are no subfolders, path gets converted to a byte and fails
 	qui destring `r(varlist)', replace // Try to convert to numbers
 	qui compress
 	qui drop if missing(filename)
