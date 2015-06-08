@@ -257,7 +257,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		local groups `groups' _group_`var'
 	}
 
-	sort `groups'
+	sort `groups' time
 	gen byte _index_ = _n
 
 	foreach var of local header {
