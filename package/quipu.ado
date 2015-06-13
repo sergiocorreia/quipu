@@ -203,14 +203,17 @@ program define SaveOne, eclass
 	* Parse key=value options and append to ereturn as hidden
 	if `"`notes'"'!="" {
 		local keys
-		while `"`notes'"'!="" {
-			gettoken key notes : notes, parse(" =")
-			assert_msg `"`notes'"'!="", msg("Error in quipu notes(): expected <key=value>, got <key>")
+		while (`"`notes'"'!="") {
+			gettoken note notes : notes, parse(" ")
+			*di `"{txt}note=<{res}`note'{txt}>"'
+			gettoken key note : note, parse("=")
 			assert_msg !inlist("`key'","sample","time"), msg("Key cannot be -sample- or -time-") // Else -estimates- will fail
-			gettoken _ notes : notes, parse("=")
-			gettoken value notes : notes, quotes
+			*di `"{txt} - key=<{res}`key'{txt}>"'
+			gettoken equal val : note, parse("=")
+			*di `"{txt} - equal=<{res}`equal'{txt}> val=<{res}`val'{txt}>"'
+			assert_msg `"`val'"'!="", msg("Error in quipu notes(): expected {it:key=value} but only received key ({it:`key'})")
 			local keys `keys' `key'
-			ereturn hidden local `key' `value'
+			ereturn hidden local `key' `val'
 		}
 		if ("`e(keys)'"!="") local existing_keys = "`e(keys)' "
 		ereturn hidden local keys "`existing_keys'`keys'"
@@ -500,11 +503,11 @@ syntax, fullpath(string) number(integer) pos(integer) keys(string) extravars(str
 	local keys `keys' `e(keys)'
 	local keys : list uniq keys
 	foreach key of local keys {
-		if ("`e(`key')'"=="") continue
-		cap replace `key' = "`e(`key')'" in `pos'
+		if (`"`e(`key')'"'=="") continue
+		cap replace `key' = `"`e(`key')'"' in `pos'
 		if (c(rc)) {
 			qui gen `key' = ""
-			qui replace `key' = "`e(`key')'" in `pos'
+			qui replace `key' = `"`e(`key')'"' in `pos'
 		}
 	}
 
@@ -594,7 +597,7 @@ program define View, eclass
 		if "`e(keys)'"!="" {
 			di as text "{title:Classification}"
 			foreach key in `e(keys)' {
-				local ans `ans' as text " `key'=" as result "`e(`key')'"
+				local ans `ans' as text " `key'=" as result `"`e(`key')'"'
 			}
 			di `ans' _n
 		}

@@ -23,7 +23,7 @@ program define View, eclass
 		if "`e(keys)'"!="" {
 			di as text "{title:Classification}"
 			foreach key in `e(keys)' {
-				local ans `ans' as text " `key'=" as result "`e(`key')'"
+				local ans `ans' as text " `key'=" as result `"`e(`key')'"'
 			}
 			di `ans' _n
 		}

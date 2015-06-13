@@ -279,11 +279,11 @@ syntax, fullpath(string) number(integer) pos(integer) keys(string) extravars(str
 	local keys `keys' `e(keys)'
 	local keys : list uniq keys
 	foreach key of local keys {
-		if ("`e(`key')'"=="") continue
-		cap replace `key' = "`e(`key')'" in `pos'
+		if (`"`e(`key')'"'=="") continue
+		cap replace `key' = `"`e(`key')'"' in `pos'
 		if (c(rc)) {
 			qui gen `key' = ""
-			qui replace `key' = "`e(`key')'" in `pos'
+			qui replace `key' = `"`e(`key')'"' in `pos'
 		}
 	}
 
