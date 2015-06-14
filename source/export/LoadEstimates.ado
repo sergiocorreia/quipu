@@ -41,7 +41,13 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 			local i 0
 			while ("`cats'"!="") {
 				gettoken cat cats : cats
-				qui replace sort_`var' = `++i' if `var'=="`cat'"
+				local is_string = strpos("`: type `var''", "str")==1
+				if (`is_string') {
+					qui replace sort_`var' = `++i' if `var'=="`cat'"
+				}
+				else {
+					qui replace sort_`var' = `++i' if `var'==`cat'	
+				}
 			}
 		}
 

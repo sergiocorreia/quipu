@@ -39,7 +39,8 @@ program define Export
 
 	if ($quipu_verbose>1) local noisily noisily
 	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
-	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost'
+	estfe quipu* // , labels(x#y "X times Y") // no need to do -estfe quipu* , restore
+	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`r(indicate_fe)')
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' // `options' style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
@@ -248,7 +249,13 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 			local i 0
 			while ("`cats'"!="") {
 				gettoken cat cats : cats
-				qui replace sort_`var' = `++i' if `var'=="`cat'"
+				local is_string = strpos("`: type `var''", "str")==1
+				if (`is_string') {
+					qui replace sort_`var' = `++i' if `var'=="`cat'"
+				}
+				else {
+					qui replace sort_`var' = `++i' if `var'==`cat'	
+				}
 			}
 		}
 
