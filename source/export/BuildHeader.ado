@@ -130,5 +130,6 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	}
 	local ans "`ans'`header_end'"
 	global quipu_header `"`ans'"'
+	global quipu_header : subinstr global quipu_header "#" "\#", all
 	drop varlabel footnote
 end

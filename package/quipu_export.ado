@@ -91,7 +91,7 @@ program define Parse
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
 	if ("`orientation'"=="") local orientation "portrait"
-	assert_msg inlist("`orientation'", "landscape", "portrait"), msg("invalid page orientation (needs to be landscape or portrait)")
+	assert_msg inlist("`orientation'", "landscape", "portrait", "inline"), msg("invalid page orientation (needs to be landscape, portrait or inline (=float portrait))")
 	assert_msg inrange(`size', 1, 10), msg("invalid table size (needs to be an integer between 1 and 10)")
 	if ("`stars'"=="") local stars "0.10 0.05 0.01" // 0.05 0.01 ??
 	foreach cutoff of local stars {
@@ -341,7 +341,7 @@ syntax, pos(integer) [indicate(string)]
 
 			local is_indicator 0
 			local basevar `var'
-			while (regexm("`basevar'", "[0-9]+[bn]*\.")) {
+			while (regexm("`basevar'", "^[0-9]+[bn]*\.")) {
 				local is_indicator 1
 				local basevar = regexr("`basevar'", "[0-9]+[bn]*\.", "i.")
 			}
@@ -420,19 +420,18 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		*"$TAB\${quipu_insertnote}\endlastfoot"
 end
 program define BuildPreheadTEX
-syntax, colformat(string) orientation(string) size(integer) [title(string) label(string) ifcond(string asis)]
+syntax, orientation(string) [*]
+	BuildPreheadTEX_`orientation', `options'
+	global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
+end
+program define BuildPreheadTEX_landscape
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
 
 	local hr = 32 * "*"
     local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
     local size_colseps 04 11 11 30 30 30 30 30 30 30 // 04 = 0.04cm
 
 	local bottom = cond(`size'<=2, 2, 3)
-	if ("`orientation'"=="landscape") {
-		local wrapper "\newgeometry{bottom=`bottom'cm}$ENTER\begin{landscape}$ENTER\setlength\LTcapwidth{\textwidth}"
-	}
-	else {
-		local wrapper "{"
-	}
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
@@ -442,12 +441,13 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
 		`"$TAB - Criteria: `ifcond'"' ///
 		`"$TAB - Estimates: ${quipu_path}"' ///
 		`"\end{comment}"' ///
-		`"`wrapper'"' ///
+		`"\newgeometry{bottom=`bottom'cm}$ENTER\begin{landscape}$ENTER\setlength\LTcapwidth{\linewidth}"' ///
 		`"$BACKSLASH`size_name'"' ///
 		`"\tabcolsep=0.`size_colseps'cm"' ///
-		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
-		`"\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}"' /// Different line for table number and table title
+		`"\centering"' ///
+		`"\captionsetup{singlelinecheck=off,labelfont=bf,labelsep=newline,font=bf,justification=justified}"' /// Different line for table number and table title
 		`"\begin{ThreePartTable}"' ///
+		`"\renewcommand{\TPTminimum}{\linewidth}"' ///
 		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
 		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
 		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
@@ -455,6 +455,67 @@ syntax, colformat(string) orientation(string) size(integer) [title(string) label
 		`"$TAB\midrule\endhead"' ///
 		`"$TAB\midrule\endfoot"' ///
 		`"$TAB\${quipu_insertnote}\endlastfoot"'
+end
+program define BuildPreheadTEX_portrait
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
+
+	local hr = 32 * "*"
+    local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
+    local size_colseps 04 11 11 30 30 30 30 30 30 30 // 04 = 0.04cm
+
+	local bottom = cond(`size'<=2, 2, 3)
+    local size_name : word `size' of `size_names'
+    local size_colseps : word `size' of `size_colseps'
+
+	global quipu_prehead ///
+		`"$ENTER\begin{comment}"' ///
+		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
+		`"$TAB - Criteria: `ifcond'"' ///
+		`"$TAB - Estimates: ${quipu_path}"' ///
+		`"\end{comment}"' ///
+		`"{"' ///
+		`"$BACKSLASH`size_name'"' ///
+		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+		`"\captionsetup{singlelinecheck=on,labelfont=bf,labelsep=colon,font=bf,justification=centering}"' ///
+		`"\begin{ThreePartTable}"' ///
+		`"\renewcommand{\TPTminimum}{0.9\textwidth}"' /// textwidth vs linewidth
+		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
+		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
+		`"$TAB\toprule\endfirsthead"' ///
+		`"$TAB\midrule\endhead"' ///
+		`"$TAB\midrule\endfoot"' ///
+		`"$TAB\${quipu_insertnote}\endlastfoot"'
+end
+program define BuildPreheadTEX_inline
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
+
+	local hr = 32 * "*"
+    local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
+    local size_colseps 04 11 11 30 30 30 30 30 30 30 // 04 = 0.04cm
+
+	local bottom = cond(`size'<=2, 2, 3)
+    local size_name : word `size' of `size_names'
+    local size_colseps : word `size' of `size_colseps'
+
+	global quipu_prehead ///
+		`"$ENTER\begin{comment}"' ///
+		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
+		`"$TAB - Criteria: `ifcond'"' ///
+		`"$TAB - Estimates: ${quipu_path}"' ///
+		`"\end{comment}"' ///
+		`"{"' ///
+		`"$BACKSLASH`size_name'"' ///
+		`"\begin{table}[!thbp]"' ///
+		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
+		`"\captionsetup{singlelinecheck=on,labelfont=bf,labelsep=colon,font=bf,justification=centering}"' ///
+		`"\begin{ThreePartTable}"' ///
+		`"\renewcommand{\TPTminimum}{0.9\textwidth}"' /// textwidth vs linewidth
+		`"$TAB\caption{`title'}\label{table:`label'}"' ///
+		`"$TAB\begin{tabular}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\toprule"'
 end
 program define BuildHeader
 syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
@@ -587,6 +648,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	}
 	local ans "`ans'`header_end'"
 	global quipu_header `"`ans'"'
+	global quipu_header : subinstr global quipu_header "#" "\#", all
 	drop varlabel footnote
 end
 program define BuildPosthead
@@ -722,8 +784,14 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		gettoken indepvar indepvars : indepvars
 		qui replace varname = "`indepvar'" in `i'
 	}
-	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
-		keepusing(varlabel footnote sort_indepvar sort_depvar)
+	clonevar expanded_name = varname
+	qui replace varname = substr(varname, strpos(varname, ".")+1, .) // bugbug (need to generalize to e.g. i.x#i.y#L.z)
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) ///
+		nogen nolabel nonotes keepusing(varlabel footnote sort_indepvar sort_depvar)
+	gen stub = substr(expanded_name, 1, strpos(expanded_name, "."))
+	qui replace varlabel = stub + varlabel if varlabel!=""
+	drop varname stub
+	rename expanded_name varname
 
 	* Drop variables
 	if (`"`drop'"'!="") {
@@ -791,7 +859,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	* ...
 
 	* Set varlabel option
+	* BUGBUG, put lags later
+	bys sort_indepvar: gen byte lag = real(regexs(1)) if regexm(varname, "^L([0-9]+)\.")
+	qui replace lag = 0 if missing(lag)
 	sort sort_indepvar // orders RHS, and ensures footnote daggers will be in order
+	sort sort_indepvar lag
+	drop lag
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']
@@ -953,24 +1027,38 @@ syntax, [*]
 	global quipu_postfoot `"  </tfoot>$ENTER$ENTER  </table>${quipu_footnotes}"'
 end
 program define BuildPostfootTEX
-syntax, orientation(string) size(integer) [PAGEBREAK]
-
-	if ("`orientation'"=="landscape") {
-		local wrapper "\vspace{-5pt}$ENTER\end{landscape}"
-	}
-	else {
-		local wrapper "\vspace{15pt}$ENTER}"
-	}
-
+syntax, orientation(string) [*] [PAGEBREAK]
 	* clearpage vs newpage http://tex.stackexchange.com/questions/45609/is-it-wrong-to-use-clearpage-instead-of-newpage
 	local flush = cond("`pagebreak'"!="", "$ENTER\newpage", "")
-
+	BuildPostfootTEX_`orientation', `options' flush(`flush')
+end
+program define BuildPostfootTEX_landscape
+syntax, [flush(string)] size(integer) 
 	global quipu_postfoot ///
 		`"$TAB\bottomrule"' ///
 		`"$TAB\end{longtable}"' ///
 		`"\end{ThreePartTable}"' ///
-		`"`wrapper'"' ///
+		`"\vspace{-5pt}$ENTER\end{landscape}"' ///
 		`"\restoregeometry`flush'"'
+end
+program define BuildPostfootTEX_portrait
+syntax, [flush(string)] size(integer)
+	global quipu_postfoot ///
+		`"$TAB\bottomrule"' ///
+		`"$TAB\end{longtable}"' ///
+		`"\end{ThreePartTable}"' ///
+		`"\vspace{15pt}$ENTER}"' ///
+		`"\restoregeometry`flush'"'
+end
+program define BuildPostfootTEX_inline
+syntax, [flush(string)] size(integer)
+	global quipu_postfoot ///
+		`"$TAB\bottomrule"' ///
+		`"$TAB\end{tabular}"' ///
+		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
+		`"\end{ThreePartTable}"' ///
+		`"\end{table}"' /// `"\vspace{15pt}"' ///
+		`"$ENTER}"'
 end
 
 	
@@ -1114,7 +1202,7 @@ syntax, filename(string) [*]
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
-	local substitute `substitute' "\_cons " Constant
+	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
 	RunCMD `cmd', `tex_opt' `options'
@@ -1134,7 +1222,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
-	local substitute `substitute' "\_cons " Constant "..." "\ldots"
+	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 
 	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')

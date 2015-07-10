@@ -134,7 +134,7 @@ syntax, pos(integer) [indicate(string)]
 
 			local is_indicator 0
 			local basevar `var'
-			while (regexm("`basevar'", "[0-9]+[bn]*\.")) {
+			while (regexm("`basevar'", "^[0-9]+[bn]*\.")) {
 				local is_indicator 1
 				local basevar = regexr("`basevar'", "[0-9]+[bn]*\.", "i.")
 			}

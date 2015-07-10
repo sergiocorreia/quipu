@@ -1,4 +1,4 @@
-* Build Index
+ * Build Index
 
 * Notes:
 * - keys() are *on top* of time, filename, path, fullpath, and the ones set when creating
@@ -134,8 +134,8 @@ program define Index
 	qui save "`fn'", replace
 	di as text `" - index saved in {stata "use `fn'":`fn'}"'
 
-	* Deal with indicator variables by just using the root variable
-	* (else with many indicators it becomes a mess)
+	* Deal with factor and time seires variables by just using
+	* the root variable (else with many indicators it becomes a mess)
 	local newvarlist
 	while "`varlist'"!="" {
 		gettoken var varlist : varlist, parse(" ")

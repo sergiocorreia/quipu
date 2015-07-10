@@ -16,8 +16,14 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		gettoken indepvar indepvars : indepvars
 		qui replace varname = "`indepvar'" in `i'
 	}
-	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) nogen nolabel nonotes ///
-		keepusing(varlabel footnote sort_indepvar sort_depvar)
+	clonevar expanded_name = varname
+	qui replace varname = substr(varname, strpos(varname, ".")+1, .) // bugbug (need to generalize to e.g. i.x#i.y#L.z)
+	qui merge m:1 varname using "${quipu_path}/varlist", keep(master match) ///
+		nogen nolabel nonotes keepusing(varlabel footnote sort_indepvar sort_depvar)
+	gen stub = substr(expanded_name, 1, strpos(expanded_name, "."))
+	qui replace varlabel = stub + varlabel if varlabel!=""
+	drop varname stub
+	rename expanded_name varname
 
 	* Drop variables
 	if (`"`drop'"'!="") {
@@ -85,7 +91,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	* ...
 
 	* Set varlabel option
+	* BUGBUG, put lags later
+	bys sort_indepvar: gen byte lag = real(regexs(1)) if regexm(varname, "^L([0-9]+)\.")
+	qui replace lag = 0 if missing(lag)
 	sort sort_indepvar // orders RHS, and ensures footnote daggers will be in order
+	sort sort_indepvar lag
+	drop lag
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']

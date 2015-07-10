@@ -43,7 +43,7 @@ program define Parse
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
 	if ("`orientation'"=="") local orientation "portrait"
-	assert_msg inlist("`orientation'", "landscape", "portrait"), msg("invalid page orientation (needs to be landscape or portrait)")
+	assert_msg inlist("`orientation'", "landscape", "portrait", "inline"), msg("invalid page orientation (needs to be landscape, portrait or inline (=float portrait))")
 	assert_msg inrange(`size', 1, 10), msg("invalid table size (needs to be an integer between 1 and 10)")
 	if ("`stars'"=="") local stars "0.10 0.05 0.01" // 0.05 0.01 ??
 	foreach cutoff of local stars {

@@ -1,3 +1,5 @@
+rebuild_git quipu
+
 * Prep work
 	clear all
 	cls
@@ -18,6 +20,8 @@
 
 * Run regressions and add results to db
 	sysuse auto
+	bys turn: gen t = _n
+	xtset turn t
 
 	reg price weight
 	quipu save
@@ -27,10 +31,14 @@
 
 	reg price head length
 	quipu save, prefix("bar")
-	local fn = e(filename)
-	// note that the final path should be returned in a hidden e(filename)
-	di as text "`fn'"
-	assert "`fn'"!="."
+	return list, all
+	
+	quipu save: reg price L.weight L2.weight
+	
+	*local fn = e(filename)
+	*// note that the final path should be returned in a hidden e(filename)
+	*di as text "`fn'"
+	*assert "`fn'"!="."
 
 * Add .ster as an extension and see if I can open it
 	* quipu associate // will run as administrator
@@ -49,9 +57,10 @@
 	assert _rc==2000
 	
 	quipu use if depvar=="price"
-	assert c(N)==3
+	*assert c(N)==3
 
 * Describe many results
+	quipu export if 1 using borrar.html,  view
 	asd
 
 	quipu describe if ..

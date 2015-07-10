@@ -14,7 +14,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	foreach char in `specialchars' {
 		local substitute `substitute' `char' $BACKSLASH`char'
 	}
-	local substitute `substitute' "\_cons " Constant "..." "\ldots"
+	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 
 	local cmd esttab quipu* using "`filename'.tex"
 	local tex_opt longtable booktabs substitute(`substitute')
