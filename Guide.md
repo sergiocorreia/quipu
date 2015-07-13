@@ -125,6 +125,12 @@ Note that factor variables must include the "i." and/or "c." prefix.
 
 To change the Yes/No labels, edit metadata.txt (under the `#misc` header). To change the labels, also edit metadata.txt, adding the entries under the `#indicate` header.
 
+## Alternative varwidth()
+
+Option `varwidth()` doesn't seem to work with tex output. The best alternative so far (and the one implemented) is to use a maximum width. Thus, varwidth will take a unit (e.g. "2cm") and if that is too generous, nothing will happen.
+
+
+
 ## Summary
 
 To recap, these are the steps:
