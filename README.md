@@ -88,6 +88,7 @@ Basically, quotes are the row delimiters. By using "@" as placeholders, you can 
 ### Magic stats.
 
 Some stats have meaningful labels by default. Other complex stats ("weakid", etc.) are also included.
+Also, there are some sensible defaults depending on the model. If you want to keep them and add others on top, use the keyword *default*
 
 ## Arrange models in groups
 ```stata
