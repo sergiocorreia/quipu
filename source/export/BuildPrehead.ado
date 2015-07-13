@@ -36,7 +36,7 @@ capture program drop BuildPreheadTEX
 program define BuildPreheadTEX
 syntax, orientation(string) [*]
 	BuildPreheadTEX_`orientation', `options'
-	global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
+	*global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
 end
 
 capture program drop BuildPreheadTEX_landscape

@@ -37,8 +37,8 @@ program define Parse
 	* Will save 3 locals: filename (full path+fn WITHOUT THE EXT!), extension, and ifcond
 	ParseUsingIf `anything'
 
-	* Set default options
-	if ("`header'"=="") local header depvar #
+	ParseHeader `header' // injects `header' and `headerhide'
+
 	if ("`colformat'"=="") local colformat C{2cm}
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
@@ -55,7 +55,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
-		rename drop indicate header cellformat metadata options
+		rename drop indicate header headerhide cellformat metadata options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -95,4 +95,19 @@ program define ParseUsingIf
 	c_local filename `filename'
 	c_local ext `ext'
 	c_local ifcond   `ifcond'
+end
+
+capture program drop ParseHeader
+program define ParseHeader
+	syntax [anything(name=header equalok everything)] , [hide(string)]
+	
+	* Set default options
+	if ("`header'"=="") local header depvar #
+	local header : subinstr local header "#" "autonumeric", word
+	local hide : subinstr local hide "#" "autonumeric", word
+
+	local hide_only : list hide - header
+	assert_msg "`hide_only'"=="", msg("error in header() suboption hide(..): `hide_only' not in `header'")
+	c_local header `header'
+	c_local headerhide `hide'
 end

@@ -94,37 +94,44 @@
 \normalsize
 \tabcolsep=0.30cm
 \centering
-\captionsetup{singlelinecheck=false,labelfont=bf,labelsep=newline,font=bf,justification=justified}
+\captionsetup{singlelinecheck=on,labelfont=bf,labelsep=colon,font=bf,justification=centering}
 \begin{ThreePartTable}
+\renewcommand{\TPTminimum}{0.9\textwidth}
 	\begin{TableNotes}
-		\Note{Standard errors in parentheses Levels of significance:  * \(p<0.10\),  ** \(p<0.05\),  *** \(p<0.01\).}
+		\Note{Standard errors in parentheses Levels of significance:  * \(p<0.10\),  ** \(p<0.05\),  *** \(p<0.01\). Tenemos varios temas aca}
 	\end{TableNotes}
-	\begin{longtable}{l*{3}{C{2cm}}}
+	\begin{longtable}{l*{4}{C{2cm}}}
 	\caption{The Title \( \gamma^3 \)}\label{table:tableurl} \\
 	\toprule\endfirsthead
 	\midrule\endhead
 	\midrule\endfoot
 	\insertTableNotes\endlastfoot
-	\multicolumn{1}{l}{} & \multicolumn{3}{c}{price}	\\
-	\cmidrule(lr){2-4}
-	\multicolumn{1}{c}{} & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)}	\\
+	\multicolumn{1}{l}{} & \multicolumn{4}{c}{price}	\\
+	\cmidrule(lr){2-5}
+	\multicolumn{1}{c}{} & \multicolumn{1}{c}{(1)} & \multicolumn{1}{c}{(2)} & \multicolumn{1}{c}{(3)} & \multicolumn{1}{c}{(4)}	\\
 	\midrule  
 
-Constant      &       -6.71   &     -4584.9*  &     -4942.3*  \\
-            &    (1174.4)   &    (2664.4)   &    (2673.3)   \\
+headroom    &               &               &               &      -515.5   \\
+            &               &               &               &     (431.5)   \\
 
-headroom    &               &               &      -515.5   \\
-            &               &               &     (431.5)   \\
+Constant      &       -6.71   &     -4584.9*  &      5420.6** &     -4942.3*  \\
+            &    (1174.4)   &    (2664.4)   &    (2298.4)   &    (2673.3)   \\
 
-length      &               &        57.2***&        67.3***\\
-            &               &      (14.1)   &      (16.4)   \\
+length      &               &        57.2***&               &        67.3***\\
+            &               &      (14.1)   &               &      (16.4)   \\
 
-weight      &        2.04***&               &               \\
-            &      (0.38)   &               &               \\
+weight      &        2.04***&               &               &               \\
+            &      (0.38)   &               &               &               \\
+
+L.weight    &               &               &       -1.00   &               \\
+            &               &               &      (0.97)   &               \\
+
+L2.weight   &               &               &        1.32   &               \\
+            &               &               &      (0.90)   &               \\
 	\midrule
-Observations&\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{74}   \\
-\(R^2\)     &\multicolumn{1}{r}{0.2901}   &\multicolumn{1}{r}{0.1865}   &\multicolumn{1}{r}{0.2025}   \\
-Adjusted \(R^2\)&\multicolumn{1}{r}{0.2802}   &\multicolumn{1}{r}{0.1752}   &\multicolumn{1}{r}{0.1800}   \\
+Observations&\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{74}   &\multicolumn{1}{r}{42}   &\multicolumn{1}{r}{74}   \\
+\(R^2\)     &\multicolumn{1}{r}{0.2901}   &\multicolumn{1}{r}{0.1865}   &\multicolumn{1}{r}{0.0521}   &\multicolumn{1}{r}{0.2025}   \\
+Adjusted \(R^2\)&\multicolumn{1}{r}{0.2802}   &\multicolumn{1}{r}{0.1752}   &\multicolumn{1}{r}{0.0035}   &\multicolumn{1}{r}{0.1800}   \\
 	\bottomrule
 	\end{longtable}
 \end{ThreePartTable}

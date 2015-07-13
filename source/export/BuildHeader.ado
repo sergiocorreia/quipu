@@ -1,9 +1,8 @@
 capture program drop BuildHeader
 program define BuildHeader
-syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
+syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string asis)] [HEADERHIDE(string)]
 
 	* Set replacement locals
-	local header : subinstr local header "#" "autonumeric", word
 	foreach cat of local header {
 		if ("`cat'"=="autonumeric") {
 			local template_`cat' "(@)"
@@ -66,6 +65,10 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
 	foreach cat of local header {
+
+		local hidden : list cat in headerhide
+		if (`hidden') continue
+
 		local ++numrow
 		local line "`linestart'"
 		local numcell 0
@@ -130,6 +133,6 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	}
 	local ans "`ans'`header_end'"
 	global quipu_header `"`ans'"'
-	global quipu_header : subinstr global quipu_header "#" "\#", all
+	*global quipu_header : subinstr global quipu_header "#" "\#", all
 	drop varlabel footnote
 end

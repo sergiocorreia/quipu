@@ -27,7 +27,7 @@ program define Export
 	Use `ifcond' // Load selected estimates
 	LoadEstimates `header', indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	
-	BuildHeader `header', ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
+	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats', ext(`ext')
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
@@ -41,7 +41,7 @@ program define Export
 	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
 	estfe quipu* // , labels(x#y "X times Y") // no need to do -estfe quipu* , restore
 	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`r(indicate_fe)')
-	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' // `options' style(html)
+	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' `options' // style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
 	
@@ -85,8 +85,8 @@ program define Parse
 	* Will save 3 locals: filename (full path+fn WITHOUT THE EXT!), extension, and ifcond
 	ParseUsingIf `anything'
 
-	* Set default options
-	if ("`header'"=="") local header depvar #
+	ParseHeader `header' // injects `header' and `headerhide'
+
 	if ("`colformat'"=="") local colformat C{2cm}
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
@@ -103,7 +103,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat notes stars vcenote title label stats ///
-		rename drop indicate header cellformat metadata options
+		rename drop indicate header headerhide cellformat metadata options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -141,6 +141,19 @@ program define ParseUsingIf
 	c_local filename `filename'
 	c_local ext `ext'
 	c_local ifcond   `ifcond'
+end
+program define ParseHeader
+	syntax [anything(name=header equalok everything)] , [hide(string)]
+	
+	* Set default options
+	if ("`header'"=="") local header depvar #
+	local header : subinstr local header "#" "autonumeric", word
+	local hide : subinstr local hide "#" "autonumeric", word
+
+	local hide_only : list hide - header
+	assert_msg "`hide_only'"=="", msg("error in header() suboption hide(..): `hide_only' not in `header'")
+	c_local header `header'
+	c_local headerhide `hide'
 end
 program define Initialize
 	syntax, EXTension(string) [METAdata(string asis)]
@@ -422,7 +435,7 @@ end
 program define BuildPreheadTEX
 syntax, orientation(string) [*]
 	BuildPreheadTEX_`orientation', `options'
-	global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
+	*global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
 end
 program define BuildPreheadTEX_landscape
 syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
@@ -518,10 +531,9 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		`"$TAB\toprule"'
 end
 program define BuildHeader
-syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(string asis)]
+syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string asis)] [HEADERHIDE(string)]
 
 	* Set replacement locals
-	local header : subinstr local header "#" "autonumeric", word
 	foreach cat of local header {
 		if ("`cat'"=="autonumeric") {
 			local template_`cat' "(@)"
@@ -584,6 +596,10 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	local ans "`header_start'" // Will contain the header string
 	local numrow 0
 	foreach cat of local header {
+
+		local hidden : list cat in headerhide
+		if (`hidden') continue
+
 		local ++numrow
 		local line "`linestart'"
 		local numcell 0
@@ -648,7 +664,7 @@ syntax [anything(name=header equalok everything)] , EXTension(string) [Fmt(strin
 	}
 	local ans "`ans'`header_end'"
 	global quipu_header `"`ans'"'
-	global quipu_header : subinstr global quipu_header "#" "\#", all
+	*global quipu_header : subinstr global quipu_header "#" "\#", all
 	drop varlabel footnote
 end
 program define BuildPosthead

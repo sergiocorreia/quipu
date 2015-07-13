@@ -24,16 +24,16 @@ rebuild_git quipu
 	xtset turn t
 
 	reg price weight
-	quipu save
-	quipu save: reg weight price
+	quipu save, notes(foo=spam)
+	quipu save, note(foo=bar): reg weight price
 	reg price length
-	quipu save, notes(model=ols smpl=2 vars=all)
+	quipu save, notes(foo=bar model=ols smpl=2 vars=all)
 
 	reg price head length
-	quipu save, prefix("bar")
+	quipu save, prefix("bar") notes(foo=spam)
 	return list, all
 	
-	quipu save: reg price L.weight L2.weight
+	quipu save, notes(foo=spam): reg price L.weight L2.weight
 	
 	*local fn = e(filename)
 	*// note that the final path should be returned in a hidden e(filename)
@@ -50,7 +50,7 @@ rebuild_git quipu
 	quipu update_varlist
 
 * View one result
-	quipu view "D:\Github\quipu\test\tmp\foo\7826-6430-22915172.ster"
+	*quipu view "D:\Github\quipu\test\tmp\foo\7826-6430-22915172.ster"
 
 * Load an index
 	cap quipu use if 0
@@ -60,7 +60,7 @@ rebuild_git quipu
 	*assert c(N)==3
 
 * Describe many results
-	quipu export if 1 using borrar.html,  view
+	quipu export if 1 using borrar.html,  view header(foo depvar #, hide(foo)) transform(@*100 100) verbose(2) noi
 	asd
 
 	quipu describe if ..
