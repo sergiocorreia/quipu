@@ -85,6 +85,10 @@ stats(F p N, layout("@ @" @) fmt(a3 3 a3) labels("F statistic" "Observations"))
 ```
 Basically, quotes are the row delimiters. By using "@" as placeholders, you can add text/format to the cells.
 
+### Magic stats.
+
+Some stats have meaningful labels by default. Other complex stats ("weakid", etc.) are also included.
+
 ## Arrange models in groups
 ```stata
 mgroups(A B, pattern(1 0 1 0) 
