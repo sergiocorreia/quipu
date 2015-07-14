@@ -32,29 +32,29 @@ program define BuildPrefoot
 		local region_end "$TAB\midrule"
 	}
 
-	* Add rows with FEs Yes/No
-	cap ds ABSORBED_*
-	if (!_rc) {
-		
-		yaml local yes=metadata.misc.indicate_yes
-		yaml local no=metadata.misc.indicate_no
-
-		local absvars = r(varlist)
-		local region "`region_start'"
-		local numrow 0
-		foreach absvar of local absvars {
-			local ++numrow
-			local label : var label `absvar'
-			local row `"`cell_start'`label'`cell_end'"'
-			forval i = 1/`c(N)' {
-				local cell = cond(`absvar'[`i'], "`yes'", "`no'")
-				local row `"`row'`cell_sep'`cell_start'`cell'`cell_end'"'
-			}
-			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local region `"`region'`sep'`row'`row_end'"'
-		}
-		local region `"`region'`region_end'"'
-	}
+	*** Add rows with FEs Yes/No
+	**cap ds ABSORBED_*
+	**if (!_rc) {
+	**	
+	**	yaml local yes=metadata.misc.indicate_yes
+	**	yaml local no=metadata.misc.indicate_no
+	**
+	**	local absvars = r(varlist)
+	**	local region "`region_start'"
+	**	local numrow 0
+	**	foreach absvar of local absvars {
+	**		local ++numrow
+	**		local label : var label `absvar'
+	**		local row `"`cell_start'`label'`cell_end'"'
+	**		forval i = 1/`c(N)' {
+	**			local cell = cond(`absvar'[`i'], "`yes'", "`no'")
+	**			local row `"`row'`cell_sep'`cell_start'`cell'`cell_end'"'
+	**		}
+	**		local sep = cond(`numrow'>1, "`row_sep'", "")
+	**		local region `"`region'`sep'`row'`row_end'"'
+	**	}
+	**	local region `"`region'`region_end'"'
+	**}
 
 	* Add what goes after the FEs
 	if ("`extension'"=="html") {

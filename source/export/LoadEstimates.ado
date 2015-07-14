@@ -9,8 +9,8 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 	assert "${indepvars}"=="" // bugbug drop
 
 	* "#" will be ignored when sorting
-	local autonumeric #
-	local header : list header - autonumeric
+	local exclude autonumeric
+	local header : list header - exclude
 
 	* Variables that we need to construct from the estimates
 	qui ds
@@ -39,18 +39,17 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		assert inlist(_rc, 0, 510)
 		if (!_rc) {
 			local i 0
-			while ("`cats'"!="") {
+			while (`"`cats'"'!="") {
 				gettoken cat cats : cats
 				local is_string = strpos("`: type `var''", "str")==1
 				if (`is_string') {
 					qui replace sort_`var' = `++i' if `var'=="`cat'"
 				}
 				else {
-					qui replace sort_`var' = `++i' if `var'==`cat'	
+					qui replace sort_`var' = `++i' if `var'==`cat'
 				}
 			}
 		}
-
 		bys `groups' sort_`var' `var': gen byte _group_`var' = _n==1
 		qui replace _group_`var' = sum(_group_`var')
 		local groups `groups' _group_`var'
@@ -74,6 +73,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		local fn = path[`i'] +"/"+filename[`i']
 		local num_estimate = num_estimate[`i']
 		estimates use "`fn'", number(`num_estimate')
+		if ("`e(exexog_ct)'"!="" & "`e(endog_ct)'"!="") StockYogo // Load Stock Yogo crit values at 20%
 		
 		estimates title: "`fn'"
 		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables
@@ -178,4 +178,18 @@ syntax, pos(integer) [indicate(string)]
 		if (!_rc) la var ABSORBED_`fixedvar' "`var'"
 		qui replace ABSORBED_`fixedvar' = 1 in `pos'
 	}
+end
+
+* Problem: need to load estimates to use this..
+capture program drop StockYogo
+program define StockYogo, eclass
+	* BUG: Only works with up to 2 endogvars
+	* Piggybacks on ivreg2 and estadd!
+	tempname stats cv
+	mata: s_cdsy("`stats'", 5) // 2=10% bias, 3=20% bias, ... 5=10% size  7=20^ size
+	local k2 = e(exexog_ct)
+	local nendog = e(endog_ct)
+	scalar `cv' = `stats'[`k2', `nendog']
+	ereturn scalar stock_yogo = `cv'
+	*di e(stock_yogo)
 end

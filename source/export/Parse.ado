@@ -6,6 +6,7 @@ program define Parse
 		ENGINE(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
 		SIZE(integer 5) ORIENTation(string) PAGEBREAK /// More PDF options
 		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
+		COLSEP(string) ///
 		NOTEs(string) /// Misc notes (i.e. everything besides the glossaries for symbols, stars, and vcv)
 		VCEnote(string) /// Note regarding std. errors, in case default msg is not good enough
 		TITLE(string) ///
@@ -17,13 +18,14 @@ program define Parse
 		STARs(string) /// Cutoffs for statistical significance
 		CELLFORMAT(string) /// Decimal format of coefs and SDs
 		STATs(string asis) ///
-		Indicate(string) ///
+		Indicate(string asis) ///
 		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
+		VARWIDTH(string) ///
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
 	* Parse -indicate- vs -indicate()-
-	if ("`indicate'"=="") {
+	if (`"`indicate'"'=="") {
 		local 0 , `options'
 		syntax, [Indicate] [*]
 		if ("`indicate'"!="") local indicate _cons
@@ -39,7 +41,7 @@ program define Parse
 
 	ParseHeader `header' // injects `header' and `headerhide'
 
-	if ("`colformat'"=="") local colformat C{2cm}
+	if ("`colformat'"=="") local colformat "S" // C{2cm} c S
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
 	if ("`orientation'"=="") local orientation "portrait"
@@ -50,12 +52,12 @@ program define Parse
 		assert_msg real("`cutoff'")<. , msg("invalid cutoff: `cutoff' (not a number)")
 		assert_msg inrange(`cutoff', 0.0, 1.0) , msg("invalid cutoff: `cutoff' (outside [0-1])")
 	}
-	if ("`cellformat'"=="") local cellformat "b(a2) se(a2)"
+	if ("`cellformat'"=="") local cellformat "b(a3) se(a3)"
 	
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
-		colformat notes stars vcenote title label stats ///
-		rename drop indicate header headerhide cellformat metadata options
+		colformat colsep notes stars vcenote title label stats ///
+		rename drop indicate header headerhide cellformat metadata varwidth options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {

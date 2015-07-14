@@ -55,7 +55,7 @@ syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string
 		local header_start ""
 		local header_end "$TAB\midrule"
 		local offset 1 // First cell in row is usually empty
-		local topleft "\multicolumn{1}{l}{} & "
+		local topleft "\multicolumn{1}{l}{\`header_label'} & "
 		local topleft_auto "\multicolumn{1}{c}{} & "
 
 		local linestart "$TAB"
@@ -88,6 +88,9 @@ syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string
 			qui su span_`cat'
 			local is_group = (r(max)>1)
 			assert inlist(`is_group', 0, 1)
+
+			local header_label
+			cap yaml local header_label=metadata.header.label.`cat'
 
 			local row `"`row_start'`topleft'"' // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {

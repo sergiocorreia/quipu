@@ -17,7 +17,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 
 	local cmd esttab quipu* using "`filename'.tex"
-	local tex_opt longtable booktabs substitute(`substitute')
+	local tex_opt longtable booktabs substitute(`substitute') modelwidth(1)
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'
 

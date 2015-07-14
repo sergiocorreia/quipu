@@ -9,6 +9,7 @@ syntax, filename(string) [*]
 	}
 	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 	local cmd esttab quipu* using "`filename'.tex"
-	local tex_opt longtable booktabs substitute(`substitute')
+	local tex_opt longtable booktabs substitute(`substitute') modelwidth(1)
+	* modelwdith(1) just makes the .tex smaller / easier to read
 	RunCMD `cmd', `tex_opt' `options'
 end

@@ -25,26 +25,41 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header', indicate(`indicate') // Loads estimates and sort them in the correct order
-	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size')	
+	LoadEstimates `header', // indicate(`indicate') // Loads estimates and sort them in the correct order
+	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size') varwidth(`varwidth') colsep(`colsep')
 	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats', ext(`ext')
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
-	BuildRHS, ext(`ext') rename(`rename') drop(`drop') // $quipu_rhsoptions -> rename() drop() varlabels() order()
+	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') // $quipu_rhsoptions -> rename() drop() varlabels() order()
 	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
 
 	if ($quipu_verbose>1) local noisily noisily
 	local prepost prehead(`"$quipu_prehead"') posthead(`"${quipu_header}${quipu_posthead}"') prefoot(`"$quipu_prefoot"') postfoot(`"$quipu_postfoot"')
-	estfe quipu* // , labels(x#y "X times Y") // no need to do -estfe quipu* , restore
-	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`r(indicate_fe)')
+	
+	yaml local fe_labels=metadata.misc.fe_labels
+	estfe quipu*, labels(`fe_labels') // no need to do -estfe quipu* , restore
+	local indicate_fe `"`r(indicate_fe)'"'
+
+	* Defaults
+	local yes "Yes"
+	local no "No"
+	* Retrieve metadata
+	cap yaml local yes=metadata.misc.indicate_yes
+	cap yaml local no=metadata.misc.indicate_no
+	* Add \text{} if needed
+	if ("`ext'"!="html") local yes \multicolumn{1}{c}{`yes'}
+	if ("`ext'"!="html") local no \multicolumn{1}{c}{`no'}
+
+	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`indicate' `indicate_fe', labels(`yes' `no'))
+
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' `options' // style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
 	if ("`ext'"=="tex") BuildTEX, filename(`filename') `base_opt' `options'  // Run after PDF so it overwrites the .tex file
-	
+
 	Cleanup
 end
 program define Parse
@@ -54,6 +69,7 @@ program define Parse
 		ENGINE(string) /// xelatex (smaller pdfs, better fonts) or pdflatex (faster)
 		SIZE(integer 5) ORIENTation(string) PAGEBREAK /// More PDF options
 		COLFORMAT(string) /// Alternatives include 1) D{.}{.}{-1} with dcolumn 2) c 3) p{2cm} 4) C{2cm} with array + a custom cmd
+		COLSEP(string) ///
 		NOTEs(string) /// Misc notes (i.e. everything besides the glossaries for symbols, stars, and vcv)
 		VCEnote(string) /// Note regarding std. errors, in case default msg is not good enough
 		TITLE(string) ///
@@ -65,13 +81,14 @@ program define Parse
 		STARs(string) /// Cutoffs for statistical significance
 		CELLFORMAT(string) /// Decimal format of coefs and SDs
 		STATs(string asis) ///
-		Indicate(string) ///
+		Indicate(string asis) ///
 		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
+		VARWIDTH(string) ///
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
 	* Parse -indicate- vs -indicate()-
-	if ("`indicate'"=="") {
+	if (`"`indicate'"'=="") {
 		local 0 , `options'
 		syntax, [Indicate] [*]
 		if ("`indicate'"!="") local indicate _cons
@@ -87,7 +104,7 @@ program define Parse
 
 	ParseHeader `header' // injects `header' and `headerhide'
 
-	if ("`colformat'"=="") local colformat C{2cm}
+	if ("`colformat'"=="") local colformat "S" // C{2cm} c S
 	if ("`engine'"=="") local engine "xelatex"
 	assert_msg inlist("`engine'", "xelatex", "pdflatex"), msg("invalid latex engine: `engine'")
 	if ("`orientation'"=="") local orientation "portrait"
@@ -98,12 +115,12 @@ program define Parse
 		assert_msg real("`cutoff'")<. , msg("invalid cutoff: `cutoff' (not a number)")
 		assert_msg inrange(`cutoff', 0.0, 1.0) , msg("invalid cutoff: `cutoff' (outside [0-1])")
 	}
-	if ("`cellformat'"=="") local cellformat "b(a2) se(a2)"
+	if ("`cellformat'"=="") local cellformat "b(a3) se(a3)"
 	
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
-		colformat notes stars vcenote title label stats ///
-		rename drop indicate header headerhide cellformat metadata options
+		colformat colsep notes stars vcenote title label stats ///
+		rename drop indicate header headerhide cellformat metadata varwidth options
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -230,8 +247,8 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 	assert "${indepvars}"=="" // bugbug drop
 
 	* "#" will be ignored when sorting
-	local autonumeric #
-	local header : list header - autonumeric
+	local exclude autonumeric
+	local header : list header - exclude
 
 	* Variables that we need to construct from the estimates
 	qui ds
@@ -260,18 +277,17 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		assert inlist(_rc, 0, 510)
 		if (!_rc) {
 			local i 0
-			while ("`cats'"!="") {
+			while (`"`cats'"'!="") {
 				gettoken cat cats : cats
 				local is_string = strpos("`: type `var''", "str")==1
 				if (`is_string') {
 					qui replace sort_`var' = `++i' if `var'=="`cat'"
 				}
 				else {
-					qui replace sort_`var' = `++i' if `var'==`cat'	
+					qui replace sort_`var' = `++i' if `var'==`cat'
 				}
 			}
 		}
-
 		bys `groups' sort_`var' `var': gen byte _group_`var' = _n==1
 		qui replace _group_`var' = sum(_group_`var')
 		local groups `groups' _group_`var'
@@ -295,6 +311,7 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		local fn = path[`i'] +"/"+filename[`i']
 		local num_estimate = num_estimate[`i']
 		estimates use "`fn'", number(`num_estimate')
+		if ("`e(exexog_ct)'"!="" & "`e(endog_ct)'"!="") StockYogo // Load Stock Yogo crit values at 20%
 		
 		estimates title: "`fn'"
 		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables
@@ -400,6 +417,19 @@ syntax, pos(integer) [indicate(string)]
 	}
 end
 
+* Problem: need to load estimates to use this..
+program define StockYogo, eclass
+	* BUG: Only works with up to 2 endogvars
+	* Piggybacks on ivreg2 and estadd!
+	tempname stats cv
+	mata: s_cdsy("`stats'", 5) // 2=10% bias, 3=20% bias, ... 5=10% size  7=20^ size
+	local k2 = e(exexog_ct)
+	local nendog = e(endog_ct)
+	scalar `cv' = `stats'[`k2', `nendog']
+	ereturn scalar stock_yogo = `cv'
+	*di e(stock_yogo)
+end
+
 
 // Building Blocks
 program define BuildPrehead
@@ -423,22 +453,25 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		"-->" ///
 		`"  <table class="estimates" name="`label'">"' ///
 		`"  <caption>`title'</caption>"'
-
-		*"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}" ///
-		*"$TAB\begin{longtable}{l*{@M}{`colformat'}}" /// {}  {c} {p{1cm}}
-		*"$TAB\caption{`title'}\label{table:`label'} \\" ///
-		*"$TAB\toprule\endfirsthead" ///
-		*"$TAB\midrule\endhead" ///
-		*"$TAB\midrule\endfoot" ///
-		*"$TAB\${quipu_insertnote}\endlastfoot"
 end
 program define BuildPreheadTEX
-syntax, orientation(string) [*]
-	BuildPreheadTEX_`orientation', `options'
+syntax, orientation(string) [varwidth(string)] [*]
+	
+	if ("`varwidth'"!="") {
+		* The [t] aligns the top of the varwidth block with the rest of the row
+		local varlist_layout  "@{\begin{varwidth}[t]{`varwidth'}\narrowragged} l @{\end{varwidth}}"
+	}
+	else {
+		local varlist_layout "l"
+	}
+
+	BuildPreheadTEX_`orientation', varlist_layout(`varlist_layout') `options'
 	*global quipu_prehead : subinstr global quipu_prehead "#" "\#", all
 end
 program define BuildPreheadTEX_landscape
-syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
+syntax, colformat(string) size(integer) varlist_layout(string) ///
+	[title(string) label(string) ifcond(string asis)] ///
+	[colsep(string)]
 
 	local hr = 32 * "*"
     local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
@@ -446,23 +479,20 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 
 	local bottom = cond(`size'<=2, 2, 3)
     local size_name : word `size' of `size_names'
-    local size_colseps : word `size' of `size_colseps'
+    local size_colseps : word `size' of `size_colseps' // set default
+
+    if ("`colsep'"=="") local colsep 0.`size_colseps'cm
 
 	global quipu_prehead ///
-		`"$ENTER\begin{comment}"' ///
-		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
-		`"$TAB - Criteria: `ifcond'"' ///
-		`"$TAB - Estimates: ${quipu_path}"' ///
-		`"\end{comment}"' ///
 		`"\newgeometry{bottom=`bottom'cm}$ENTER\begin{landscape}$ENTER\setlength\LTcapwidth{\linewidth}"' ///
 		`"$BACKSLASH`size_name'"' ///
-		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\tabcolsep=`colsep'"' ///
 		`"\centering"' ///
 		`"\captionsetup{singlelinecheck=off,labelfont=bf,labelsep=newline,font=bf,justification=justified}"' /// Different line for table number and table title
 		`"\begin{ThreePartTable}"' ///
 		`"\renewcommand{\TPTminimum}{\linewidth}"' ///
 		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
-		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\begin{longtable}{`varlist_layout' *{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
 		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
 		`"$TAB\toprule\endfirsthead"' ///
 		`"$TAB\midrule\endhead"' ///
@@ -470,7 +500,9 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		`"$TAB\${quipu_insertnote}\endlastfoot"'
 end
 program define BuildPreheadTEX_portrait
-syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
+syntax, colformat(string) size(integer) varlist_layout(string) ///
+	[title(string) label(string) ifcond(string asis)] ///
+	colsep(string)
 
 	local hr = 32 * "*"
     local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
@@ -480,21 +512,18 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
 
+    if ("`colsep'"=="") local colsep 0.`size_colseps'cm
+
 	global quipu_prehead ///
-		`"$ENTER\begin{comment}"' ///
-		`"$TAB`hr' QUIPU - Stata Regression `hr'"' ///
-		`"$TAB - Criteria: `ifcond'"' ///
-		`"$TAB - Estimates: ${quipu_path}"' ///
-		`"\end{comment}"' ///
 		`"{"' ///
 		`"$BACKSLASH`size_name'"' ///
-		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\tabcolsep=`colsep'"' ///
 		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
 		`"\captionsetup{singlelinecheck=on,labelfont=bf,labelsep=colon,font=bf,justification=centering}"' ///
 		`"\begin{ThreePartTable}"' ///
 		`"\renewcommand{\TPTminimum}{0.9\textwidth}"' /// textwidth vs linewidth
 		`"$TAB\begin{TableNotes}$ENTER$TAB$TAB\${quipu_footnotes}$ENTER$TAB\end{TableNotes}"' ///
-		`"$TAB\begin{longtable}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\begin{longtable}{`varlist_layout' *{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
 		`"$TAB\caption{`title'}\label{table:`label'} \\"' ///
 		`"$TAB\toprule\endfirsthead"' ///
 		`"$TAB\midrule\endhead"' ///
@@ -502,7 +531,8 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		`"$TAB\${quipu_insertnote}\endlastfoot"'
 end
 program define BuildPreheadTEX_inline
-syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)]
+syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
+	colsep(string)
 
 	local hr = 32 * "*"
     local size_names tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge
@@ -511,6 +541,8 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 	local bottom = cond(`size'<=2, 2, 3)
     local size_name : word `size' of `size_names'
     local size_colseps : word `size' of `size_colseps'
+
+    if ("`colsep'"=="") local colsep 0.`size_colseps'cm
 
 	global quipu_prehead ///
 		`"$ENTER\begin{comment}"' ///
@@ -521,13 +553,13 @@ syntax, colformat(string) size(integer) [title(string) label(string) ifcond(stri
 		`"{"' ///
 		`"$BACKSLASH`size_name'"' ///
 		`"\begin{table}[!thbp]"' ///
-		`"\tabcolsep=0.`size_colseps'cm"' ///
+		`"\tabcolsep=`colsep'"' ///
 		`"\centering"' /// Prevent centering captions that fit in single lines; don't put it in the preamble b/c that makes normal tables look ugly
 		`"\captionsetup{singlelinecheck=on,labelfont=bf,labelsep=colon,font=bf,justification=centering}"' ///
 		`"\begin{ThreePartTable}"' ///
 		`"\renewcommand{\TPTminimum}{0.9\textwidth}"' /// textwidth vs linewidth
 		`"$TAB\caption{`title'}\label{table:`label'}"' ///
-		`"$TAB\begin{tabular}{l*{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
+		`"$TAB\begin{tabular}{`varlist_layout' *{@M}{`colformat'}}"' /// {}  {c} {p{1cm}}
 		`"$TAB\toprule"'
 end
 program define BuildHeader
@@ -586,7 +618,7 @@ syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string
 		local header_start ""
 		local header_end "$TAB\midrule"
 		local offset 1 // First cell in row is usually empty
-		local topleft "\multicolumn{1}{l}{} & "
+		local topleft "\multicolumn{1}{l}{\`header_label'} & "
 		local topleft_auto "\multicolumn{1}{c}{} & "
 
 		local linestart "$TAB"
@@ -619,6 +651,9 @@ syntax [anything(name=header equalok everything)], EXTension(string) [Fmt(string
 			qui su span_`cat'
 			local is_group = (r(max)>1)
 			assert inlist(`is_group', 0, 1)
+
+			local header_label
+			cap yaml local header_label=metadata.header.label.`cat'
 
 			local row `"`row_start'`topleft'"' // TODO: Allow a header instead of empty or `cat'
 			forval i = 1/`c(N)' {
@@ -717,29 +752,29 @@ program define BuildPrefoot
 		local region_end "$TAB\midrule"
 	}
 
-	* Add rows with FEs Yes/No
-	cap ds ABSORBED_*
-	if (!_rc) {
-		
-		yaml local yes=metadata.misc.indicate_yes
-		yaml local no=metadata.misc.indicate_no
-
-		local absvars = r(varlist)
-		local region "`region_start'"
-		local numrow 0
-		foreach absvar of local absvars {
-			local ++numrow
-			local label : var label `absvar'
-			local row `"`cell_start'`label'`cell_end'"'
-			forval i = 1/`c(N)' {
-				local cell = cond(`absvar'[`i'], "`yes'", "`no'")
-				local row `"`row'`cell_sep'`cell_start'`cell'`cell_end'"'
-			}
-			local sep = cond(`numrow'>1, "`row_sep'", "")
-			local region `"`region'`sep'`row'`row_end'"'
-		}
-		local region `"`region'`region_end'"'
-	}
+	*** Add rows with FEs Yes/No
+	**cap ds ABSORBED_*
+	**if (!_rc) {
+	**	
+	**	yaml local yes=metadata.misc.indicate_yes
+	**	yaml local no=metadata.misc.indicate_no
+	**
+	**	local absvars = r(varlist)
+	**	local region "`region_start'"
+	**	local numrow 0
+	**	foreach absvar of local absvars {
+	**		local ++numrow
+	**		local label : var label `absvar'
+	**		local row `"`cell_start'`label'`cell_end'"'
+	**		forval i = 1/`c(N)' {
+	**			local cell = cond(`absvar'[`i'], "`yes'", "`no'")
+	**			local row `"`row'`cell_sep'`cell_start'`cell'`cell_end'"'
+	**		}
+	**		local sep = cond(`numrow'>1, "`row_sep'", "")
+	**		local region `"`region'`sep'`row'`row_end'"'
+	**	}
+	**	local region `"`region'`region_end'"'
+	**}
 
 	* Add what goes after the FEs
 	if ("`extension'"=="html") {
@@ -784,7 +819,8 @@ syntax, [vcenote(string)]
 	clear // Because we -use-d the dataset
 end
 program define BuildRHS
-syntax, EXTension(string) [rename(string asis) drop(string asis)]
+syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
+	[indicate(string asis)] // Don't add labels to indicate
 
 	* NOTE: -estout- requires that after a rename, all the options MUST USE THE NEW NAME
 	* i.e. if I rename(price Precio), then when calling -esttab- I need to include keep(Precio)
@@ -868,12 +904,6 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		drop original renamed
 	}
 
-	* Fill contents of keep (must be done after the renames are made)
-	qui levelsof varname, local(rhskeep) clean
-
-	* Groups +-+-
-	* ...
-
 	* Set varlabel option
 	* BUGBUG, put lags later
 	bys sort_indepvar: gen byte lag = real(regexs(1)) if regexm(varname, "^L([0-9]+)\.")
@@ -882,14 +912,30 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	sort sort_indepvar lag
 	drop lag
 
+	gen byte is_indicate = 0
+	while (`"`indicate'"'!="") {
+		gettoken part indicate : indicate
+		gettoken part_label part_pattern : part , parse("=")
+		gettoken eqsign part_pattern : part_pattern , parse("=")
+		
+		* Need to allow "stub1* stub*" syntax like -estout-
+		foreach pat of local part_pattern { 
+			assert "`pat'"!=""
+			replace is_indicate = 1 if strmatch(varname, "`pat'")
+		}
+	}
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']
 		local varlabel = varlabel[`i']
+		local is_indicate = is_indicate[`i']
+
+		if (`is_indicate') continue
 
 		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
 		* This is critical if we have a regr. with 1000s of dummies
-		if ("`varlabel'"!="" | "`footnote'"!="" | strpos("`varname'", ".")==0 ) {
+		if ("`varlabel'"!="" | "`footnote'"!="") {
 			* We need *something* as varlabel, to put next to the footnote dagger
 			if ("`varlabel'"=="") local varlabel `"`varname'"'
 			AddFootnote, ext(`extension') footnote(`footnote')
@@ -898,20 +944,31 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		local order `order' `varname'
 	}
 
+	* Fill contents of keep (must be done after the renames are made)
+	* Also after indicate
+	qui levelsof varname if !is_indicate, local(rhskeep) clean
+
+	* Groups +-+-
+	* ...
+
 	drop _all // BUGBUG: clear?
 	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
 	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
-	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') keep(`rhskeep')
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename')
+	
+	*keep(`rhskeep') // bugs with keep (messes with indicate, refcat, etc.)
+
 end
 program define BuildStats
-syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string) Labels(string asis)]
+syntax [anything(name=stats equalok everything)],  EXTension(string) 
+	// [Fmt(string) Labels(string asis)]
 
 	local DEFAULT_STATS_all N
 	local DEFAULT_STATS_ols r2 r2_a
-	local DEFAULT_STATS_iv idp widstat jp
+	local DEFAULT_STATS_iv underid weakid overid // idp widstat jp
 	*local DEFAULT_STATS_fe
 	*local DEFAULT_STATS_re
 
@@ -938,20 +995,36 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string
 	local labels_N			"Observations"
 	local labels_N_clust	"Num. Clusters"
 	local labels_df_a		"Num. Fixed Effects"
+	local labels_F			"F Statistic"
 	local labels_r2		"\(R^2\)"
 	local labels_r2_a		"Adjusted \(R^2\)"
 	local labels_idp		"Underid. P-val. (KP LM)"
 	local labels_widstat	"Weak id. F-stat (KP Wald)"
 	local labels_jp		"Overid. P-val (Hansen J)"
+	
+	local labels_baseline "Baseline (avg. dep. var.)"
+
+	local labels_underid_1 "Underidentification test"
+	local labels_underid_2 "\(\;\; p \, \) value"
+
+	local labels_weakid_1 "Weak identification F stat."
+	local labels_weakid_2 "\(\;\;\) 10% maximal IV size"
+
+	local labels_overid_1 "Overidentification J stat."
+	local labels_overid_2 "\(\;\; p \, \) value"
 
 	local fmt_N			%12.0gc
 	local fmt_N_clust	%12.0gc
 	local fmt_df_a		%12.0gc
-	local fmt_r2		%6.4f
-	local fmt_r2_a		%6.4f
-	local fmt_idp		%6.3fc
-	local fmt_widstat	%6.2fc
-	local fmt_jp		%6.3fc
+	local fmt_r2		%6.3f
+	local fmt_r2_a		%6.3f
+	*local fmt_idp		%6.3fc
+	*local fmt_widstat	%6.2fc
+	*local fmt_jp		%6.3fc
+
+	local fmt_id0		%2.0f // Number of dof
+	local fmt_id1		%5.1f // The Fstats or Chi stats
+	local fmt_id2		%5.3f // The p-values
 
 	local DEFAULT_FORMAT a3
 
@@ -962,28 +1035,51 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [Fmt(string
 		// A rejection casts doubt on the validity of the instruments.
 
 	* Parse received fmt and labels, to override defaults
-	foreach cat in fmt labels {
-		local args `"``cat''"'
-		while (`"`args'"'!="") {
-			gettoken key args : args
-			gettoken val args : args
-			local `cat'_`key' `val'
+	*foreach cat in fmt labels {
+	*	local args `"``cat''"'
+	*	while (`"`args'"'!="") {
+	*		gettoken key args : args
+	*		gettoken val args : args
+	*		local `cat'_`key' `val'
+	*	}
+	*}
+
+	* Parse stats
+	local expanded_stats
+	foreach stat of local stats {
+
+		* Magical stats
+		if inlist("`stat'", "overid", "weakid", "underid") {
+			local statlabels `"`statlabels' "`labels_`stat'_1'" "`labels_`stat'_2'""'
+
+			if ("`stat'"!="weakid") local statformats `"`statformats' `fmt_id0' `fmt_id1' `fmt_id2'"'
+			if ("`stat'"=="weakid") local statformats `"`statformats' `fmt_id1' `fmt_id1'"'
+
+			if ("`stat'"!="weakid") local exp "\(\chi^2(@){=}@\)"
+			if ("`stat'"=="weakid") local exp "@"
+
+			local layout = cond("`extension'"=="html", "`exp'", "\multicolumn{1}{r}{`exp'}")
+			local layouts = `"`layouts' "`layout'""'
+			local layout = cond("`extension'"=="html", "@", "\multicolumn{1}{r}{@}")
+			local layouts = `"`layouts' "`layout'""'
+
+
+			if ("`stat'"=="overid") local expanded_stats `expanded_stats' jdf  j jp
+			if ("`stat'"=="underid") local expanded_stats `expanded_stats' iddf idstat idp
+			if ("`stat'"=="weakid") local expanded_stats `expanded_stats' widstat stock_yogo
+		}
+		else {
+			local expanded_stats `expanded_stats' `stat'
+			local statlbl = cond(`"`labels_`stat''"'!="", `"`labels_`stat''"', "`stat'")
+			local statfmt = cond(`"`fmt_`stat''"'!="", `"`fmt_`stat''"', "`DEFAULT_FORMAT'")
+			local statlabels `"`statlabels' "`statlbl'""'
+			local statformats `"`statformats' `statfmt'"'
+			local layout = cond("`extension'"=="html", "@", "\multicolumn{1}{r}{@}")
+			local layouts = `"`layouts' "`layout'""'
 		}
 	}
 
-	* Parse stats
-	foreach stat of local stats {
-		local statlbl = cond(`"`labels_`stat''"'!="", `"`labels_`stat''"', "`stat'")
-		local statfmt = cond(`"`fmt_`stat''"'!="", `"`fmt_`stat''"', "`DEFAULT_FORMAT'")
-		local statlabels `"`statlabels' "`statlbl'""'
-		local statformats `"`statformats' `statfmt'"'
-	}
-
-	local layout = cond("`extension'"=="html", "@ ", "\multicolumn{1}{r}{@} ")
-	local numstats : word count `stats'
-	local statlayout = "`layout'" * `numstats'
-
-	global quipu_stats `"stats(`stats', fmt(`statformats') labels(`statlabels') layout(`statlayout') )"'
+	global quipu_stats `"stats(`expanded_stats', fmt(`statformats') labels(`statlabels') layout(`layouts') )"'
 end
 program define BuildFootnotes
 syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
@@ -997,7 +1093,7 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		local num : word `i' of `stars'
 		local sep = cond(`i'>1, ", ", ".")
 		local starnote "`starnote' `sign' \(p<`num'\)`sep'"
-		local starlevels "`starlevels' `sign' `num'"
+		local starlevels "`starlevels' \text{`sign'} `num'"
 	}
 
 	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`notes'"!="", " ", "")
@@ -1220,7 +1316,8 @@ syntax, filename(string) [*]
 	}
 	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 	local cmd esttab quipu* using "`filename'.tex"
-	local tex_opt longtable booktabs substitute(`substitute')
+	local tex_opt longtable booktabs substitute(`substitute') modelwidth(1)
+	* modelwdith(1) just makes the .tex smaller / easier to read
 	RunCMD `cmd', `tex_opt' `options'
 end
 program define BuildPDF
@@ -1241,7 +1338,7 @@ syntax, filename(string) engine(string) [VIEW] [*]
 	local substitute `substitute' "\_cons " Constant "..." "\ldots" "#" "\#"
 
 	local cmd esttab quipu* using "`filename'.tex"
-	local tex_opt longtable booktabs substitute(`substitute')
+	local tex_opt longtable booktabs substitute(`substitute') modelwidth(1)
 	local pdf_options top(`fn_top') bottom(`fn_bottom')
 	RunCMD `cmd', `tex_opt' `pdf_options' `options'
 

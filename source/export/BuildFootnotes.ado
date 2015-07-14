@@ -11,7 +11,7 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		local num : word `i' of `stars'
 		local sep = cond(`i'>1, ", ", ".")
 		local starnote "`starnote' `sign' \(p<`num'\)`sep'"
-		local starlevels "`starlevels' `sign' `num'"
+		local starlevels "`starlevels' \text{`sign'} `num'"
 	}
 
 	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`notes'"!="", " ", "")

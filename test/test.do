@@ -35,6 +35,8 @@ rebuild_git quipu
 	
 	quipu save, notes(foo=spam): reg price L.weight L2.weight
 	
+	quipu save, notes(foo=eggs): ivreg2 price (weight=length gear) , cluster(turn)	
+	
 	*local fn = e(filename)
 	*// note that the final path should be returned in a hidden e(filename)
 	*di as text "`fn'"

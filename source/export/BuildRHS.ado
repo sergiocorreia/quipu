@@ -1,6 +1,7 @@
 capture program drop BuildRHS
 program define BuildRHS
-syntax, EXTension(string) [rename(string asis) drop(string asis)]
+syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
+	[indicate(string asis)] // Don't add labels to indicate
 
 	* NOTE: -estout- requires that after a rename, all the options MUST USE THE NEW NAME
 	* i.e. if I rename(price Precio), then when calling -esttab- I need to include keep(Precio)
@@ -84,12 +85,6 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		drop original renamed
 	}
 
-	* Fill contents of keep (must be done after the renames are made)
-	qui levelsof varname, local(rhskeep) clean
-
-	* Groups +-+-
-	* ...
-
 	* Set varlabel option
 	* BUGBUG, put lags later
 	bys sort_indepvar: gen byte lag = real(regexs(1)) if regexm(varname, "^L([0-9]+)\.")
@@ -98,14 +93,30 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 	sort sort_indepvar lag
 	drop lag
 
+	gen byte is_indicate = 0
+	while (`"`indicate'"'!="") {
+		gettoken part indicate : indicate
+		gettoken part_label part_pattern : part , parse("=")
+		gettoken eqsign part_pattern : part_pattern , parse("=")
+		
+		* Need to allow "stub1* stub*" syntax like -estout-
+		foreach pat of local part_pattern { 
+			assert "`pat'"!=""
+			replace is_indicate = 1 if strmatch(varname, "`pat'")
+		}
+	}
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']
 		local varlabel = varlabel[`i']
+		local is_indicate = is_indicate[`i']
+
+		if (`is_indicate') continue
 
 		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
 		* This is critical if we have a regr. with 1000s of dummies
-		if ("`varlabel'"!="" | "`footnote'"!="" | strpos("`varname'", ".")==0 ) {
+		if ("`varlabel'"!="" | "`footnote'"!="") {
 			* We need *something* as varlabel, to put next to the footnote dagger
 			if ("`varlabel'"=="") local varlabel `"`varname'"'
 			AddFootnote, ext(`extension') footnote(`footnote')
@@ -114,11 +125,21 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)]
 		local order `order' `varname'
 	}
 
+	* Fill contents of keep (must be done after the renames are made)
+	* Also after indicate
+	qui levelsof varname if !is_indicate, local(rhskeep) clean
+
+	* Groups +-+-
+	* ...
+
 	drop _all // BUGBUG: clear?
 	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
 	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
 
 	* Set global option
 	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
-	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename') keep(`rhskeep')
+	global quipu_rhsoptions varlabels(`varlabels') order(`order') rename(`rhsrename')
+	
+	*keep(`rhskeep') // bugs with keep (messes with indicate, refcat, etc.)
+
 end
