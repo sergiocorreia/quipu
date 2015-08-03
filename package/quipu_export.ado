@@ -25,10 +25,10 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header', // indicate(`indicate') // Loads estimates and sort them in the correct order
+	LoadEstimates `header', scalebaseline(`scalebaseline') // indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size') varwidth(`varwidth') colsep(`colsep')
 	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
-	BuildStats `stats', ext(`ext')
+	BuildStats `stats', ext(`ext') scalebaseline(`scalebaseline')
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
@@ -84,6 +84,7 @@ program define Parse
 		Indicate(string asis) ///
 		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		VARWIDTH(string) ///
+		SCALEBASELINE(real 1.0) ///
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
@@ -120,7 +121,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat colsep notes stars vcenote title label stats ///
-		rename drop indicate header headerhide cellformat metadata varwidth options
+		rename drop indicate header headerhide cellformat metadata varwidth options scalebaseline
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -237,8 +238,12 @@ program define Cleanup
 		cap mata: mata drop `obj'
 	}
 end
-program define LoadEstimates
-syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt(string asis)]
+program define LoadEstimates, eclass
+syntax [anything(name=header equalok everything)] , ///
+	[indicate(string)] ///  [Fmt(string asis)]
+	[scalebaseline(real 1.0)]
+
+	assert `scalebaseline'>0
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
@@ -311,7 +316,17 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		local fn = path[`i'] +"/"+filename[`i']
 		local num_estimate = num_estimate[`i']
 		estimates use "`fn'", number(`num_estimate')
+
+		* Inject stuff into e()
 		if ("`e(exexog_ct)'"!="" & "`e(endog_ct)'"!="") StockYogo // Load Stock Yogo crit values at 20%
+
+		cap conf matrix e(summarize)
+		if !c(rc) & "`e(baseline)'"=="" {
+			tempname summarize
+			matrix `summarize' = e(summarize)
+			cap matrix `summarize' = `summarize'["mean", "`e(depvar)'"] // row -mean- may not exist
+			if (!c(rc)) ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+		}
 		
 		estimates title: "`fn'"
 		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables
@@ -443,7 +458,7 @@ syntax, EXTension(string) [*]
 end
 program define BuildPreheadHTML
 syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
-	orientation(string) // THESE WILL BE IGNORED
+	orientation(string) [varwidth(string) colsep(string)] // THESE WILL BE IGNORED
 	local hr = 32 * " "
 
 	global quipu_prehead ///
@@ -963,7 +978,7 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 
 end
 program define BuildStats
-syntax [anything(name=stats equalok everything)],  EXTension(string) 
+syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebaseline(real 1.0)]
 	// [Fmt(string) Labels(string asis)]
 
 	local DEFAULT_STATS_all N
@@ -1002,7 +1017,8 @@ syntax [anything(name=stats equalok everything)],  EXTension(string)
 	local labels_widstat	"Weak id. F-stat (KP Wald)"
 	local labels_jp		"Overid. P-val (Hansen J)"
 	
-	local labels_baseline "Baseline (avg. dep. var.)"
+	local labels_baseline "Mean of Dependent Variable"
+	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \(\times `scalebaseline'\)"
 
 	local labels_underid_1 "Underidentification test"
 	local labels_underid_2 "\(\;\; p \, \) value"
@@ -1025,6 +1041,8 @@ syntax [anything(name=stats equalok everything)],  EXTension(string)
 	local fmt_id0		%2.0f // Number of dof
 	local fmt_id1		%5.1f // The Fstats or Chi stats
 	local fmt_id2		%5.3f // The p-values
+
+	local fmt_baseline	%6.4g
 
 	local DEFAULT_FORMAT a3
 

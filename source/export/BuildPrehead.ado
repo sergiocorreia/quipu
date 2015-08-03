@@ -12,7 +12,7 @@ end
 capture program drop BuildPreheadHTML
 program define BuildPreheadHTML
 syntax, colformat(string) size(integer) [title(string) label(string) ifcond(string asis)] ///
-	orientation(string) // THESE WILL BE IGNORED
+	orientation(string) [varwidth(string) colsep(string)] // THESE WILL BE IGNORED
 	local hr = 32 * " "
 
 	global quipu_prehead ///

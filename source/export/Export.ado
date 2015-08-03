@@ -4,10 +4,10 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header', // indicate(`indicate') // Loads estimates and sort them in the correct order
+	LoadEstimates `header', scalebaseline(`scalebaseline') // indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size') varwidth(`varwidth') colsep(`colsep')
 	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
-	BuildStats `stats', ext(`ext')
+	BuildStats `stats', ext(`ext') scalebaseline(`scalebaseline')
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)

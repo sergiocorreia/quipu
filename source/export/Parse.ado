@@ -21,6 +21,7 @@ program define Parse
 		Indicate(string asis) ///
 		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		VARWIDTH(string) ///
+		SCALEBASELINE(real 1.0) ///
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
@@ -57,7 +58,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat colsep notes stars vcenote title label stats ///
-		rename drop indicate header headerhide cellformat metadata varwidth options
+		rename drop indicate header headerhide cellformat metadata varwidth options scalebaseline
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {

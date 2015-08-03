@@ -1,6 +1,10 @@
 capture program drop LoadEstimates
-program define LoadEstimates
-syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt(string asis)]
+program define LoadEstimates, eclass
+syntax [anything(name=header equalok everything)] , ///
+	[indicate(string)] ///  [Fmt(string asis)]
+	[scalebaseline(real 1.0)]
+
+	assert `scalebaseline'>0
 
 	* Load estimates in the order set by varlist.dta (wrt depvar)
 	rename depvar varname
@@ -73,7 +77,17 @@ syntax [anything(name=header equalok everything)] [ , indicate(string)] //  [Fmt
 		local fn = path[`i'] +"/"+filename[`i']
 		local num_estimate = num_estimate[`i']
 		estimates use "`fn'", number(`num_estimate')
+
+		* Inject stuff into e()
 		if ("`e(exexog_ct)'"!="" & "`e(endog_ct)'"!="") StockYogo // Load Stock Yogo crit values at 20%
+
+		cap conf matrix e(summarize)
+		if !c(rc) & "`e(baseline)'"=="" {
+			tempname summarize
+			matrix `summarize' = e(summarize)
+			cap matrix `summarize' = `summarize'["mean", "`e(depvar)'"] // row -mean- may not exist
+			if (!c(rc)) ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+		}
 		
 		estimates title: "`fn'"
 		GetVars, indicate(`indicate') pos(`i') // This injects `indepvars' and creates/replaces variables

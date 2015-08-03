@@ -1,6 +1,6 @@
 capture program drop BuildStats
 program define BuildStats
-syntax [anything(name=stats equalok everything)],  EXTension(string) 
+syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebaseline(real 1.0)]
 	// [Fmt(string) Labels(string asis)]
 
 	local DEFAULT_STATS_all N
@@ -39,7 +39,8 @@ syntax [anything(name=stats equalok everything)],  EXTension(string)
 	local labels_widstat	"Weak id. F-stat (KP Wald)"
 	local labels_jp		"Overid. P-val (Hansen J)"
 	
-	local labels_baseline "Baseline (avg. dep. var.)"
+	local labels_baseline "Mean of Dependent Variable"
+	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \((\times `scalebaseline')\)"
 
 	local labels_underid_1 "Underidentification test"
 	local labels_underid_2 "\(\;\; p \, \) value"
@@ -62,6 +63,8 @@ syntax [anything(name=stats equalok everything)],  EXTension(string)
 	local fmt_id0		%2.0f // Number of dof
 	local fmt_id1		%5.1f // The Fstats or Chi stats
 	local fmt_id2		%5.3f // The p-values
+
+	local fmt_baseline	%6.4g
 
 	local DEFAULT_FORMAT a3
 
