@@ -1,7 +1,8 @@
 capture program drop BuildRHS
 program define BuildRHS
 syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
-	[indicate(string asis)] // Don't add labels to indicate
+	[indicate(string asis)] /// Don't add labels to indicate
+	[varwidth(string)]
 
 	* NOTE: -estout- requires that after a rename, all the options MUST USE THE NEW NAME
 	* i.e. if I rename(price Precio), then when calling -esttab- I need to include keep(Precio)
@@ -106,6 +107,11 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 		}
 	}
 
+	if ("`varwidth'"!="") {
+		local prefix	"\FlatVarLabel{`varwidth'}{"
+		local suffix	"}"
+	}
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']
@@ -116,11 +122,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 
 		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
 		* This is critical if we have a regr. with 1000s of dummies
-		if ("`varlabel'"!="" | "`footnote'"!="") {
+		* But then we don't want to print that!
+		if (1) {
+		*if ("`varlabel'"!="" | "`footnote'"!="") {
 			* We need *something* as varlabel, to put next to the footnote dagger
 			if ("`varlabel'"=="") local varlabel `"`varname'"'
 			AddFootnote, ext(`extension') footnote(`footnote')
-			local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
+			local varlabels `"`varlabels' `varname' "`prefix'`varlabel'`r(symbolcell)'`suffix'" "'
 		}
 		local order `order' `varname'
 	}
@@ -133,8 +141,19 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 	* ...
 
 	drop _all // BUGBUG: clear?
-	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
-	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
+
+	if ("`varwidth'"!="") {
+		* Need to subtract a bit or else it will clash with the next column
+		local varlabels `"`varlabels' _cons Constant "' // , prefix("\smash{\begin{minipage}[t]{`varwidth'-1mm}\hangindent=0.2cm") suffix("\end{minipage}} ") "'
+	}
+	else {
+		local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
+	}
+	
+	*local varlabels `"`varlabels' _cons Constant , prefix("\multirow{2}{*}[2em]{\vfil \begin{minipage}[t]{5cm}") suffix("\end{minipage}} ") "'
+	// end("" "") nolast
+	*local varlabels `"`varlabels' _cons Constant , prefix("\multirow{2}{*}{ \begin{minipage}[t]{5cm}{") suffix("}\end{minipage}}") "' // end("" "") nolast
+	* \rule[-.3\baselineskip]{2mm}{2.3\baselineskip}
 
 	* Set global option
 	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")

@@ -43,13 +43,13 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \((\times `scalebaseline')\)"
 
 	local labels_underid_1 "Underidentification test"
-	local labels_underid_2 "\(\;\; p \, \) value"
+	local labels_underid_2 "\enskip \(p \, \) value"
 
 	local labels_weakid_1 "Weak identification F stat."
-	local labels_weakid_2 "\(\;\;\) 10% maximal IV size"
+	local labels_weakid_2 "\enskip 10% maximal IV size"
 
 	local labels_overid_1 "Overidentification J stat."
-	local labels_overid_2 "\(\;\; p \, \) value"
+	local labels_overid_2 "\enskip \(p \, \) value"
 
 	local fmt_N			%12.0gc
 	local fmt_N_clust	%12.0gc

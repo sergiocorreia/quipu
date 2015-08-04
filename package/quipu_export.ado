@@ -32,7 +32,7 @@ program define Export
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
-	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') // $quipu_rhsoptions -> rename() drop() varlabels() order()
+	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') varwidth(`varwidth') // $quipu_rhsoptions -> rename() drop() varlabels() order()
 	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
@@ -54,7 +54,17 @@ program define Export
 	if ("`ext'"!="html") local yes \multicolumn{1}{c}{`yes'}
 	if ("`ext'"!="html") local no \multicolumn{1}{c}{`no'}
 
-	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`indicate' `indicate_fe', labels(`yes' `no'))
+	if ("`varwidth'"!="") {
+		local lower_prefix	"\VarLabel{`varwidth'}{"
+		local lower_suffix	"}"
+	}
+	foreach part in `indicate' `indicate_fe' {
+		local part : subinstr local part "=" "`lower_suffix'="
+		local part `lower_prefix'`part'
+		local fixed_indicate `"`fixed_indicate' "`part'""'
+	}
+	
+	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`fixed_indicate', labels(`yes' `no'))
 
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' `options' // style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
@@ -835,7 +845,8 @@ syntax, [vcenote(string)]
 end
 program define BuildRHS
 syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
-	[indicate(string asis)] // Don't add labels to indicate
+	[indicate(string asis)] /// Don't add labels to indicate
+	[varwidth(string)]
 
 	* NOTE: -estout- requires that after a rename, all the options MUST USE THE NEW NAME
 	* i.e. if I rename(price Precio), then when calling -esttab- I need to include keep(Precio)
@@ -940,6 +951,11 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 		}
 	}
 
+	if ("`varwidth'"!="") {
+		local prefix	"\FlatVarLabel{`varwidth'}{"
+		local suffix	"}"
+	}
+
 	forv i=1/`c(N)' {
 		local varname = varname[`i']
 		local footnote = footnote[`i']
@@ -950,11 +966,13 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 
 		* If both footnotes and varlabels have nothing, then we don't need to relabel the var!
 		* This is critical if we have a regr. with 1000s of dummies
-		if ("`varlabel'"!="" | "`footnote'"!="") {
+		* But then we don't want to print that!
+		if (1) {
+		*if ("`varlabel'"!="" | "`footnote'"!="") {
 			* We need *something* as varlabel, to put next to the footnote dagger
 			if ("`varlabel'"=="") local varlabel `"`varname'"'
 			AddFootnote, ext(`extension') footnote(`footnote')
-			local varlabels `"`varlabels' `varname' `"`varlabel'`r(symbolcell)'"' "'
+			local varlabels `"`varlabels' `varname' "`prefix'`varlabel'`r(symbolcell)'`suffix'" "'
 		}
 		local order `order' `varname'
 	}
@@ -967,8 +985,19 @@ syntax, EXTension(string) [rename(string asis) drop(string asis)] ///
 	* ...
 
 	drop _all // BUGBUG: clear?
-	*local varlabels varlabels(`varlabels' _cons Constant , end("" "") nolast)
-	local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
+
+	if ("`varwidth'"!="") {
+		* Need to subtract a bit or else it will clash with the next column
+		local varlabels `"`varlabels' _cons Constant "' // , prefix("\smash{\begin{minipage}[t]{`varwidth'-1mm}\hangindent=0.2cm") suffix("\end{minipage}} ") "'
+	}
+	else {
+		local varlabels `"`varlabels' _cons Constant , end("" "") nolast"'
+	}
+	
+	*local varlabels `"`varlabels' _cons Constant , prefix("\multirow{2}{*}[2em]{\vfil \begin{minipage}[t]{5cm}") suffix("\end{minipage}} ") "'
+	// end("" "") nolast
+	*local varlabels `"`varlabels' _cons Constant , prefix("\multirow{2}{*}{ \begin{minipage}[t]{5cm}{") suffix("}\end{minipage}}") "' // end("" "") nolast
+	* \rule[-.3\baselineskip]{2mm}{2.3\baselineskip}
 
 	* Set global option
 	assert_msg "`rhskeep'"!="", msg("No RHS variables kept!")
@@ -1018,16 +1047,16 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	local labels_jp		"Overid. P-val (Hansen J)"
 	
 	local labels_baseline "Mean of Dependent Variable"
-	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \(\times `scalebaseline'\)"
+	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \((\times `scalebaseline')\)"
 
 	local labels_underid_1 "Underidentification test"
-	local labels_underid_2 "\(\;\; p \, \) value"
+	local labels_underid_2 "\enskip \(p \, \) value"
 
 	local labels_weakid_1 "Weak identification F stat."
-	local labels_weakid_2 "\(\;\;\) 10% maximal IV size"
+	local labels_weakid_2 "\enskip 10% maximal IV size"
 
 	local labels_overid_1 "Overidentification J stat."
-	local labels_overid_2 "\(\;\; p \, \) value"
+	local labels_overid_2 "\enskip \(p \, \) value"
 
 	local fmt_N			%12.0gc
 	local fmt_N_clust	%12.0gc

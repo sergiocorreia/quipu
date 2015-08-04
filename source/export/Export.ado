@@ -11,7 +11,7 @@ program define Export
 	BuildPrefoot, ext(`ext') // This creates YES/NO for indicators, so run this before clearing the data!
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
-	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') // $quipu_rhsoptions -> rename() drop() varlabels() order()
+	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') varwidth(`varwidth') // $quipu_rhsoptions -> rename() drop() varlabels() order()
 	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
@@ -33,7 +33,17 @@ program define Export
 	if ("`ext'"!="html") local yes \multicolumn{1}{c}{`yes'}
 	if ("`ext'"!="html") local no \multicolumn{1}{c}{`no'}
 
-	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`indicate' `indicate_fe', labels(`yes' `no'))
+	if ("`varwidth'"!="") {
+		local lower_prefix	"\VarLabel{`varwidth'}{"
+		local lower_suffix	"}"
+	}
+	foreach part in `indicate' `indicate_fe' {
+		local part : subinstr local part "=" "`lower_suffix'="
+		local part `lower_prefix'`part'
+		local fixed_indicate `"`fixed_indicate' "`part'""'
+	}
+	
+	local base_opt replace `noisily' $quipu_rhsoptions $quipu_starlevels mlabels(none) nonumbers `cellformat' ${quipu_stats} `prepost' indicate(`fixed_indicate', labels(`yes' `no'))
 
 	if ("`ext'"=="html") BuildHTML, filename(`filename') `view' `base_opt' `options' // style(html)
 	if ("`ext'"=="pdf") BuildPDF, filename(`filename') engine(`engine') `view' `base_opt' `options'
