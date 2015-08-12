@@ -12,7 +12,7 @@ program define Export
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
 	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') varwidth(`varwidth') // $quipu_rhsoptions -> rename() drop() varlabels() order()
-	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
+	BuildFootnotes, ext(`ext') notes(`"`notes'"') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
 

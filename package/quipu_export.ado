@@ -33,7 +33,7 @@ program define Export
 	BuildVCENote, vcenote(`vcenote') // This clears the data!
 	clear // Do after (BuildHeader, BuildStats). Do before (BuildRHS)
 	BuildRHS, ext(`ext') rename(`rename') drop(`drop') indicate(`indicate') varwidth(`varwidth') // $quipu_rhsoptions -> rename() drop() varlabels() order()
-	BuildFootnotes, ext(`ext') notes(`notes') stars(`stars') // Updates $quipu_footnotes
+	BuildFootnotes, ext(`ext') notes(`"`notes'"') stars(`stars') // Updates $quipu_footnotes
 	BuildPostfoot, ext(`ext') orientation(`orientation') size(`size') `pagebreak'  // Run *AFTER* building $quipu_footnotes
 	BuildPosthead, ext(`ext')
 
@@ -1143,8 +1143,8 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		local starlevels "`starlevels' \text{`sign'} `num'"
 	}
 
-	local sep1 = cond("${quipu_vcenote}"!="" & "`starnote'`notes'"!="", " ", "")
-	local sep2 = cond("${quipu_vcenote}`starnote'"!="" & "`notes'"!="", " ", "")
+	local sep1 = cond(`"`notes'"'!="" & `"${quipu_vcenote}`starnote'"'!="", " ", "")
+	local sep2 = cond(`"`notes'${quipu_vcenote}"'!="" & `"`starnote'"'!="", " ", "")
 	
 	if ("`extension'"=="html") {
 		local note "<em>Note.&mdash; </em>${quipu_vcenote}`sep1'`starnote'`sep2'`notes'"
@@ -1157,9 +1157,9 @@ syntax, EXTension(string) stars(string) [notes(string)] [vcnote(string)]
 		}
 	}
 	else {
-		local note `"\Note{${quipu_vcenote}`sep1'`starnote'`sep2'`notes'}"'
+		local note `"\Note{`notes'`sep1'${quipu_vcenote}`sep2'`starnote'}"'
 		if (`"${quipu_footnotes}"'!="") {
-			global quipu_footnotes `"${ENTER}`summary'${ENTER}${TAB}${ENTER}${quipu_footnotes}${ENTER}${TAB}`note'"'
+			global quipu_footnotes `"${ENTER}${TAB}${quipu_footnotes}${ENTER}${TAB}`note'"'
 		}
 		else {
 			global quipu_footnotes `"`note'"'
