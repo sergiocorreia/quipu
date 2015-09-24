@@ -1,6 +1,10 @@
 
 # QUIPU
 
+## Introspection
+
+The big conclusion from this is that writing complicated/large packages like this in Stata is a PITA. Even well thought code (estout) gets really complicated as complexity increases. A saner alternative would be to code in in Python, but we would need a package that reads .ster files
+
 ## Usage
 
 This is an experimental package intended for personal use.
