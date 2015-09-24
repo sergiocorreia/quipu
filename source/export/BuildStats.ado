@@ -30,7 +30,7 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 
 	* List of common stats with their label and desired format
 	local labels_N			"Observations"
-	local labels_N_clust	"Num. Clusters"
+	local labels_N_clust	"Number of Clusters"
 	local labels_df_a		"Num. Fixed Effects"
 	local labels_F			"F Statistic"
 	local labels_r2		"\(R^2\)"
@@ -42,14 +42,20 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	local labels_baseline "Mean of Dependent Variable"
 	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \((\times `scalebaseline')\)"
 
+	local labels_ratio_baseline "Relative Effect (%)"
+
 	local labels_underid_1 "Underidentification test"
 	local labels_underid_2 "\enskip \(p \, \) value"
 
 	local labels_weakid_1 "Weak identification F stat."
 	local labels_weakid_2 "\enskip 10% maximal IV size"
+	local labels_weakid_short_1 "`labels_weakid_1'"
+	local labels_weakid_short_2 "`labels_weakid_2'"
 
 	local labels_overid_1 "Overidentification J stat."
 	local labels_overid_2 "\enskip \(p \, \) value"
+	local labels_overid_short_1 "`labels_overid_1'"
+	local labels_overid_short_2 "`labels_overid_2'"
 
 	local fmt_N			%12.0gc
 	local fmt_N_clust	%12.0gc
@@ -65,6 +71,7 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	local fmt_id2		%5.3f // The p-values
 
 	local fmt_baseline	%6.4g
+	local fmt_ratio_baseline	%6.1f
 
 	local DEFAULT_FORMAT a3
 
@@ -89,24 +96,24 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	foreach stat of local stats {
 
 		* Magical stats
-		if inlist("`stat'", "overid", "weakid", "underid") {
+		if inlist("`stat'", "overid", "weakid", "underid", "weakid_short", "overid_short") {
 			local statlabels `"`statlabels' "`labels_`stat'_1'" "`labels_`stat'_2'""'
 
-			if ("`stat'"!="weakid") local statformats `"`statformats' `fmt_id0' `fmt_id1' `fmt_id2'"'
-			if ("`stat'"=="weakid") local statformats `"`statformats' `fmt_id1' `fmt_id1'"'
+			if ( strpos("`stat'", "weakid") | strpos("`stat'","_short") ) local statformats `"`statformats' `fmt_id1' `fmt_id1'"'
+			else local statformats `"`statformats' `fmt_id0' `fmt_id1' `fmt_id2'"'
 
-			if ("`stat'"!="weakid") local exp "\(\chi^2(@){=}@\)"
-			if ("`stat'"=="weakid") local exp "@"
+			if ( strpos("`stat'", "weakid") | strpos("`stat'","_short") ) local exp "@"
+			else local exp "\(\chi^2(@){=}@\)"
 
 			local layout = cond("`extension'"=="html", "`exp'", "\multicolumn{1}{r}{`exp'}")
 			local layouts = `"`layouts' "`layout'""'
 			local layout = cond("`extension'"=="html", "@", "\multicolumn{1}{r}{@}")
 			local layouts = `"`layouts' "`layout'""'
 
-
 			if ("`stat'"=="overid") local expanded_stats `expanded_stats' jdf  j jp
+			if ("`stat'"=="overid_short") local expanded_stats `expanded_stats' j jp
 			if ("`stat'"=="underid") local expanded_stats `expanded_stats' iddf idstat idp
-			if ("`stat'"=="weakid") local expanded_stats `expanded_stats' widstat stock_yogo
+			if (strpos("`stat'", "weakid")==1) local expanded_stats `expanded_stats' widstat stock_yogo
 		}
 		else {
 			local expanded_stats `expanded_stats' `stat'

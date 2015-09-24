@@ -2,7 +2,8 @@ capture program drop LoadEstimates
 program define LoadEstimates, eclass
 syntax [anything(name=header equalok everything)] , ///
 	[indicate(string)] ///  [Fmt(string asis)]
-	[scalebaseline(real 1.0)]
+	[scalebaseline(real 1.0)] ///
+	[keyvar(string)]
 
 	assert `scalebaseline'>0
 
@@ -86,7 +87,15 @@ syntax [anything(name=header equalok everything)] , ///
 			tempname summarize
 			matrix `summarize' = e(summarize)
 			cap matrix `summarize' = `summarize'["mean", "`e(depvar)'"] // row -mean- may not exist
-			if (!c(rc)) ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+			if (!c(rc)) {
+				ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+				if ("`keyvar'"!="") {
+					tempname b
+					matrix `b' = e(b)
+					cap matrix `b' = `b'["`keyvar'",1] // Assume first value is the one I care about
+					ereturn scalar ratio_baseline = `b'[1,1] / e(baseline) * `scalebaseline' * 100
+				}
+			}
 		}
 		
 		estimates title: "`fn'"

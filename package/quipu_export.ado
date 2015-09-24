@@ -25,7 +25,7 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header', scalebaseline(`scalebaseline') // indicate(`indicate') // Loads estimates and sort them in the correct order
+	LoadEstimates `header', scalebaseline(`scalebaseline') keyvar(`keyvar') // indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size') varwidth(`varwidth') colsep(`colsep')
 	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats', ext(`ext') scalebaseline(`scalebaseline')
@@ -95,6 +95,7 @@ program define Parse
 		Order(string asis) VARLabels(string asis) KEEP(string asis) /// ESTOUT TRAP OPTIONS: Will be silently ignored!
 		VARWIDTH(string) ///
 		SCALEBASELINE(real 1.0) ///
+		KEYVAR(string) ///
 		] [*]
 	* Note: Remember to update any changes here before the bottom c_local!
 
@@ -131,7 +132,7 @@ program define Parse
 	* Inject values into caller (Export.ado)
 	local names filename ext ifcond tex pdf html view engine orientation size pagebreak ///
 		colformat colsep notes stars vcenote title label stats ///
-		rename drop indicate header headerhide cellformat metadata varwidth options scalebaseline
+		rename drop indicate header headerhide cellformat metadata varwidth options scalebaseline keyvar
 	if ($quipu_verbose>1) di as text "Parsed options:"
 	foreach name of local names {
 		if (`"``name''"'!="") {
@@ -251,7 +252,8 @@ end
 program define LoadEstimates, eclass
 syntax [anything(name=header equalok everything)] , ///
 	[indicate(string)] ///  [Fmt(string asis)]
-	[scalebaseline(real 1.0)]
+	[scalebaseline(real 1.0)] ///
+	[keyvar(string)]
 
 	assert `scalebaseline'>0
 
@@ -335,7 +337,15 @@ syntax [anything(name=header equalok everything)] , ///
 			tempname summarize
 			matrix `summarize' = e(summarize)
 			cap matrix `summarize' = `summarize'["mean", "`e(depvar)'"] // row -mean- may not exist
-			if (!c(rc)) ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+			if (!c(rc)) {
+				ereturn scalar baseline = `summarize'[1,1] * `scalebaseline'
+				if ("`keyvar'"!="") {
+					tempname b
+					matrix `b' = e(b)
+					cap matrix `b' = `b'["`keyvar'",1] // Assume first value is the one I care about
+					ereturn scalar ratio_baseline = `b'[1,1] / e(baseline) * `scalebaseline' * 100
+				}
+			}
 		}
 		
 		estimates title: "`fn'"
@@ -1037,7 +1047,7 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 
 	* List of common stats with their label and desired format
 	local labels_N			"Observations"
-	local labels_N_clust	"Num. Clusters"
+	local labels_N_clust	"Number of Clusters"
 	local labels_df_a		"Num. Fixed Effects"
 	local labels_F			"F Statistic"
 	local labels_r2		"\(R^2\)"
@@ -1049,14 +1059,20 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	local labels_baseline "Mean of Dependent Variable"
 	if (`scalebaseline'!=1) local labels_baseline "`labels_baseline' \((\times `scalebaseline')\)"
 
+	local labels_ratio_baseline "Relative Effect (%)"
+
 	local labels_underid_1 "Underidentification test"
 	local labels_underid_2 "\enskip \(p \, \) value"
 
 	local labels_weakid_1 "Weak identification F stat."
 	local labels_weakid_2 "\enskip 10% maximal IV size"
+	local labels_weakid_short_1 "`labels_weakid_1'"
+	local labels_weakid_short_2 "`labels_weakid_2'"
 
 	local labels_overid_1 "Overidentification J stat."
 	local labels_overid_2 "\enskip \(p \, \) value"
+	local labels_overid_short_1 "`labels_overid_1'"
+	local labels_overid_short_2 "`labels_overid_2'"
 
 	local fmt_N			%12.0gc
 	local fmt_N_clust	%12.0gc
@@ -1072,6 +1088,7 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	local fmt_id2		%5.3f // The p-values
 
 	local fmt_baseline	%6.4g
+	local fmt_ratio_baseline	%6.1f
 
 	local DEFAULT_FORMAT a3
 
@@ -1096,24 +1113,24 @@ syntax [anything(name=stats equalok everything)],  EXTension(string) [scalebasel
 	foreach stat of local stats {
 
 		* Magical stats
-		if inlist("`stat'", "overid", "weakid", "underid") {
+		if inlist("`stat'", "overid", "weakid", "underid", "weakid_short", "overid_short") {
 			local statlabels `"`statlabels' "`labels_`stat'_1'" "`labels_`stat'_2'""'
 
-			if ("`stat'"!="weakid") local statformats `"`statformats' `fmt_id0' `fmt_id1' `fmt_id2'"'
-			if ("`stat'"=="weakid") local statformats `"`statformats' `fmt_id1' `fmt_id1'"'
+			if ( strpos("`stat'", "weakid") | strpos("`stat'","_short") ) local statformats `"`statformats' `fmt_id1' `fmt_id1'"'
+			else local statformats `"`statformats' `fmt_id0' `fmt_id1' `fmt_id2'"'
 
-			if ("`stat'"!="weakid") local exp "\(\chi^2(@){=}@\)"
-			if ("`stat'"=="weakid") local exp "@"
+			if ( strpos("`stat'", "weakid") | strpos("`stat'","_short") ) local exp "@"
+			else local exp "\(\chi^2(@){=}@\)"
 
 			local layout = cond("`extension'"=="html", "`exp'", "\multicolumn{1}{r}{`exp'}")
 			local layouts = `"`layouts' "`layout'""'
 			local layout = cond("`extension'"=="html", "@", "\multicolumn{1}{r}{@}")
 			local layouts = `"`layouts' "`layout'""'
 
-
 			if ("`stat'"=="overid") local expanded_stats `expanded_stats' jdf  j jp
+			if ("`stat'"=="overid_short") local expanded_stats `expanded_stats' j jp
 			if ("`stat'"=="underid") local expanded_stats `expanded_stats' iddf idstat idp
-			if ("`stat'"=="weakid") local expanded_stats `expanded_stats' widstat stock_yogo
+			if (strpos("`stat'", "weakid")==1) local expanded_stats `expanded_stats' widstat stock_yogo
 		}
 		else {
 			local expanded_stats `expanded_stats' `stat'

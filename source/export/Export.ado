@@ -4,7 +4,7 @@ program define Export
 	
 	Initialize, ext(`ext') metadata(`metadata') `verbose' // Define globals and mata objects (including the metadata)
 	Use `ifcond' // Load selected estimates
-	LoadEstimates `header', scalebaseline(`scalebaseline') // indicate(`indicate') // Loads estimates and sort them in the correct order
+	LoadEstimates `header', scalebaseline(`scalebaseline') keyvar(`keyvar') // indicate(`indicate') // Loads estimates and sort them in the correct order
 	BuildPrehead, ext(`ext') colformat(`colformat') title(`title') label(`label') ifcond(`ifcond') orientation(`orientation') size(`size') varwidth(`varwidth') colsep(`colsep')
 	BuildHeader `header', headerhide(`headerhide') ext(`ext') fmt(`fmt') // Build header and saves it in $quipu_header (passed to posthead)
 	BuildStats `stats', ext(`ext') scalebaseline(`scalebaseline')
